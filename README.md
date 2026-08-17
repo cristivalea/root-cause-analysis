@@ -1,243 +1,190 @@
-# Arhitectura proiect Root cause analysis
+# Proiect Root-Cause Analysis (RCA)
 
-# Arhitectură — Agenți
+## 1. Problem Definition & Scope
 
-Sistemul separă strict **reasoning** (propus de LLM, output JSON validat) de **execuție** (tool-uri deterministe, testabile unitar). Niciun agent LLM nu scrie direct în sistem — orice scriere trece prin tool-uri deterministe, iar orice acțiune cu risc peste prag trece printr-o poartă de aprobare umană.
+**Business / IT Problem:** În Problem Management (ITIL), un „problem” reprezintă cauza reală sau potențială a unuia sau mai multor incidente. Scopul procesului nu este restaurarea imediată a serviciului (aceasta este responsabilitatea Incident Management), ci prevenirea reapariției incidentelor prin identificarea cauzei rădăcină (Root Cause Analysis — RCA) și implementarea de soluții durabile (Known Error, workaround structurat sau Change Request).
+Problema de business/IT abordată de acest proiect este următoarea: în organizațiile cu volum mare de incidente, identificarea manuală a tiparelor recurente și formularea de ipoteze de cauză consumă timp semnificativ din partea Problem Manager-ului și a experților tehnici, iar analiza istoricului de incidente, al configurațiilor (CMDB), al schimbărilor recente (Changes) și al logurilor se face în mod fragmentat, în surse separate, fără o corelare sistematică. Acest lucru duce la întârzieri în deschiderea Problem Record-urilor, la ipoteze incomplete și, uneori, la eșecul de a sesiza corelații evidente (de exemplu, o schimbare recentă de configurare care coincide cu apariția unui tipar de eșec).
+**Obiectivul proiectului** este construirea unui agent AI asistiv care, pornind de la unul sau mai multe incidente recurente (sau de la un incident major), recuperează automat contextul relevant din surse multiple, identifică tiparul (pattern) și propune 2–3 ipoteze de cauză rădăcină, fiecare însoțită de dovezi citate explicit și de un pas de validare concret. Rezultatul este un draft de Problem Record, nu un verdict automat — decizia finală rămâne întotdeauna la Problem Manager și la expertul tehnic.
 
-## 1. Retriever agent
+**Oiective:**
 
-**Responsabilitate**: aduce context istoric relevant pentru incidentul curent, cu trasabilitate completă la sursă.
+- Reducerea timpului necesar pentru formularea unui prim draft de Problem Record, pornind de la incidente deja înregistrate.
+- Creșterea calității ipotezelor de cauză prin corelarea sistematică a istoricului de incidente, CMDB, changes recente și loguri.
+- Asigurarea trasabilității: fiecare ipoteză trebuie să fie susținută de dovezi citabile (ID-uri de incidente, loguri, changes).
+- Menținerea controlului uman asupra deciziilor cu impact (aprobare, respingere, solicitare de dovezi suplimentare), agentul nefiind autorizat să declare o cauză ca fiind confirmată.
+- Livrarea unui sistem end-to-end, demonstrabil, cu cost zero de licențiere (LLM open-source local sau prin tier gratuit), potrivit unui proiect de academie.
 
-| | |
-|---|---|
-| **Input** | Descrierea incidentului curent (text) + metadate opționale (categorie, sistem afectat) pentru filtrare |
-| **Output** | Listă structurată de incidente similare: `incident_id`, `data`, `scor_similaritate`, `rezumat` |
-| **Tehnologie** | Embeddings (`sentence-transformers` sau embeddings Ollama) + ChromaDB |
-| **LLM implicat** | Nu |
+**Scope:**
 
-**Tool-uri**
-- `embed_query(text) -> vector` — transformă incidentul curent în embedding, folosind același model ca la indexare
-- `search_similar_incidents(vector, k=5, filters=None) -> list[IncidentMatch]` — interogare ChromaDB, top-k după similaritate cosine
+- Ingestia și căutarea semantică în istoricul incidentelor și al rezoluțiilor anterioare.
+- Corelarea automată a incidentelor cu topologia serviciilor (CMDB), modificările recente (Changes) și mesajele din loguri.
+- Formularea a 2–3 ipoteze de cauză rădăcină însoțite de citări exacte și pași practici de validare.
+- Asigurarea unui flux Human-in-the-Loop (aprobare, respingere, cerere de investigații suplimentare) cu jurnalizare completă de audit.
 
-**Reguli de implementare**
-- Fiecare incident din setul mock e indexat cu metadata atașată (`incident_id`, `data`, `categorie`, `severitate`), nu doar text brut — permite filtrare înainte de similarity search
-- Prag minim de similaritate (ex: sub 0.6 = irelevant) — stabilit și justificat explicit, nu implicit
-- ID-ul original al fiecărui incident e păstrat integral prin tot fluxul — orice ipoteză de mai târziu trebuie să poată fi trasată înapoi la `incident_id`-urile care au fundamentat-o
+**Assumptions:**
 
-**Ce NU face**: nu interpretează, nu decide cauze, nu generează text nou — mecanism de căutare, atât.
+- Datele despre incidente conțin descrieri textuale, timestamp-uri și referințe către serviciile afectate.
+- Sistemele adiacente (CMDB, Changes, Logs) sunt accesibile prin interfețe de tip mock/API structurat.
+- Utilizatorii (Problem Manager, expert tehnic) au cunoștințe de bază despre procesul ITIL de Problem Management.
+- Un incident/grup de incidente este deja „selectat” sau selectabil în sistem înainte de a porni analiza (nu face obiectul acestui proiect integrarea cu un sistem de ticketing real pentru colectarea inițială).
 
----
+**Exclusions:**
 
-## 2. Analyst agent (Chain-of-Thought)
+- Sistemul nu garantează identificarea corectă a cauzei rădăcină — oferă ipoteze plauzibile, clasificate după puterea dovezilor, nu certitudini.
+- Sistemul nu execută remedieri automate în producție (auto-healing/auto-remediation direct).
+- Sistemul nu înlocuiește Incident Management-ul (nu face dispecerat de alerte live pentru Service Desk).
+- Sistemul nu emite verdicte definitive nesupuse validării umane.
+- Nu se implementează notificări automate către Service Owner sau integrare cu sisteme de change management pentru deschiderea automată a unui Change Request — se generează doar recomandarea.
 
-**Responsabilitate**: singurul punct din sistem unde se face raționament — transformă context istoric + incident curent în ipoteze de cauză motivate.
 
-| | |
-|---|---|
-| **Input** | Incidentul curent + lista de incidente similare (din Retriever), formatate în prompt structurat |
-| **Output** | JSON strict, validat cu Pydantic |
-| **Tehnologie** | LLM open-source (Ollama local sau Groq free tier) |
-| **LLM implicat** | Da — singurul agent care generează text liber/raționament |
+## 2. Understanding of the Process
 
-**Schema de output (Pydantic)**
+| Etapa | Metoda Tradiționala | Blocaje & Ineficiențe | Imbunătățirea prin AI
+| ---------------- | ------------------------------- | ----------------------------- | -----------------------------------|
+| Detectie tipar | Problem Managerul analizează manual rapoarte săptămânale în Excel/Jira pentru a găsi tipare. |  Detectare lentă (zile/săptămâni); corelațiile subtile între servicii diferite sunt omise. | Identificare semantică automată a recurenței pe baza similarității vectoriale și a ferestrelor temporale. |
+| Colectare Context | Inginerul deschide manual 3–4 unelte diferite: CMDB, pipeline-ul de CI/CD, dashboard-ul de loguri. | Amestecuri informaționale; timp pierdut comutând între platforme disparate. | Agregare unificată prin Tools: interogare simultană în CMDB, Changes și Loguri pentru CI-ul afectat. |
+| Analiză Cauză (RCA) | Brainstorming bazat pe memoria tehnică a echipei sau pe presupuneri nefondate (trial and error). | Cognitive bias; risc mare de eroare umană; dependență critică de disponibilitatea seniorilor. | Raționament Chain-of-Thought (CoT): sinteză logică pas cu pas, formulare de ipoteze cu grad de certitudine și trimiteri directe la dovezi. |
+| Documentare | Redactare manuală a Problem Record-ului, adesea incompletă sau fără pași clari de verificare. | Lipsă de standardizare; documentația tehnică devine o sarcină evitată de ingineri. | Generare de draft structurat (JSON/Pydantic) gata de revizuire, cu pași concreți de validare tehnică. | 
 
-```python
-class Hypothesis(BaseModel):
-    cauza_probabila: str
-    incredere: float  # 0.0-1.0
-    incidente_citate: list[str]  # ID-uri, nu texte libere
-    severitate_estimata: Literal["Low", "Medium", "High", "Critical"]
-    rationament: str  # rezumat CoT, nu tot raționamentul brut
+## 3. Proposed Solution / TO-BE Flow
 
-class AnalystOutput(BaseModel):
-    incident_id: str
-    ipoteze: list[Hypothesis]  # de regulă 1-3, ordonate după incredere
+Sistemul propus este o aplicație agentică asistivă, cu un flux TO-BE care păstrează structura procesului ITIL de Problem Management, dar automatizează etapa de recuperare a contextului și de formulare a ipotezelor inițiale. Problem Manager rămâne punctul de intrare și de decizie al procesului; agentul AI acționează ca un „asistent de investigație” care pregătește un draft documentat, pe care omul îl validează, îl respinge sau îl trimite spre completare.
+
+| Actor | Rol in flux |
+|---------------------| --------------------------------------------------------------------- |
+| Problem Manager | Problem Coordinator | Pornește analiza, selectează serviciul/CI/perioada, revizuiește draftul, aprobă Problem Record-ul|
+| Incident Manager | Furnizează incidentele și contextul inițial (grupul de incidente recurente sau incidentul major) |
+| Developer / DevOps / SRE / Infrastructură | Oferă sau validează dovezile tehnice; primește draftul prin „Trimite către expert tehnic” |
+| Service Owner | Poate aproba acțiunile ulterioare (de ex. Change Request rezultat din Known Error) |
+| Agent AI (RCA) | Recuperează istoricul și contextul tehnic, propune ipoteze de cauză cu dovezi și pas de validare |
+
+![Diagrama flux](./flux_to_be.png)
+
+Pașii fluxului:
+1.	Punct de plecare: incidente recurente (detectate de Incident Management sau printr-un raport de tendințe) sau un incident major individual.
+2.	Problem Manager selectează contextul de analiză: serviciul afectat, CI-ul (Configuration Item) relevant și perioada de timp.
+3.	Agentul recuperează automat: istoricul de incidente similare (ChromaDB/RAG), dependențele din CMDB, schimbările recente (Changes) și logurile relevante.
+4.	Agentul RCA identifică tiparul (de exemplu, „eșecuri repetate luni între 09:00–10:00”), formulează 2–3 ipoteze de cauză, atașează dovezi și citări pentru fiecare, și indică explicit ce informații lipsesc, dacă e cazul.
+5.	Se generează draftul de Problem Record, cu statusul draft_pending_human_review — niciodată o concluzie finală.
+6.	Problem Manager revizuiește draftul; poate trimite direct către expertul tehnic pentru validarea dovezilor (butonul „Trimite către expert tehnic”).
+7.	Decizia umană: Aprobă (draftul devine Problem Record oficial, cu Known Error / workaround / Change Request asociat), Respinge (se închide draftul, cu motiv înregistrat), sau Solicită dovezi (agentul reia recuperarea cu context extins sau solicită informații suplimentare din partea echipelor tehnice).
+8.	Toate acțiunile (selecție, generare draft, trimitere, aprobare, respingere, solicitare de dovezi) sunt înregistrate în jurnalul de audit.
+
+Interfața propusă (simplificată, fără autentificare complexă)
+- Ecran principal Problem Manager: selecție serviciu/CI/perioadă, listă de incidente candidate, buton „Pornește analiza”.
+- Ecran rezultat/draft: afișarea tiparului identificat, a ipotezelor cu dovezi și evidence strength, a informațiilor lipsă, și butonul „Trimite către expert tehnic”.
+- Ecran review (Problem Manager / expert tehnic): butoane „Aprobă”, „Respinge”, „Solicită dovezi”, cu câmp opțional de comentariu.
+- Toate acțiunile din ecranele de mai sus sunt persistate în audit log (actor simulat prin selecție de rol, fără sistem complet de autentificare).
+ 
+## Arhitectură la nivel înalt (High-Level Architecture)
+
+![Ahitectura de nivel inalt](./arhitectura%20de%20nivel%20inalt.png)
+
+| Componenta | Rol | Tehnologie propusa |
+| -------------------- | --------------------------------------------------- | -------------------------------- | 
+| UI | Ecran Problem Manager + ecran de review (selecție, vizualizare draft, aprobare/respingere/solicitare dovezi) | Streamlit |
+| Backend / API | Orchestrare cereri, validare schemă, expunere endpoints, scriere audit log | FastAPI (Docker) |
+| Model / LLM | Raționament Chain-of-Thought: identifică tipar, formulează ipoteze, decide ce tool-uri să apeleze | LLM open-source via Ollama (local) sau Groq (tier gratuit) |
+| Retrieval (RAG) | Recuperare semantică a incidentelor istorice similare | ChromaDB (vector store) + embeddings |
+| Data (mock tools) | CMDB, Changes, Loguri — surse structurate simulate, interogabile prin funcții deterministe | Tool layer (funcții Python peste date mock JSON/SQLite) |
+| Aplicație / Validare | Validarea structurii ieșirii LLM înainte de a fi expusă ca draft | Pydantic schema pentru Problem Record |
+| Output | Draft de Problem Record +, după aprobare, Known Error / Workaround / Change Request | JSON structurat, persistat |
+| Observability | Trasabilitatea deciziilor agentului, pentru debugging și verificare | Arize Phoenix / traces |
+| Audit | Jurnal al tuturor acțiunilor umane și ale agentului | Log persistat (bază de date sau fișier structurat) |
+
+Un principiu central al arhitecturii este separarea clară între raționamentul LLM (care propune, interpretează, formulează ipoteze în limbaj natural, validat apoi printr-o schemă Pydantic) și execuția tool-urilor (funcții deterministe care interoghează ChromaDB, CMDB, Changes și Loguri, și returnează date structurate, nu text liber). Această separare reduce riscul de „halucinație” a datelor factuale — LLM-ul nu inventează un ID de incident sau un CI, ci doar interpretează rezultatele returnate de tool-uri, care sunt verificabile și reproductibile.
+
+## Proiectarea datelor și abordarea RAG (Data Design & RAG Thinking)
+
+### Date necesare
+
+- Istoric de incidente: descriere, serviciu afectat, CI, timestamp deschidere/închidere, severitate, note de rezolvare, tag-uri.
+- CMDB (mock): servicii, Configuration Items (CI), relații de dependență între CI-uri (de ex. Payroll API depinde de PayrollDB).
+- Changes recente (mock): CR-uri cu descriere, CI afectat, data aplicării, autor, tip (config change, deployment, etc.).
+- Loguri relevante (mock): mesaje de eroare/evenimente asociate unui serviciu/CI, cu timestamp și severitate (de ex. „database connection pool exhausted”).
+
+### Entități și schemă aproximativă
+
+| Entitati | Campuri principale |
+| ------------------- | -------------------------------------------------------------------------|
+| Incident | incident_id, title, description, affected_service, ci_id, opened_at, closed_at, severity, resolution_notes, tags |
+| CI (CMDB) | ci_id, name, type (service/app/db/infra), depends_on[] (listă de ci_id) |
+| Change | change_id, ci_id, description, applied_at, author, type |
+| Log entry | log_id, ci_id/service, timestamp, level, message |
+| Problem Record (draft) | title, affected_service, linked_incidents[], pattern, hypotheses[], recommended_workaround, change_required, status |
+| Hypothesis | cause, evidence[], evidence_strength (low/medium/high), validation_step |
+| Audit entry | actor, action, target (ex. problem_record_id), timestamp, comment |
+
+### Strategia de date mock
+
+Se va construi un set de date mock realist, de aproximativ 200–500 de incidente, distribuite pe câteva servicii (de ex. Payroll API, Billing Service, Auth Gateway), cu 2–3 tipare recurente construite intenționat (de exemplu, eșecuri de tip „connection pool exhausted” corelate cu o schimbare de configurare recentă, sau eșecuri de memorie corelate cu un deployment recent), astfel încât agentul să poată demonstra identificarea corectă a corelației cauză–efect în scenarii cunoscute, verificabile de către evaluator. Datele CMDB, Changes și Loguri vor fi generate coerent cu incidentele (aceleași ci_id, aceleași ferestre de timp), pentru ca RCA-ul să fie plauzibil și verificabil.
+
+### Ce informație necesită retrieval/search
+
+Istoricul de incidente este singura sursă pentru care este justificată căutarea semantică (RAG): descrierile incidentelor sunt text liber, iar incidente similare pot folosi formulări diferite pentru aceeași cauză (de exemplu, „aplicația nu răspunde” vs. „timeout la request”). CMDB, Changes și Loguri, fiind date structurate, sunt interogate direct (filtrare pe ci_id / interval de timp), fără a necesita căutare semantică — acestea sunt tratate ca tool-uri deterministe, nu ca surse RAG.
+
+### Utilizarea ChromaDB
+
+- Fiecare incident istoric este indexat ca un document (titlu + descriere + note de rezolvare), cu embedding generat printr-un model de embeddings open-source
+- Metadate atașate fiecărui document: ci_id, affected_service, opened_at, incident_id — pentru a permite filtrare combinată (similaritate semantică + filtre structurate pe serviciu/perioadă).
+- La interogare, agentul caută top-k incidente similare cu incidentul/grupul curent, restrânse la serviciul și fereastra de timp selectate de Problem Manager.
+- Rezultatele RAG sunt folosite ca dovezi citabile (linked_incidents), nu doar ca context implicit — fiecare incident_id returnat de ChromaDB poate apărea explicit în lista de evidence a unei ipoteze.
+- Calitatea retrieval-ului va fi evaluată cu RAGAS (relevanță, fidelitate față de sursă), conform cerințelor proiectului.
+
+## Concept de raționament, decizie și execuție
+
+| Agent | Responsabilitate |
+| -------------------------- | ---------------------------------------------------------------------------------|
+| Agent de recuperare context (retrieval) | Decide ce interogări sunt necesare (RAG pe ChromaDB, interogări CMDB/Changes/Loguri) în funcție de serviciul, CI-ul și perioada selectate |
+| Agent RCA (Chain-of-Thought) | Analizează contextul recuperat, identifică tiparul, formulează 2–3 ipoteze de cauză, evaluează puterea dovezilor și propune pași de validare |
+| Componentă de validare a ieșirii | Verifică (schema Pydantic) că structura Problem Record-ului generat de LLM este completă și corectă înainte de a fi expusă ca draft |
+| Om în buclă (Problem Manager / expert tehnic) | Validează, aprobă, respinge sau solicită dovezi suplimentare — punctul final de decizie |
+
+### Principii de decizie și execuție
+
+- Raționamentul (Chain-of-Thought) este expus explicit sub formă de ipoteze cu dovezi și grad de încredere (evidence_strength), nu ca o singură concluzie fără justificare.
+- Execuția este strict limitată la recuperare de date și generare de draft — agentul nu execută acțiuni corective (nu modifică configurări, nu deschide automat Change Request-uri).
+- Orice acțiune cu efect asupra stării Problem Record-ului (trimitere spre expert, aprobare, respingere) necesită decizie umană explicită, înregistrată în audit.
+- Lipsa informației este tratată ca rezultat valid și util (agentul semnalează explicit ce date lipsesc), nu ca eșec al analizei
+
+## KPI și criterii de succes
+
+**KPI 1 — Timp până la un prim draft de Problem Record**
+
+Măsoară timpul scurs din momentul selectării incidentelor/serviciului de către Problem Manager până la generarea draftului de Problem Record de către agent, comparat cu timpul mediu istoric necesar pentru un prim draft realizat manual (estimat retrospectiv, pe baza timestamp-urilor de deschidere a Problem Record-urilor anterioare din procesul actual, dacă sunt disponibile, sau printr-un studiu de referință simplu în care aceeași investigație este parcursă manual de un evaluator, cronometrat, pentru comparație).
+
+**KPI 2 — Rata de acceptare a ipotezelor propuse de agent**
+
+Măsoară procentul de Problem Record-uri în care cel puțin o ipoteză propusă de agent este aprobată (integral sau parțial, eventual după solicitare de dovezi suplimentare) de către Problem Manager/expert tehnic, din totalul draft-urilor generate. Această metrică se calculează direct din fluxul „Aprobă / Respinge / Solicită dovezi”, deja înregistrat în audit log, fără a necesita instrumentare suplimentară: rata de acceptare = (draft-uri aprobate) / (total draft-uri generate).
+
+### Metodologia de verificare
+
+- Cele două KPI de mai sus se pot calcula direct din datele deja capturate de sistem: audit log-ul (timestamp-uri pentru fiecare etapă a fluxului) și starea finală a fiecărui Problem Record (status: aprobat / respins / dovezi solicitate).
+- Pentru comparația cu procesul manual, se poate folosi fie un baseline istoric (dacă există date despre durata investigațiilor anterioare), fie un mic experiment controlat: aceleași 3–5 cazuri de test rulate atât prin agent, cât și manual de un evaluator, comparând timpul și numărul de surse consultate.
+- Nu se estimează valori numerice în această etapă a documentației — se stabilește doar modul în care succesul va fi verificat ulterior, pe baza datelor generate de sistem în timpul demo-ului.
+
+## Anexă — Exemplu ilustrativ de draft Problem Record
+
+Exemplul de mai jos ilustrează formatul JSON al draftului generat de agent, pentru scenariul „Payroll API devine indisponibilă luni între 09:00–10:00”, cu 14 incidente similare identificate într-o lună:
+
+```json
+{   
+    "title": "Recurring Payroll API availability failures",   
+    "affected_service": "Payroll API",   
+    "linked_incidents": ["INC-101", "INC-117", "INC-124"],   
+    "pattern": "Failures occur during Monday payroll batch",   
+    "hypotheses": [     
+        {       
+            "cause": "Database connection pool exhaustion",       
+            "evidence": ["INC-117 resolution notes", "LOG-2026-041", "CHG-044"],       
+            "evidence_strength": "high",       
+            "validation_step": "Run load test with previous pool configuration"     
+        }   
+    ],   
+    "recommended_workaround": "Temporarily increase connection pool",   
+    "change_required": true,   
+    "status": "draft_pending_human_review" 
+}
 ```
 
-**Reguli de implementare**
-- Promptul cere explicit raționament pas-cu-pas *înainte* de JSON-ul final ("gândește-te ce au în comun incidentele similare, apoi formulează ipoteza") — raționamentul brut se loghează separat (util pentru Phoenix), fără să polueze schema de output
-- Dacă parsing-ul JSON eșuează sau validarea Pydantic pică → retry cu eroarea inclusă în prompt ("output-ul nu respectă schema, eroarea a fost X"). Niciun JSON malformat nu trece mai departe în flux
-- `incidente_citate` trebuie să conțină exclusiv ID-uri care au apărut efectiv în contextul furnizat de Retriever — verificat printr-un check programatic suplimentar (nu doar Pydantic), pentru a preveni citări halucinate
-
-**Ce NU face**: nu scrie nimic persistent, nu decide dacă se execută ceva — doar propune.
-
----
-
-## 3. Problem Record Builder
-
-**Responsabilitate**: transformă output-ul validat al Analyst-ului în recordul final, aplicând reguli de business deterministe. Aici se concretizează separarea reasoning/execuție.
-
-| | |
-|---|---|
-| **Input** | `AnalystOutput` (deja validat Pydantic) |
-| **Output** | `ProblemRecord` — obiectul final pregătit pentru scriere în sistem |
-| **Tehnologie** | Logică Python pură, fără LLM |
-| **LLM implicat** | Nu |
-
-**Reguli de business (exemple)**
-- Dacă `severitate_estimata == "Critical"` ȘI `incredere < 0.5` → se forțează `severitate_finala = "High"` (regulă de precauție codificată explicit, nu decisă de model)
-- Maparea pe categorie ITIL: dicționar cuvinte-cheie → categorie, nu inferență liberă
-- Calculează `necesita_aprobare: bool` pe baza pragurilor definite — acesta e semnalul pentru Approval gate
-
-**Reguli de implementare**
-- Funcție pură, testabilă unitar clasic: dai un `AnalystOutput` mock, verifici că output-ul e cel așteptat — demonstrează direct separarea reasoning/execuție cerută
-- Nicio interpretare de text liber, niciun apel LLM
-
-**Ce NU face**: nu interpretează, nu regenerează, nu apelează din nou modelul.
-
----
-
-## 4. Approval gate
-
-**Responsabilitate**: punct de control uman — oprește fluxul înainte de orice scriere/execuție cu impact, dacă pragul de risc e depășit.
-
-| | |
-|---|---|
-| **Input** | `ProblemRecord` + flagul `necesita_aprobare` |
-| **Output** | Continuă automat (sub prag) sau intră în așteptare pentru decizie umană (aprobat/respins/modificat) |
-| **Tehnologie** | State machine / `interrupt()` (LangGraph) sau echivalent |
-| **LLM implicat** | Nu |
-
-**Praguri (exemplu, de justificat explicit în document)**
-- `severitate_finala >= "High"` → necesită aprobare (o escaladare greșită la acest nivel afectează SLA-uri active)
-- Propunere de închidere/escaladare automată a unui incident cu impact major → necesită aprobare
-
-**Reguli de implementare**
-- Punct natural pentru `interrupt()` dacă orchestrarea e făcută cu LangGraph — graful se oprește, salvează state-ul, așteaptă input extern (ex: buton „Aprobă"/„Respinge" în interfața Streamlit)
-- Fiecare decizie umană (cine, când, ce a ales) e logată integral — alimentează direct cerința de audit (cine a aprobat, pe ce bază)
-- O respingere poate întoarce fluxul la Analyst agent cu feedback („aprobatorul a respins pentru că...") în loc să oprească definitiv — opțional, dar arată maturitate de design
-
-**Ce NU face**: nu decide singur — garantează că nimic riscant nu trece fără om în buclă.
-
-
-# Tool-uri Deterministe
-
-- **`embed_query(text: str) -> list[float]`**
-  - *Sursă / Tehnologie*: `sentence-transformers/all-MiniLM-L6-v2` sau Ollama `nomic-embed-text`
-  - *Rol*: Transformă textul incidentului curent într-un vector dens folosit pentru căutarea vectorială.
-- **`search_similar_incidents(vector: list[float], k: int = 5, score_threshold: float = 0.6) -> list[IncidentMatch]`**
-  - *Sursă / Tehnologie*: ChromaDB
-  - *Rol*: Interogare vectorială bazată pe similaritate cosine; filtrează automat rezultatele cu scor sub pragul de `0.6`.
-- **`validate_and_parse_cot_output(raw_llm_output: str) -> AnalystOutput`**
-  - *Sursă / Tehnologie*: Pydantic
-  - *Rol*: Validează structura JSON generată de LLM. Dacă parsing-ul eșuează, declanșează un loop de retry trimițând eroarea înapoi în prompt.
-- **`verify_citations(cited_ids: list[str], retrieved_ids: list[str]) -> bool`**
-  - *Sursă / Tehnologie*: Logică Python pură
-  - *Rol*: Garantează că ID-urile citate de LLM în raționament au fost efectiv furnizate de Retriever, eliminând citările halucinate.
-- **`build_problem_record(analyst_output: AnalystOutput) -> ProblemRecord`**
-  - *Sursă / Tehnologie*: Logică Python pură (Business Rules)
-  - *Rol*: Aplică reguli stricte (ex: forțează `severitate = High` dacă `severitate_estimata == Critical` și `incredere < 0.5`) și calculează flag-ul `necesita_aprobare`.
-- **`save_problem_record_to_db(record: ProblemRecord) -> bool`**
-  - *Sursă / Tehnologie*: Bază de date (PostgreSQL / SQLite / File Store)
-  - *Rol*: Persistă recordul final în baza de date doar după trecerea de Approval Gate.
-
----
-
-# State Schema (Limbaj de date între pași)
-
-State-ul este obiectul unic de date transmis între nodurile grafului de orchestrare:
-
-```python
-from typing import TypedDict, Optional, List, Literal
-from pydantic import BaseModel
-
-class IncidentMatch(BaseModel):
-    incident_id: str
-    data: str
-    scor_similaritate: float
-    rezumat: str
-    categorie: str
-    severitate: str
-
-class ProblemState(TypedDict):
-    # --- Input inițial ---
-    incident_id: str
-    descriere_incident: str
-    sistem_afectat: Optional[str]
-    
-    # --- Pas 1: Retriever Agent ---
-    incidente_similare: List[IncidentMatch]
-    
-    # --- Pas 2: Analyst Agent ---
-    raw_llm_cot: str                      # Raționamentul brut (logat în Arize Phoenix)
-    analyst_output: Optional[dict]        # Parsat și validat ca AnalystOutput
-    validation_errors: List[str]          # Istoric erori de parsare pentru loop-ul de retry
-    retry_count: int
-    
-    # --- Pas 3: Problem Record Builder ---
-    problem_record: Optional[dict]        # Recordul structurat final
-    necesita_aprobare: bool
-    
-    # --- Pas 4: Approval Gate ---
-    status_aprobare: Literal["PENDING", "APPROVED", "REJECTED", "AUTO_APPROVED"]
-    aprobat_de: Optional[str]             # User ID / Nume responsabil
-    motiv_respingere: Optional[str]
-    
-    # --- Stare finală ---
-    sistem_actualizat: bool
-```
-
-# Handoff-uri și Tranziții între Noduri
-
-1. **Start $\rightarrow$ Retriever Agent**:
-   - **Tranziție**: Directă.
-   - **Payload**: `descriere_incident` + metadate de filtrare.
-2. **Retriever Agent $\rightarrow$ Analyst Agent**:
-   - **Tranziție**: Condiționată. Dacă lista de incidente similare este goală, Analyst-ul primește un prompt adaptat (fallback fără RAG).
-   - **Payload**: `descriere_incident` + `incidente_similare`.
-3. **Analyst Agent $\rightarrow$ Validation Check (Self-Loop / Retry)**:
-   - **Tranziție Condiționată**:
-     - Dacă validarea Pydantic **PASS** $\rightarrow$ Handoff către **Problem Record Builder**.
-     - Dacă validarea **FAIL** și `retry_count < 3` $\rightarrow$ Handoff înapoi la **Analyst Agent** (se adaugă eroarea în prompt).
-     - Dacă `retry_count >= 3` $\rightarrow$ Trecere în stare de eroare / escaladare manuală.
-4. **Problem Record Builder $\rightarrow$ Approval Gate / Conditional Router**:
-   - **Tranziție Condiționată**:
-     - Dacă `necesita_aprobare == True` $\rightarrow$ Intrare în stare de pauză (`interrupt()` în LangGraph) și așteptare decizie umană.
-     - Dacă `necesita_aprobare == False` $\rightarrow$ Handoff direct la **Save Tool** (`status_aprobare = "AUTO_APPROVED"`).
-5. **Approval Gate $\rightarrow$ Execuție / Re-analiză**:
-   - Dacă **Approved** / **Auto-Approved** $\rightarrow$ Apelare tool `save_problem_record_to_db`.
-   - Dacă **Rejected** $\rightarrow$ Oprirea fluxului sau handoff înapoi la **Analyst Agent** cu `motiv_respingere` inclus în context.
-
----
-
-# Diagrama de Arhitectură (Mermaid)
-
-```mermaid
-graph TD
-    Start([1. Incident Nou Receptat]) --> Retriever[1. Retriever Agent<br/><i>ChromaDB Search</i>]
-    
-    Retriever -->|list: IncidentMatch| Analyst[2. Analyst Agent<br/><i>LLM CoT Reasoning</i>]
-    
-    Analyst --> ValCheck{Validare JSON & Citări?}
-    
-    ValCheck -->|FAIL & retry < 3| Analyst
-    ValCheck -->|FAIL & retry >= 3| ErrorState[Eroare Parsare LLM]
-    
-    ValCheck -->|PASS| Builder[3. Problem Record Builder<br/><i>Logică Python / Business Rules</i>]
-    
-    Builder --> RiskCheck{necesita_aprobare == True?}
-    
-    RiskCheck -->|DA| HumanGate[4. Approval Gate<br/><i>LangGraph Interrupt / Human-in-the-Loop</i>]
-    RiskCheck -->|NU| AutoApprove[Status: AUTO_APPROVED]
-    
-    HumanGate --> Decision{Decizie Umană}
-    Decision -->|Aprobat| Executed[5. Save Problem Record Tool<br/><i>Write to DB</i>]
-    Decision -->|Respins| RejectedState[Caz Închis / Re-analiză]
-    
-    AutoApprove --> Executed
-    Executed --> End([Finalizare Proces])
-
-    subgraph Observabilitate [Arize Phoenix Instrumenting]
-        Retriever
-        Analyst
-        Builder
-        HumanGate
-    end
-
-    classDef agent fill:#f9f,stroke:#333,stroke-width:1px;
-    classDef tool fill:#bbf,stroke:#333,stroke-width:1px;
-    classDef gate fill:#ffe699,stroke:#d6b656,stroke-width:1px;
-    
-    class Analyst agent;
-    class Retriever,Builder,Executed tool;
-    class HumanGate gate; ```
+Se observă că agentul nu afirmă „aceasta este cauza” — propune ipoteza, gradul de încredere susținut de dovezi și un pas de validare concret prin care ipoteza poate fi confirmată sau infirmată de expertul tehnic.
