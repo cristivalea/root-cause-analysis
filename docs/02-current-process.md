@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
@@ -11,6 +11,17 @@
 The process below is the traditional way of working, without AI. It starts after an
 incident has already been resolved and someone decides that the cause must be
 investigated.
+
+The short version:
+
+| Stage | How it is done today | Where it loses time | What the application changes |
+|---|---|---|---|
+| Spotting the recurrence | Weekly reports read by hand in Excel or Jira | Days or weeks; a pattern spread over several services is missed | Similar incidents are grouped automatically, by meaning and by time |
+| Collecting the context | Five or six tools opened one by one: tickets, old RCAs, CMDB, change calendar, logs | Time lost switching between systems, each with its own search | All sources are queried in one run |
+| Finding the cause | Brainstorming from what the team remembers, then trial and error | Depends on who is available; the first plausible cause wins | The evidence is correlated and at least two hypotheses are written, each with its proof |
+| Writing it down | The document is written by hand, often incomplete | No common structure, so the task is avoided | A structured draft is ready before the review starts |
+
+The detailed version follows.
 
 | Step | What happens | Who does it | Typical time |
 |---|---|---|---|
@@ -70,6 +81,15 @@ judging it.
 **The first plausible cause wins.**
 When the investigation is long and tiring, the first explanation that sounds reasonable is
 usually accepted. Alternative causes are rarely written down.
+
+**The investigation depends on who is available.**
+The people who can judge a production failure are the most senior and the most booked. If
+they are busy with another incident, the RCA waits for them.
+
+**Memory decides more often than evidence.**
+The investigation starts from what the team remembers about the last similar failure. A
+familiar cause is accepted faster than an unfamiliar one, and the evidence is then read to
+confirm it instead of to test it.
 
 **The result depends on the person.**
 Two experts investigating the same incident produce two different documents, with

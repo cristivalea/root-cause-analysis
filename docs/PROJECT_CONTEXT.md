@@ -1,6 +1,6 @@
 # Project Context — Root Cause Analysis (RCA) Application
 
-**Status:** living document · **Last updated:** 2026-08-17 · **Language:** English
+**Status:** living document · **Last updated:** 2026-08-19 · **Language:** English
 
 ---
 
@@ -132,8 +132,9 @@ requirements themselves.
 4. Primary user is the **Problem Manager**; reviewer is the **Technical Expert**.
 5. The **Incident Manager is not a user**; incidents, CMDB and logs are mocked.
 6. The AI does the research and correlation that used to be manual; the human approves.
-7. The output is a **structured final RCA backed by evidence** — not a Known Error and
-   not a Change Request.
+7. The output is a **structured final RCA backed by evidence**. It may recommend a
+   workaround and say that a change is likely needed, but it never creates a Known Error
+   and never opens a Change Request.
 8. The AI output must always say **"Candidate Root Cause / Hypothesis"**, never "Root
    Cause". `final_root_cause` stays `null` until the Technical Expert validates.
 
@@ -489,6 +490,8 @@ exhaustion", otherwise the application only confirms what we gave it.
   },
 
   "ai_conclusion": "Candidate Root Cause identified. Technical validation is required.",
+  "suggested_workaround": "Temporarily raise the connection pool limit.",
+  "change_likely_required": true,
   "final_root_cause": null,
 
   "technical_validation": {
@@ -625,7 +628,28 @@ Decided on 2026-08-18:
    pause for a human and resume later, and LangGraph gives the pause, the saved state and
    the resume for free.
 
+Decided on 2026-08-19, after comparing the two documentation drafts:
+
+7. **The output object is an RCA record**, not a Problem Record. The RCA feeds the
+   Problem Record that the next process owns.
+8. **Everything merged from the colleague's README is translated to English.** The
+   documentation stays in one language.
+9. **Recurrence pattern detection is a named capability**, including time patterns such as
+   "every Monday during the payroll batch". The mock data must contain at least two
+   stories with a time signature, otherwise there is nothing to detect.
+10. **The RCA carries two forward-looking fields**: `suggested_workaround` and
+    `change_likely_required`. Recommendations only. Confirm the boundary with the
+    colleague who builds the Known Error DB Curator; if their component covers this, the
+    two fields are removed and our output becomes their input instead.
+11. **The investigation scope can be set by hand.** The Investigation Planner decides the
+    service and the time window by default; the Problem Manager can override both before
+    starting.
+12. **One demo scenario has no useful history**, so the application can be shown
+    correctly reporting weak support instead of inventing a cause.
+
 Still open:
 
 - Which exact Groq model to use.
 - Python version for the project environment (3.11 or 3.12, not 3.14).
+- Whether the Known Error DB Curator teammate covers the workaround and change
+  recommendation (decision 10).

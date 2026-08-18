@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
@@ -69,6 +69,14 @@ then what could explain it, then what argues against it. That reasoning is recor
 Phoenix, because it explains how the answer was reached, but it does not go into the RCA
 record. The record keeps only the structured conclusions.
 
+Looking for what argues against a hypothesis is asked as its own step, not left to good
+intentions. For every hypothesis the agent goes back through the evidence ledger and looks
+for the facts that do not fit: a change that happened after the first symptom, a similar
+past incident that had a different cause, a log pattern that also appears on days without
+an incident. What it finds goes into the contradicting evidence, and the confidence rules
+lower the level because of it. An empty list is allowed, but it has to be the result of
+looking.
+
 The agent must produce **at least two hypotheses**, or state clearly why only one is
 possible. This is a rule against the most common mistake in a real investigation, which is
 stopping at the first explanation that sounds reasonable.
@@ -118,9 +126,15 @@ class DraftRCA(BaseModel):
     observed_patterns: list[str]
     hypotheses: list[Hypothesis]
     not_checked: list[str]
+    suggested_workaround: str | None
+    change_likely_required: bool
 ```
 
 The confidence is not in this schema on purpose. The model does not get to state it.
+
+The last two fields are suggestions about what should happen next, and nothing more. The
+application does not apply a workaround and does not open a change. It writes down what a
+person should consider, and a person decides.
 
 **2. The citations.** Every evidence id in the answer must exist in the evidence ledger. A
 hypothesis that cites something which was never found is refused. This is a plain

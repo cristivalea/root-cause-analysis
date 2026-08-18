@@ -2,11 +2,16 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
 ## 1.1 The problem
+
+In ITIL, an **incident** is an interruption of a service, and a **problem** is the cause
+behind one or more incidents. Incident Management restores the service as fast as
+possible. Problem Management asks why it broke and makes sure it does not break again.
+These are two different jobs, and this application belongs to the second one.
 
 A large company runs hundreds of IT services. Some incidents keep coming back. When that
 happens, Problem Management must find out **why** it happens, not only restore the
@@ -47,11 +52,14 @@ the expert a **draft RCA with hypotheses and evidence**, ready to be reviewed.
 The application must:
 
 1. Find the past incidents and past RCAs that are similar to the current one.
-2. Collect the technical evidence: service dependencies, recent changes, logs.
-3. Propose one or more candidate root causes, each supported by evidence with citations.
-4. Say clearly what it could not check.
-5. Ask a human Technical Expert to approve, reject, or request more evidence.
-6. Produce one final RCA record, visible to both the Problem Manager and the expert.
+2. Describe the pattern behind the recurrence: which service, under which conditions, and
+   whether the failures follow a time pattern, for example every Monday during the payroll
+   batch.
+3. Collect the technical evidence: service dependencies, recent changes, logs.
+4. Propose one or more candidate root causes, each supported by evidence with citations.
+5. Say clearly what it could not check.
+6. Ask a human Technical Expert to approve, reject, or request more evidence.
+7. Produce one final RCA record, visible to both the Problem Manager and the expert.
 
 What we want to achieve:
 
@@ -93,6 +101,11 @@ One final RCA record containing: the status, the validated root cause, the evide
 behind it, the technical validation, the RCA owner, the creation date and the completion
 date.
 
+The record also carries two suggestions about what to do next: a possible workaround, and
+whether a change is likely to be needed. These are **recommendations, not actions**. The
+application never creates a Known Error and never opens a Change Request. It hands over a
+finished analysis, and the next process decides what to do with it.
+
 ---
 
 ## 1.4 Assumptions
@@ -115,7 +128,8 @@ The following are outside this project:
 - A complete Problem Management system.
 - Incident Management: detecting, registering or resolving incidents.
 - Change Management: creating or approving change requests.
-- Creating Known Error records or Change Requests from the RCA result.
+- Creating Known Error records or Change Requests. The RCA can say that one is likely
+  needed, but it never creates one.
 - Any automatic action on real systems. The application only investigates and proposes.
 - Real integrations with real ITSM tools. Everything is mocked.
 - Deciding the root cause without a human. The AI always stops at candidate hypotheses.

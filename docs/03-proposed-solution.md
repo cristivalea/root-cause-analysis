@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
@@ -45,6 +45,12 @@ of an empty page.**
 Steps 2 to 8 are the part that used to take days. They now run in one go, without a
 person in between.
 
+Step 3 has a manual override. By default the application decides the service and the time
+window by itself. Before starting, the Problem Manager can set them by hand, for example
+to look at one component only, or at a longer period. The plan is then built inside those
+limits. The default keeps the flow automatic; the override exists for the cases where the
+person knows something the data does not show.
+
 ---
 
 ## 3.3 User flow diagram
@@ -82,6 +88,7 @@ the Problem Manager owns the process and the result.
 **Problem Manager**
 
 - A list of incidents that need an RCA, and a button to start one.
+- An optional filter to set the service and the time window by hand before starting.
 - The investigation while it runs: which source is being checked, what was found.
 - The draft RCA: candidate causes, evidence, what could not be checked.
 - A button to send the draft to the Technical Expert.
@@ -157,3 +164,68 @@ close?* If not, it goes back to the expert for clarification.
 | The result depends on the person | Every RCA has the same structure and the same steps |
 | Evidence is not traceable | Every statement points to the record it came from |
 | Recurrence is noticed too late | The investigation starts by grouping the similar incidents |
+
+---
+
+## 3.8 What goes in and what comes out
+
+**In.** One incident that needs an RCA. It carries symptoms and context only, never the
+answer.
+
+```json
+{
+  "incident_id": "INC-2026-00482",
+  "title": "Payment API intermittent failures",
+  "severity": "SEV-1",
+  "service": "Payment API",
+  "environment": "production",
+  "detected_at": "2026-07-14T14:32:00Z",
+  "resolved_at": "2026-07-14T15:17:00Z",
+  "symptoms": [
+    "HTTP 500 responses from Payment API",
+    "increased database connection timeout errors",
+    "latency above 5 seconds"
+  ],
+  "impact": { "failed_transactions": 18420, "error_rate_peak": "18.7%" },
+  "rca_required": true
+}
+```
+
+**Out.** The draft RCA that the Technical Expert receives. Shortened here to one
+hypothesis and two pieces of evidence. The full shape is in document 6.
+
+```json
+{
+  "rca_id": "RCA-2026-00137",
+  "incident_id": "INC-2026-00482",
+  "status": "PENDING_TECHNICAL_REVIEW",
+  "linked_incidents": ["INC-2026-00311", "INC-2026-00402"],
+  "observed_pattern": "Failures appear within one hour of a production deployment of the Payment API.",
+  "hypotheses": [
+    {
+      "hypothesis_id": "HYP-001",
+      "candidate_root_cause": "Connection pool exhaustion introduced by Payment API v4.18.2.",
+      "confidence": "HIGH",
+      "supporting_evidence": ["EV-001", "EV-002"],
+      "contradicting_evidence": [],
+      "recommended_validation": ["Compare connection usage before and after v4.18.2."]
+    }
+  ],
+  "evidence": [
+    { "evidence_id": "EV-001", "type": "LOG", "citation": "LOG-2026-00482-14" },
+    { "evidence_id": "EV-002", "type": "CHANGE", "citation": "CHG-2026-00871" }
+  ],
+  "not_checked": ["No database metrics were available for the incident window."],
+  "suggested_workaround": "Temporarily raise the connection pool limit.",
+  "change_likely_required": true,
+  "final_root_cause": null
+}
+```
+
+Four things in this output are the whole design, on one screen:
+
+- it says **candidate root cause**, never root cause,
+- `final_root_cause` stays `null` until a Technical Expert approves,
+- every hypothesis cites evidence identifiers, and every identifier exists in the evidence
+  list under it, so no statement can point at a source that was never found,
+- what could not be checked is written down instead of left out.

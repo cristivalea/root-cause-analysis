@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
@@ -170,6 +170,27 @@ lines.
 - **The incident never contains the answer.** The input has symptoms and context only. If
   the incident text said "root cause: connection pool exhaustion", the application would
   only repeat what we gave it.
+- **At least two stories follow a clock.** One repeats every Monday morning during the
+  payroll batch, another at the end of the month during the billing run. Without a time
+  signature in the data there is no time pattern to find, and pattern detection would have
+  nothing to show.
+
+### Two scenarios chosen on purpose
+
+Two of the ten stories are built for a specific reason, and both are used in the demo.
+
+**A story with a clear time pattern.** The failures happen on the same weekday, in the
+same hour, always during the same batch. A person needs to read a lot of tickets to see
+that. The application groups them and states the pattern in one sentence. This is the
+easiest thing to show and the hardest thing to do by hand.
+
+**A story with no useful history.** No past RCA, no similar incident, and one innocent
+change in the time window. The correct behaviour here is not to find a cause. It is to
+report weak support, list what could not be checked, and suggest asking for more evidence
+instead of approving. This scenario is in the demo on purpose: every project shows its
+system succeeding, and almost none show it correctly saying "I do not know". For an
+application whose whole premise is that a human decides, that is the more convincing of
+the two.
 
 ### The answer key
 

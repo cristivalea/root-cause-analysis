@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-19
 
 ---
 
@@ -65,7 +65,7 @@ system is weak.
 | Retrieval quality | Whether the historical search brought the records that should have been found. Measured with RAGAS on the evaluation set |
 | Faithfulness | Whether the written hypotheses stay inside the evidence they cite, without adding anything. Measured with RAGAS |
 | Citation validity | The percentage of citations that point to a real evidence record. By design this must be 100 percent, so any other value means a broken guardrail |
-| Expert acceptance rate | How many drafts are approved without asking for more evidence |
+| Expert acceptance rate | How many drafts are approved without asking for more evidence. It is read together with KPI 2 and never instead of it, because on its own it measures the reviewer as much as the system |
 | Rounds to approval | How many times a draft goes back before it is accepted |
 | Expert effort | The time the expert spends inside the application, which is review time instead of investigation time |
 | Tool success rate | How many tool calls returned a usable result |
