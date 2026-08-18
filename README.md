@@ -58,7 +58,7 @@ Sistemul propus este o aplicație agentică asistivă, cu un flux TO-BE care pă
 | Service Owner | Poate aproba acțiunile ulterioare (de ex. Change Request rezultat din Known Error) |
 | Agent AI (RCA) | Recuperează istoricul și contextul tehnic, propune ipoteze de cauză cu dovezi și pas de validare |
 
-![Diagrama flux](./flux_to_be.png)
+![Diagrama flux](images/flux_to_be.png)
 
 Pașii fluxului:
 1.	Punct de plecare: incidente recurente (detectate de Incident Management sau printr-un raport de tendințe) sau un incident major individual.
@@ -78,7 +78,7 @@ Interfața propusă (simplificată, fără autentificare complexă)
  
 ## Arhitectură la nivel înalt (High-Level Architecture)
 
-![Ahitectura de nivel inalt](./arhitectura%20de%20nivel%20inalt.png)
+![Ahitectura de nivel inalt](images/arhitectura%20de%20nivel%20inalt.png)
 
 | Componenta | Rol | Tehnologie propusa |
 | -------------------- | --------------------------------------------------- | -------------------------------- | 
