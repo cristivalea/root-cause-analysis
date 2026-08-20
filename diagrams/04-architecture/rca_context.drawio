@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net" agent="claude">
+  <diagram name="RCA context (Level 0)" id="rca-dfd-0">
+    <mxGraphModel dx="1414" dy="777" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1220" pageHeight="588" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1e40af;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#0f172a;verticalAlign=middle;" value="Source systems" vertex="1">
+          <mxGeometry height="80" width="190" x="485" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1e40af;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#0f172a;verticalAlign=middle;" value="Problem Manager" vertex="1">
+          <mxGeometry height="90" width="190" x="60" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="12" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#1e40af;strokeWidth=2;fontSize=15;fontStyle=1;fontColor=#0f172a;verticalAlign=middle;" value="Technical Expert" vertex="1">
+          <mxGeometry height="110" width="190" x="910" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="13" parent="1" style="rounded=1;arcSize=18;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#6d28d9;strokeWidth=2;fontSize=15;fontColor=#0f172a;verticalAlign=middle;spacingTop=30;" value="&lt;b&gt;RCA Application&lt;/b&gt;" vertex="1">
+          <mxGeometry height="160" width="300" x="430" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="16" edge="1" parent="1" source="10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="incidents, past RCAs, CMDB, changes, logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="17" edge="1" parent="1" source="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2222;exitDx=0;exitDy=0;entryX=0.0;entryY=0.3438;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="incident to investigate">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="18" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.0;exitY=0.6562;exitDx=0;exitDy=0;entryX=1.0;entryY=0.7778;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="11" value="final RCA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="19" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2812;exitDx=0;exitDy=0;entryX=0.0;entryY=0.1818;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="draft RCA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="20" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.0;exitY=0.5;exitDx=0;exitDy=0;entryX=1.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="decision">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="21" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.7188;exitDx=0;exitDy=0;entryX=0.0;entryY=0.8182;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="final RCA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="900" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#0f172a;" value="RCA application — context diagram" vertex="1">
+          <mxGeometry height="30" width="760" x="40" y="24" as="geometry" />
+        </mxCell>
+        <mxCell id="901" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#64748b;" value="The whole system as one process, and everyone it exchanges data with." vertex="1">
+          <mxGeometry height="20" width="760" x="40" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="902" parent="1" style="rounded=1;arcSize=8;html=1;fillColor=#f8fafc;strokeColor=#cbd5e1;" value="" vertex="1">
+          <mxGeometry height="126" width="260" x="880" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="903" parent="1" style="text;html=1;align=left;fontSize=13;fontStyle=1;fontColor=#64748b;" value="LEGEND" vertex="1">
+          <mxGeometry height="20" width="120" x="896" y="47" as="geometry" />
+        </mxCell>
+        <mxCell id="910" parent="1" style="rounded=0;html=1;fillColor=#dbeafe;strokeColor=#1e40af;" value="" vertex="1">
+          <mxGeometry height="20" width="46" x="896" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="911" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#0f172a;" value="External entity" vertex="1">
+          <mxGeometry height="20" width="170" x="956" y="72" as="geometry" />
+        </mxCell>
+        <mxCell id="912" parent="1" style="rounded=1;arcSize=30;html=1;fillColor=#ede9fe;strokeColor=#6d28d9;" value="" vertex="1">
+          <mxGeometry height="20" width="46" x="896" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="913" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#0f172a;" value="The system" vertex="1">
+          <mxGeometry height="20" width="170" x="956" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="914" parent="1" style="shape=partialRectangle;html=1;top=0;bottom=1;left=0;right=0;strokeColor=#475569;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="20" width="46" x="896" y="124" as="geometry" />
+        </mxCell>
+        <mxCell id="915" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#0f172a;" value="Data flow" vertex="1">
+          <mxGeometry height="20" width="170" x="956" y="124" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

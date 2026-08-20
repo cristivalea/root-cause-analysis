@@ -55,27 +55,14 @@ person knows something the data does not show.
 
 ## 3.3 User flow diagram
 
-```mermaid
-flowchart TD
-    A([Problem Manager: Start RCA]) --> B[AI investigation]
-    B --> C[Draft RCA with candidate causes and evidence]
-    C --> D{Technical Expert}
+Three lanes, in the order they appear: what the Problem Manager does, what the Technical
+Expert does, and what the application does on its own. Time runs from left to right,
+through the four phases named at the top. The steps are named shortly here; what each role
+actually sees is in 3.4, and the states are in 3.5.
 
-    D -->|Approve| E[Technically validated RCA]
-    D -->|Reject| F[New investigation, alternative hypothesis]
-    D -->|Request more evidence| G[Targeted investigation]
+![Swimlane diagram of the RCA user flow, with lanes for the Problem Manager, the Technical Expert and the application](../diagrams/03-proposed-solution/rca-user-flow.drawio.png)
 
-    F --> C
-    G --> H[Updated draft RCA]
-    H --> D
-
-    E --> I{Problem Manager}
-    I -->|Send back for clarification| D
-    I -->|Accept| J([FINAL RCA])
-
-    J --> K[Visible to Problem Manager]
-    J --> L[Visible to Technical Expert]
-```
+*Figure 3.1 — The user flow, from selecting an incident to the approved root cause.*
 
 Both roles see the same final RCA, because the result belongs to both of them. The
 application does the investigation, the Technical Expert validates the technical part, and

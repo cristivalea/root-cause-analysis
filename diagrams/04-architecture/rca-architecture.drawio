@@ -1,0 +1,522 @@
+<mxfile host="app.diagrams.net" agent="claude" pages="2">
+  <diagram id="1Ovpage" name="1 Overview">
+    <mxGraphModel dx="1414" dy="777" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="1270" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="1Ov_U" parent="1" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#3B6FD4;fontColor=#12294F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Problem Manager  and  Technical Expert&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Web views: open an incident, read the RCA, inspect the evidence behind it&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="700" x="90" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_FA" parent="1" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#FDF0E3;strokeColor=#C97614;fontColor=#5A3208;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;FastAPI  —  the only way in&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;HTTPS / REST  ·  verifies the user&#39;s token and role  ·  rate limits&lt;/font&gt; 🔒" vertex="1">
+          <mxGeometry height="82" width="700" x="90" y="266" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_OR" parent="1" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;RCA Orchestrator  +  Guardrails&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Deterministic: runs the steps in a fixed order, then validates the result&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;before anything is stored. It never reasons about the incident itself.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="96" width="700" x="90" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_AG" parent="1" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F3EAFC;strokeColor=#8B54C6;fontColor=#3B1A5E;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;LLM Agents&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;plan  ·  recall  ·  reason&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;output is always validated&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="336" x="90" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_TL" parent="1" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Deterministic Tools&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;CMDB  ·  changes  ·  logs&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;evidence ledger  ·  RCA store&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="336" x="454" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_DATA" parent="1" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#FFF7DC;strokeColor=#B8930F;fontColor=#4A3A05;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Data stores&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;SQLite  (incidents, CMDB, changes, RCA records, audit log)&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;ChromaDB  (past incidents and RCAs)   ·   Log store&lt;/font&gt; 🔒" vertex="1">
+          <mxGeometry height="120" width="700" x="90" y="736" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_LLM" parent="1" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Groq API&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;open-source LLM&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;the only outbound internet call&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="420" x="900" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_EMB" parent="1" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Ollama&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;local embedding model&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;runs on the same host&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="420" x="900" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ov_PH" parent="1" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" value="&lt;b&gt;Arize Phoenix&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;traces, latency and cost&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;for every step&lt;/font&gt;" vertex="1">
+          <mxGeometry height="116" width="420" x="900" y="848" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt1" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#0F172A;fontStyle=1;" value="&lt;b&gt;RCA Assistant — Overview&lt;/b&gt;" vertex="1">
+          <mxGeometry height="34" width="800" x="55" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#475569;fontStyle=0;" value="The whole system on one page. The detailed page expands the two boxes in the middle." vertex="1">
+          <mxGeometry height="24" width="900" x="55" y="62" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_bound" parent="1" style="line;strokeColor=#DC2626;strokeWidth=2;dashed=1;dashPattern=10 7;html=1;" value="" vertex="1">
+          <mxGeometry height="12" width="1280" x="60" y="238" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e0" edge="1" parent="1" source="1Ov_U" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1Ov_FA" value="HTTPS / REST · OAuth2 JWT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e1" edge="1" parent="1" source="1Ov_FA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1Ov_OR" value="in-process call">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e2" edge="1" parent="1" source="1Ov_OR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.24;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1Ov_AG" value="plan, recall, reason">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e3" edge="1" parent="1" source="1Ov_OR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.76;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="1Ov_TL" value="run the lookups">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e4" edge="1" parent="1" source="1Ov_AG" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1Ov_TL" value="evidence out">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e5" edge="1" parent="1" source="1Ov_TL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.68;exitDx=0;exitDy=0;entryX=1;entryY=0.68;entryDx=0;entryDy=0;" target="1Ov_AG" value="evidence back">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e6" edge="1" parent="1" source="1Ov_AG" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=0.33;exitY=1;exitDx=0;exitDy=0;entryX=0.16;entryY=0;entryDx=0;entryDy=0;" target="1Ov_DATA" value="semantic search">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e7" edge="1" parent="1" source="1Ov_TL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=0.67;exitY=1;exitDx=0;exitDy=0;entryX=0.84;entryY=0;entryDx=0;entryDy=0;" target="1Ov_DATA" value="SQL reads and writes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ov_e8" edge="1" parent="1" source="1Ov_AG" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#7C3AED;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;entryX=0;entryY=0.33;entryDx=0;entryDy=0;exitX=0.726;exitY=0.026;exitDx=0;exitDy=0;exitPerimeter=0;" value="HTTPS + API key over TLS">
+          <mxGeometry relative="1" x="0.1302" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="333.9" y="509" />
+              <mxPoint x="918.7" y="509" />
+              <mxPoint x="918.7" y="582.1" />
+            </Array>
+            <mxPoint x="395.74" y="551" as="sourcePoint" />
+            <mxPoint x="1004.2528205128208" y="582.1452991452991" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ov_e10" edge="1" parent="1" source="1Ov_OR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#8C9AAC;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#8C9AAC;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1Ov_PH" value="OTLP traces">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="448" />
+              <mxPoint x="860" y="906" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ov_nar" parent="1" style="rounded=1;arcSize=6;html=1;fillColor=#F8FAFC;strokeColor=#CBD5E1;" value="" vertex="1">
+          <mxGeometry height="208" width="1280" x="60" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#334155;fontStyle=1;" value="&lt;b&gt;ONE RUN, STEP BY STEP&lt;/b&gt;" vertex="1">
+          <mxGeometry height="22" width="400" x="84" y="1014" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt5" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;①&lt;/font&gt; &lt;b&gt;Plan&lt;/b&gt;   An agent turns the incident into a checklist of what to look at." vertex="1">
+          <mxGeometry height="26" width="620" x="88" y="1044" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt6" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;②&lt;/font&gt; &lt;b&gt;Gather facts&lt;/b&gt;   Tools query the CMDB, recent changes and the logs." vertex="1">
+          <mxGeometry height="26" width="620" x="88" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt7" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;③&lt;/font&gt; &lt;b&gt;Recall&lt;/b&gt;   An agent finds past incidents and RCAs that look similar." vertex="1">
+          <mxGeometry height="26" width="620" x="88" y="1116" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt8" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;④&lt;/font&gt; &lt;b&gt;Consolidate&lt;/b&gt;   Every finding is appended to the evidence ledger, with its source." vertex="1">
+          <mxGeometry height="26" width="620" x="88" y="1152" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt9" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;⑤&lt;/font&gt; &lt;b&gt;Reason&lt;/b&gt;   An agent reads the whole bundle and proposes a root cause." vertex="1">
+          <mxGeometry height="26" width="620" x="728" y="1044" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt10" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;⑥&lt;/font&gt; &lt;b&gt;Validate&lt;/b&gt;   Guardrails check schema, policy and evidence coverage." vertex="1">
+          <mxGeometry height="26" width="620" x="728" y="1080" as="geometry" />
+        </mxCell>
+        <mxCell id="1Ovt11" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=0;" value="&lt;font color=&#39;#1D4ED8&#39;&gt;⑦&lt;/font&gt; &lt;b&gt;Persist&lt;/b&gt;   Only an approved RCA is written, together with its audit trail." vertex="1">
+          <mxGeometry height="26" width="620" x="728" y="1116" as="geometry" />
+        </mxCell>
+        <mxCell id="P0yVME5cFRfA-qGcjD_w-1" edge="1" parent="1" source="1Ov_DATA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.18;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="1Ov_EMB" value="embedding function · local HTTP">
+          <mxGeometry relative="1" x="0.2897" y="14" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="815" y="758" />
+              <mxPoint x="815" y="758" />
+            </Array>
+            <mxPoint x="790" y="758" as="sourcePoint" />
+            <mxPoint x="900" y="758" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="2Depage" name="2 Detailed">
+    <mxGraphModel dx="1400" dy="900" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1740" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2Deg1" value="LAYER 1  ·  PRESENTATION  —  who uses the system" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#3B6FD4;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#3B6FD4;" vertex="1" parent="1">
+          <mxGeometry x="440" y="108" width="1260" height="128" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg2" value="LAYER 2  ·  API  —  the single way in" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#C97614;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#C97614;" vertex="1" parent="1">
+          <mxGeometry x="440" y="284" width="1260" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg3" value="LAYER 3  ·  ORCHESTRATION  —  deterministic control" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#3F9D5B;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#3F9D5B;" vertex="1" parent="1">
+          <mxGeometry x="440" y="444" width="1260" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg4" value="LAYER 4  ·  RCA PIPELINE  —  one run, step by step" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#475569;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#475569;" vertex="1" parent="1">
+          <mxGeometry x="440" y="640" width="820" height="1032" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg5" value="LAYER 5  ·  DATA STORES" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#B8930F;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#B8930F;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="640" width="420" height="636" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg6" value="LAYER 6  ·  EXTERNAL" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#6F6F6F;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#6F6F6F;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1240" width="340" height="452" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deg7" value="LOCAL MODEL SERVICE" style="rounded=1;arcSize=4;html=1;dashed=1;dashPattern=8 6;fillColor=none;strokeColor=#6F6F6F;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=14;spacingTop=4;fontSize=13;fontStyle=1;fontColor=#6F6F6F;" vertex="1" parent="1">
+          <mxGeometry x="1300" y="1330" width="420" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_PM" value="&lt;b&gt;Problem Manager view&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Opens incidents, reads the final RCA&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#3B6FD4;fontColor=#12294F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="480" y="152" width="580" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_TE" value="&lt;b&gt;Technical Expert view&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Inspects the evidence behind the RCA&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#3B6FD4;fontColor=#12294F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1090" y="152" width="580" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_FA" value="&lt;b&gt;FastAPI&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;REST / JSON over HTTPS  ·  terminates TLS  ·  verifies OAuth2 / JWT token and role  ·  rate limits&lt;/font&gt; 🔒" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#FDF0E3;strokeColor=#C97614;fontColor=#5A3208;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="480" y="326" width="1180" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_OR" value="&lt;b&gt;RCA Orchestrator  (state machine)&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Decides which step runs next and passes data between steps. It never reasons about the incident itself.&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="480" y="486" width="1180" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_A1" value="①  &lt;b&gt;Investigation Planner&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Turns the incident into a checklist of what to look at.&lt;/font&gt;" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F3EAFC;strokeColor=#8B54C6;fontColor=#3B1A5E;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="700" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_T1" value="②  &lt;b&gt;CMDB lookup&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Which services, hosts and dependencies are involved?&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="810" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_T2" value="②  &lt;b&gt;Change lookup&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;What was deployed or changed near those components?&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="900" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_T3" value="②  &lt;b&gt;Log lookup&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Pulls the log lines for the incident time window.&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="990" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_A2" value="③  &lt;b&gt;Historical RCA Agent&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Finds past incidents and past RCAs that look like this one.&lt;/font&gt;" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F3EAFC;strokeColor=#8B54C6;fontColor=#3B1A5E;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="1100" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_T4" value="④  &lt;b&gt;Evidence Ledger&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Append-only: every finding is stored with its source.&lt;/font&gt;" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.03;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="1210" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_A3" value="⑤  &lt;b&gt;RCA Reasoning Agent&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Reads the whole evidence bundle and proposes a root cause.&lt;/font&gt;" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F3EAFC;strokeColor=#8B54C6;fontColor=#3B1A5E;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="1320" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_GR" value="⑥  &lt;b&gt;Guardrails and Validation&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Schema, policy and evidence checks. Nothing is stored until it passes.&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="1430" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_T5" value="⑦  &lt;b&gt;RCA Record Store&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;Writes the approved RCA plus its audit trail.&lt;/font&gt;" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="530" y="1540" width="620" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_DB" value="&lt;b&gt;SQLite&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;incidents  ·  CMDB  ·  changes&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;RCA records  ·  audit log&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;local file, encrypted at rest&lt;/font&gt; 🔒" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#FFF7DC;strokeColor=#B8930F;fontColor=#4A3A05;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="780" width="360" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_LG" value="&lt;b&gt;Log store&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;raw application and system logs&lt;/font&gt;" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#FFF7DC;strokeColor=#B8930F;fontColor=#4A3A05;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="990" width="360" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_CH" value="&lt;b&gt;ChromaDB&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;vector index of past incidents&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;and past RCAs&lt;/font&gt;" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#FFF7DC;strokeColor=#B8930F;fontColor=#4A3A05;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="1112" width="360" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_LLM" value="&lt;b&gt;Groq API&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;open-source LLM&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;only outbound internet call&lt;/font&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="85" y="1300" width="290" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_PH" value="&lt;b&gt;Arize Phoenix&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;traces, latency and cost&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;for every single step&lt;/font&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="85" y="1500" width="290" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="2De_EMB" value="&lt;b&gt;Ollama&lt;/b&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;local embedding model&lt;/font&gt;&lt;br&gt;&lt;font style=&#39;font-size:11px&#39;&gt;runs on the same host&lt;/font&gt;" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1330" y="1382" width="360" height="118" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det8" value="&lt;b&gt;RCA Assistant — System Architecture&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontColor=#0F172A;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="55" y="30" width="900" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det9" value="How an incident becomes a validated Root Cause Analysis. Read the centre column top to bottom: that is one RCA run." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontColor=#475569;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="55" y="62" width="1100" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_bound" value="" style="line;strokeColor=#DC2626;strokeWidth=2;dashed=1;dashPattern=10 7;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="256" width="1320" height="12" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det10" value="&lt;font color=&#39;#DC2626&#39;&gt;&lt;b&gt;🔒 TRUST BOUNDARY — TLS and authentication are enforced here; nothing below is reachable from outside&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#334155;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="246" width="900" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e0" value="HTTPS / REST · OAuth2 JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.246;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_PM" target="2De_FA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e1" value="HTTPS / REST · OAuth2 JWT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.763;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_TE" target="2De_FA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e2" value="in-process call: start / resume an RCA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_FA" target="2De_OR">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_A1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="719" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_T1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="829" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_T2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="919" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_T3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="1009" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_A2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="1119" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_A3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="1339" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#1D4ED8;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#1D4ED8;labelBackgroundColor=#FFFFFF;exitX=0.622;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.2568;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_GR">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1214" y="1449" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T1" target="2De_T4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="865" />
+              <mxPoint x="505" y="1247" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T2" target="2De_T4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="955" />
+              <mxPoint x="505" y="1247" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T3" target="2De_T4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="1045" />
+              <mxPoint x="505" y="1247" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A2" target="2De_T4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="505" y="1155" />
+              <mxPoint x="505" y="1247" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e14" value="evidence bundle" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T4" target="2De_A3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e15" value="approved RCA only" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#334155;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#334155;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_GR" target="2De_T5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#7C3AED;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.2568;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A1" target="2De_LLM">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="462" y="719" />
+              <mxPoint x="462" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#7C3AED;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.2568;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A2" target="2De_LLM">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="462" y="1119" />
+              <mxPoint x="462" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#7C3AED;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#7C3AED;labelBackgroundColor=#FFFFFF;exitX=0;exitY=0.2568;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A3" target="2De_LLM">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="462" y="1339" />
+              <mxPoint x="462" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e19" value="SQL read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.4722;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T1" target="2De_DB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e20" value="SQL read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.9722;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T2" target="2De_DB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e21" value="log query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.5729;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T3" target="2De_LG">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e22" value="vector similarity search" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.7432;exitDx=0;exitDy=0;entryX=0;entryY=0.3071;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A2" target="2De_CH">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e23" value="SQL write · RCA record + audit entry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=1;exitY=0.74;exitDx=0;exitDy=0;entryX=1;entryY=0.61;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T5" target="2De_DB">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1762" y="1595" />
+              <mxPoint x="1762" y="890" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e24" value="embedding function · local HTTP, loopback only" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#B45309;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#B45309;labelBackgroundColor=#FFFFFF;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_CH" target="2De_EMB">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_e25" value="OTLP traces from every step" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#8C9AAC;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#8C9AAC;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 5;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_OR" target="2De_PH">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="546" />
+              <mxPoint x="420" y="1560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#8C9AAC;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#8C9AAC;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 5;exitX=0;exitY=0.9;exitDx=0;exitDy=0;entryX=1;entryY=0.72;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_A3" target="2De_PH">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="1385" />
+              <mxPoint x="420" y="1580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_e27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;jettySize=auto;orthogonalLoop=1;strokeColor=#8C9AAC;strokeWidth=2;endArrow=block;endFill=1;fontSize=11;fontStyle=1;fontColor=#8C9AAC;labelBackgroundColor=#FFFFFF;dashed=1;dashPattern=6 5;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.86;entryDx=0;entryDy=0;" edge="1" parent="1" source="2De_T5" target="2De_PH">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="1596" />
+              <mxPoint x="420" y="1600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dt_leg" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FBFCFD;strokeColor=#CBD5E1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="108" width="340" height="636" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det11" value="&lt;b&gt;LEGEND&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontColor=#334155;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="120" width="200" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det12" value="&lt;font color=&#39;#94A3B8&#39;&gt;&lt;b&gt;SHAPES AND COLOURS&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10.5;fontColor=#334155;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="140" width="250" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del13" value="" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E8F0FE;strokeColor=#3B6FD4;fontColor=#12294F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="164" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det14" value="User-facing view" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="162" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del15" value="" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#FDF0E3;strokeColor=#C97614;fontColor=#5A3208;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="198" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det16" value="API / service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="196" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del17" value="" style="rounded=1;arcSize=9;whiteSpace=wrap;html=1;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="232" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det18" value="Deterministic module: same input&lt;br&gt;always gives the same output" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="230" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del19" value="" style="rounded=1;arcSize=50;whiteSpace=wrap;html=1;fillColor=#F3EAFC;strokeColor=#8B54C6;fontColor=#3B1A5E;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="266" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det20" value="LLM agent: output varies,&lt;br&gt;so it is always validated" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="264" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del21" value="" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;size=0.03;fillColor=#E7F6EC;strokeColor=#3F9D5B;fontColor=#12401F;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det22" value="Append-only ledger" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="298" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del23" value="" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=13;whiteSpace=wrap;html=1;fillColor=#FFF7DC;strokeColor=#B8930F;fontColor=#4A3A05;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="334" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det24" value="Database / data store" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="332" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Del25" value="" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fillColor=#EEEEEE;strokeColor=#6F6F6F;fontColor=#242424;strokeWidth=2;align=center;verticalAlign=middle;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="80" y="368" width="52" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det26" value="External or platform service" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="366" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det27" value="&lt;font color=&#39;#94A3B8&#39;&gt;&lt;b&gt;LINES&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10.5;fontColor=#334155;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="390" width="250" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln28" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#1D4ED8;fillColor=#1D4ED8;strokeWidth=1;width=4;endWidth=10;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="426" as="sourcePoint" />
+            <mxPoint x="132" y="426" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det29" value="Control: the orchestrator calls a step&lt;br&gt;(the result comes back the same way)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="412" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln30" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#334155;fillColor=#334155;strokeWidth=1;width=4;endWidth=10;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="460" as="sourcePoint" />
+            <mxPoint x="132" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det31" value="Evidence produced inside the pipeline" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="446" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln32" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#B45309;fillColor=#B45309;strokeWidth=1;width=4;endWidth=10;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="494" as="sourcePoint" />
+            <mxPoint x="132" y="494" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det33" value="Database read / write" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="480" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln34" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#7C3AED;fillColor=#7C3AED;strokeWidth=1;width=4;endWidth=10;endSize=4;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="528" as="sourcePoint" />
+            <mxPoint x="132" y="528" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det35" value="LLM inference call" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="514" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln36" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#8C9AAC;fillColor=#8C9AAC;strokeWidth=1;width=4;endWidth=10;endSize=4;dashed=1;dashPattern=6 5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="562" as="sourcePoint" />
+            <mxPoint x="132" y="562" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det37" value="Telemetry (OpenTelemetry traces)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="548" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Deln38" style="shape=flexArrow;endArrow=classic;html=1;strokeColor=#DC2626;fillColor=#DC2626;strokeWidth=1;width=4;endWidth=10;endSize=4;dashed=1;dashPattern=6 5;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="596" as="sourcePoint" />
+            <mxPoint x="132" y="596" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="2Det39" value="Trust / network boundary" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="582" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det40" value="&lt;font color=&#39;#94A3B8&#39;&gt;&lt;b&gt;OTHER&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10.5;fontColor=#334155;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="76" y="606" width="250" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det41" value="🔒" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="84" y="630" width="40" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det42" value="Authentication, encryption or&lt;br&gt;validation point" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="628" width="250" height="32" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det43" value="&lt;font color=&#39;#1D4ED8&#39;&gt;③&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=15;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="84" y="666" width="40" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det44" value="Order of execution in one RCA run" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#334155;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="144" y="664" width="250" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="dt_notes" value="" style="rounded=1;arcSize=6;html=1;fillColor=#FFF9F0;strokeColor=#E0B77A;" vertex="1" parent="1">
+          <mxGeometry x="60" y="770" width="340" height="434" as="geometry" />
+        </mxCell>
+        <mxCell id="2Det45" value="&lt;font color=&#39;#5C4110&#39;&gt;&lt;b&gt;PROTOCOLS AND SECURITY&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;HTTPS / TLS 1.3&lt;/b&gt;&lt;br&gt;Browser to FastAPI. The API verifies an OAuth2 / JWT token and the caller&#39;s role before any step is allowed to run.&lt;br&gt;&lt;br&gt;&lt;b&gt;In-process call&lt;/b&gt;&lt;br&gt;FastAPI to Orchestrator. No network hop, so nothing to intercept.&lt;br&gt;&lt;br&gt;&lt;b&gt;HTTPS + API key&lt;/b&gt;&lt;br&gt;Agents to Groq. The only outbound internet connection in the system.&lt;br&gt;&lt;br&gt;&lt;b&gt;Local HTTP (loopback)&lt;/b&gt;&lt;br&gt;ChromaDB to Ollama. Embeddings never leave the host.&lt;br&gt;&lt;br&gt;&lt;b&gt;File / SQL, local disk&lt;/b&gt;&lt;br&gt;SQLite. Encrypt at rest and restrict OS file permissions; it holds the audit log.&lt;br&gt;&lt;br&gt;&lt;b&gt;OTLP&lt;/b&gt;&lt;br&gt;Everything to Phoenix, for tracing and cost.&lt;br&gt;&lt;br&gt;&lt;i&gt;Verify these against your deployment.&lt;/i&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#5C4110;fontStyle=0;" vertex="1" parent="1">
+          <mxGeometry x="78" y="786" width="304" height="404" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

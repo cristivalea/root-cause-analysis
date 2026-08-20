@@ -29,78 +29,20 @@ Two rules hold the design together:
 
 ## 4.2 Architecture diagram
 
-```mermaid
-flowchart TD
-    subgraph UI[Interface]
-        PM[Problem Manager view]
-        TE[Technical Expert view]
-    end
+Two pictures of the same system. The first one is the whole system on one page. The
+second one expands the orchestration and the pipeline in the middle of it.
 
-    subgraph API[Backend]
-        FA[FastAPI]
-    end
+![Overview of the RCA application: users, FastAPI, the orchestrator, the LLM agents, the deterministic tools, the data stores and the external services](../diagrams/04-architecture/rca-architecture-overview.drawio.png)
 
-    subgraph ORC[Orchestration]
-        OR[RCA Orchestrator<br/>state machine, no reasoning]
-        GR[Guardrails and validation]
-    end
+*Figure 4.1 — The whole system on one page.*
 
-    subgraph AG[LLM agents]
-        A1[Investigation Planner]
-        A2[Historical RCA Agent]
-        A3[RCA Reasoning Agent]
-    end
+![Detailed architecture of the RCA application, in six layers: presentation, API, orchestration, RCA pipeline, data stores and external services](../diagrams/04-architecture/rca-architecture-detailed.drawio.png)
 
-    subgraph TL[Deterministic tools]
-        T1[CMDB lookup]
-        T2[Change lookup]
-        T3[Log lookup]
-        T4[Evidence ledger]
-        T5[RCA record store]
-    end
+*Figure 4.2 — The same system in detail: the orchestration and the pipeline expanded, step by step.*
 
-    subgraph DATA[Data]
-        DB[(SQLite<br/>incidents, CMDB, changes, RCA records, audit)]
-        CH[(ChromaDB<br/>past incidents and past RCAs)]
-        LG[(Log store)]
-    end
-
-    LLM[Groq API<br/>open-source model]
-    EMB[Ollama<br/>local embedding model]
-    PH[Arize Phoenix<br/>traces and audit]
-
-    PM --> FA
-    TE --> FA
-    FA --> OR
-    OR --> A1
-    OR --> A2
-    OR --> A3
-    OR --> GR
-    A1 --> LLM
-    A2 --> LLM
-    A3 --> LLM
-    A2 --> CH
-    CH --> EMB
-    OR --> T1
-    OR --> T2
-    OR --> T3
-    A2 --> T4
-    T1 --> T4
-    T2 --> T4
-    T3 --> T4
-    T4 --> A3
-    GR --> T5
-    T1 --> DB
-    T2 --> DB
-    T3 --> LG
-    T5 --> DB
-    OR -.traces.-> PH
-    AG -.traces.-> PH
-    TL -.traces.-> PH
-```
-
-The dotted lines are observability. Every step reports what it did to Phoenix, without
-changing the flow.
+Both diagrams have a legend. The grey dashed arrows are observability: every step reports
+what it did to Phoenix, without changing the flow. The red dashed line is the boundary
+between what the user reaches and what runs inside the application.
 
 ---
 
@@ -168,29 +110,24 @@ None of these calls a model. Each one can be tested with normal unit tests.
 
 This is how data moves through the system, from the mock files to the final RCA.
 
-```mermaid
-flowchart LR
-    MF[Mock data files<br/>incidents, past RCAs, CMDB, changes, logs] --> LD[Loader script]
-    LD --> DB[(SQLite)]
-    LD --> EMB[Embedding model<br/>Ollama]
-    EMB --> CH[(ChromaDB)]
+The diagrams are kept simple on purpose: short names and only the symbols that are
+needed. The explanation is in the text under them.
 
-    INC[Incident selected by<br/>the Problem Manager] --> PL[Investigation Planner]
-    PL --> Q[Investigation plan<br/>service, time window, sources]
-    Q --> RET[Historical search]
-    Q --> TOOLS[CMDB, changes, logs]
-    CH --> RET
-    DB --> TOOLS
-    RET --> EV[Evidence ledger]
-    TOOLS --> EV
-    EV --> RS[RCA Reasoning Agent]
-    RS --> DR[Draft RCA<br/>validated JSON]
-    DR --> HU[Human review]
-    HU --> FIN[Final RCA]
-    FIN --> DB
-    HU --> AU[Audit trail]
-    AU --> DB
-```
+Three symbols are used. A rectangle is something outside the application. A rounded box
+is a process the application performs. A box marked with a D number is a place where data
+is kept.
+
+![Context diagram: the RCA application as one process, with the Problem Manager, the Technical Expert and the source systems around it](../diagrams/04-architecture/rca_context.drawio.png)
+
+*Figure 4.3 — The application and what is around it.*
+
+![Data loading: the mock files are read once into the source data, the logs and the historical index, while the answer key is never loaded](../diagrams/04-architecture/rca_data_loading.drawio.png)
+
+*Figure 4.4 — Loading the data, done once.*
+
+![Data flow of an investigation: six numbered processes and six data stores, from planning the investigation to the final RCA](../diagrams/04-architecture/rca_dataflow.drawio.png)
+
+*Figure 4.5 — The investigation.*
 
 Step by step:
 
@@ -216,6 +153,11 @@ Step by step:
 The important part is step 5. Because every fact becomes a numbered evidence record before
 the reasoning starts, the model can only build on things that really exist, and every
 sentence in the final RCA can be traced back to its source.
+
+Two things are left out of the diagram on purpose. The ways back — a refused answer, a
+rejected draft, a request for more evidence — belong to the states in 4.5, and drawing them
+here would only make the data flow harder to read. Every process also writes to D6, not
+only step 6, and those arrows are left out for the same reason.
 
 ---
 
@@ -249,6 +191,8 @@ stateDiagram-v2
     Final --> [*]
     Escalated --> [*]
 ```
+
+*Figure 4.6 — The states of an RCA.*
 
 The state is saved after every step. If the application is restarted, an RCA continues
 from where it stopped.

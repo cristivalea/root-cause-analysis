@@ -110,6 +110,13 @@ pattern appears, until it becomes serious.
 The tasks that take the most time are searching, matching and correlating. These are
 exactly the tasks a machine does well.
 
+The same four stages, today on the top row and with the application on the row below,
+and what the company gets out of the difference.
+
+![The four stages of an RCA, done by hand today and with the application, what the business gets, and the two KPIs](../diagrams/02-current-process/rca_problem_management.png)
+
+*Figure 2.1 — The four stages of an RCA today and with the application, and what the business gets from the difference.*
+
 | Today | With the application |
 |---|---|
 | The expert searches five systems by hand | The system queries all sources automatically |
