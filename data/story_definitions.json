@@ -1,0 +1,122 @@
+[
+  {
+    "story_id": "STORY-001",
+    "title": "Monday Morning Payroll Batch Overload",
+    "service": "Payroll Service",
+    "business_service": "Payroll & HR",
+    "true_root_cause": "PostgreSQL connection pool exhaustion caused by unthrottled concurrent worker threads during the Monday morning scheduled payroll run.",
+    "has_time_pattern": true,
+    "time_pattern": "Every Monday between 06:00:00Z and 08:30:00Z",
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00042",
+    "expected_citations": ["LOG-PAYROLL-20260727-22", "RCA-2025-00042", "CI-PAYROLL-APP"]
+  },
+  {
+    "story_id": "STORY-002",
+    "title": "Payment API Connection Pool Leak after v4.18.2",
+    "service": "Payment API",
+    "business_service": "Online Payments",
+    "true_root_cause": "HikariCP database connection leak introduced in Payment API v4.18.2 due to unclosed sessions in the transaction retry block.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00114",
+    "expected_citations": ["LOG-PAY-20260714-14", "CHG-2026-00871", "RCA-2025-00114", "CI-PAYMENT-API"]
+  },
+  {
+    "story_id": "STORY-003",
+    "title": "Novel Edge Case on Customer Portal (No Useful History)",
+    "service": "Customer Portal",
+    "business_service": "Customer Services",
+    "true_root_cause": "Distributed lock race condition under rare localized network partitioning; no prior recorded incidents or historical RCAs.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_id": null,
+    "expected_citations": ["LOG-PORTAL-20260810-09"]
+  },
+  {
+    "story_id": "STORY-004",
+    "title": "API Gateway TLS Certificate Expiration",
+    "service": "API Gateway",
+    "business_service": "Core Banking",
+    "true_root_cause": "Expired wild-card TLS certificate on edge proxy nodes due to a failed automated cert-manager renewal hook.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2024-00088",
+    "expected_citations": ["LOG-GW-20260501-03", "RCA-2024-00088", "CI-API-GATEWAY"]
+  },
+  {
+    "story_id": "STORY-005",
+    "title": "Deadlock on Settlement Event Bus",
+    "service": "Settlement Service",
+    "business_service": "Core Banking",
+    "true_root_cause": "Kafka consumer group deadlock caused by poisoned payload deserialization blocking all downstream event partitions.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00192",
+    "expected_citations": ["LOG-SETTLE-20260212-44", "CHG-2026-00104", "CI-SETTLE-SERVICE"]
+  },
+  {
+    "story_id": "STORY-006",
+    "title": "End-of-Month Billing Aggregation Timeout",
+    "service": "Billing Service",
+    "business_service": "Billing",
+    "true_root_cause": "Missing composite database index on invoice table dropped during maintenance, causing full table scans during monthly closing.",
+    "has_time_pattern": true,
+    "time_pattern": "Last business day of every month between 22:00:00Z and 02:00:00Z",
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00230",
+    "expected_citations": ["LOG-BILL-20260630-18", "RCA-2025-00230", "CI-BILLING-DB"]
+  },
+  {
+    "story_id": "STORY-007",
+    "title": "Notification Queue Disk Saturation",
+    "service": "Notification Service",
+    "business_service": "Notifications",
+    "true_root_cause": "Log rotation failure filling root partition /var/log, crashing active RabbitMQ message broker disk alarms.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_id": null,
+    "expected_citations": ["LOG-NOTIF-20260319-02", "CI-NOTIF-MQ"]
+  },
+  {
+    "story_id": "STORY-008",
+    "title": "OOM Kill Loop on Auth Service Pods",
+    "service": "Auth Service",
+    "business_service": "User Authentication",
+    "true_root_cause": "Incorrect cgroup memory limits (256Mi vs required 1Gi) introduced in Kubernetes deployment manifest update.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00305",
+    "expected_citations": ["LOG-AUTH-20260404-12", "CHG-2026-00441", "CI-AUTH-APP"]
+  },
+  {
+    "story_id": "STORY-009",
+    "title": "Cross-Service DNS Resolution Intermittent Failures",
+    "service": "Reporting Service",
+    "business_service": "Reporting",
+    "true_root_cause": "CoreDNS concurrency limits exceeded during burst traffic, causing intermittent NXDOMAIN errors across pods.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_id": null,
+    "expected_citations": ["LOG-REP-20260115-05", "CI-REP-APP"]
+  },
+  {
+    "story_id": "STORY-010",
+    "title": "Schema Serialization Mismatch after Microservice Update",
+    "service": "User Profile Service",
+    "business_service": "Customer Services",
+    "true_root_cause": "Protobuf contract field tag collision between User Profile v3.2 and upstream Gateway.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00012",
+    "expected_citations": ["LOG-USER-20260522-88", "CHG-2026-00712", "RCA-2025-00012"]
+  }
+]

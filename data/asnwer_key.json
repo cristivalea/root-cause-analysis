@@ -1,0 +1,26 @@
+{
+  "INC-2026-00350": {
+    "story_id": "STORY-001",
+    "service": "Payroll Service",
+    "true_root_cause": "PostgreSQL connection pool exhaustion caused by unthrottled concurrent worker threads during the Monday morning scheduled payroll run.",
+    "has_time_pattern": true,
+    "time_pattern": "Every Monday between 06:00:00Z and 08:30:00Z",
+    "expected_citations": ["LOG-PAYROLL-20260727-22", "LOG-PAYROLL-20260727-25", "RCA-2025-00042", "CI-PAYROLL-APP"]
+  },
+  "INC-2026-00482": {
+    "story_id": "STORY-002",
+    "service": "Payment API",
+    "true_root_cause": "HikariCP database connection leak introduced in Payment API v4.18.2 due to unclosed sessions in the transaction retry block.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "expected_citations": ["LOG-PAY-20260714-14", "CHG-2026-00871", "RCA-2025-00114", "CI-PAYMENT-API"]
+  },
+  "INC-2026-00501": {
+    "story_id": "STORY-003",
+    "service": "Customer Portal",
+    "true_root_cause": "Distributed lock race condition under rare localized network partitioning; no prior recorded incidents or historical RCAs.",
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "expected_citations": ["LOG-PORTAL-20260810-09"]
+  }
+}
