@@ -1,2 +1,15 @@
-chromadb>=0.5.0
-requests>=2.31.0
+# RAG
+chromadb==1.5.9
+requests==2.34.2
+
+# LLM and agents
+groq==1.7.0
+langgraph==1.2.11
+pydantic==2.13.5
+
+# UI
+streamlit==1.63.0
+
+# Configuration and tests
+python-dotenv==1.2.3
+pytest==9.1.1

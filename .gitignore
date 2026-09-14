@@ -4,8 +4,15 @@ __pycache__/
 .venv/
 venv/
 
+# Secrets
+.env
+
 # ChromaDB local storage
 chroma_db/
+
+# IDE
+.idea/
+.vscode/
 
 # OS
 .DS_Store
