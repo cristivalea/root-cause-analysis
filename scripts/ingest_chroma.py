@@ -96,7 +96,6 @@ def load_incident_records(path: Path) -> list[dict[str, Any]]:
             item.get("title", ""),
             item.get("service", ""),
             item.get("business_service", ""),
-            item.get("true_root_cause", ""),
             item.get("time_pattern") or "",
         ]
         text = " | ".join(part for part in text_parts if part).strip()
