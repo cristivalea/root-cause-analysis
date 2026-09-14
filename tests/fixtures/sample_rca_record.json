@@ -1,0 +1,202 @@
+{
+  "rca_id": "RCA-2026-00137",
+  "incident_id": "INC-2026-00482",
+  "status": "PENDING_REVIEW",
+  "owner": "Problem Manager",
+  "created_at": "2026-09-14T10:00:00Z",
+  "completed_at": null,
+  "duration_seconds": 38.5,
+
+  "linked_incidents": ["INC-2025-00401"],
+
+  "plan": {
+    "service": "Payment API",
+    "related_services": ["Payment Database"],
+    "window_start": "2026-07-14T11:32:00Z",
+    "window_end": "2026-07-14T15:17:00Z",
+    "sources": ["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"],
+    "search_queries": [
+      "Payment API HTTP 500 database connection timeouts",
+      "connection pool exhaustion after deployment"
+    ],
+    "rationale": "Sudden failure with database timeouts. The window starts three hours before detection to include recent deployments and ends at resolution."
+  },
+
+  "evidence": [
+    {
+      "evidence_id": "EV-001",
+      "type": "LOG",
+      "source": "payment-api-prod",
+      "description": "214 HikariPool connection acquisition timeouts between 14:05 and 15:10.",
+      "citation": "LOG-PAY-20260714-14",
+      "timestamp": "2026-07-14T14:05:12Z"
+    },
+    {
+      "evidence_id": "EV-002",
+      "type": "CHANGE",
+      "source": "CHG-2026-00871",
+      "description": "Payment API v4.18.2 deployed to production 34 minutes before detection.",
+      "citation": "CHG-2026-00871",
+      "timestamp": "2026-07-14T13:58:00Z"
+    },
+    {
+      "evidence_id": "EV-003",
+      "type": "HISTORICAL_RCA",
+      "source": "RCA-2025-00114",
+      "description": "Past Payment API failure caused by database connection pool exhaustion from unclosed sessions in the retry handler.",
+      "citation": "RCA-2025-00114",
+      "timestamp": "2025-11-20T14:00:00Z"
+    },
+    {
+      "evidence_id": "EV-004",
+      "type": "CMDB",
+      "source": "CMDB",
+      "description": "Payment API depends directly on the payment-db-prod-01 database.",
+      "citation": "CI-PAYMENT-API",
+      "timestamp": null
+    },
+    {
+      "evidence_id": "EV-005",
+      "type": "CHANGE",
+      "source": "CHG-2026-00868",
+      "description": "Firewall rule update on the edge load balancer, not on the Payment API path.",
+      "citation": "CHG-2026-00868",
+      "timestamp": "2026-07-14T12:40:00Z"
+    },
+    {
+      "evidence_id": "EV-006",
+      "type": "HISTORICAL_INCIDENT",
+      "source": "INC-2025-00401",
+      "description": "Earlier Payment API incident with HTTP 500 errors and connection pool starvation.",
+      "citation": "INC-2025-00401",
+      "timestamp": "2025-11-18T09:12:00Z"
+    },
+    {
+      "evidence_id": "EV-007",
+      "type": "LOG",
+      "source": "payment-db-prod-01",
+      "description": "Database active connections stayed below 45% of max_connections during the incident.",
+      "citation": "LOG-PAYDB-20260714-03",
+      "timestamp": "2026-07-14T14:30:00Z"
+    }
+  ],
+
+  "trace": [
+    {
+      "name": "similar_incidents",
+      "summary": "Found 1 similar past incident: INC-2025-00401.",
+      "started_at": "2026-09-14T10:00:00Z",
+      "finished_at": "2026-09-14T10:00:02Z",
+      "details": {"results": 5, "kept": 1}
+    },
+    {
+      "name": "investigation_planner",
+      "summary": "Plan: Payment API, 11:32 to 15:17, all five sources.",
+      "started_at": "2026-09-14T10:00:02Z",
+      "finished_at": "2026-09-14T10:00:06Z",
+      "details": {}
+    },
+    {
+      "name": "tools",
+      "summary": "CMDB: 1 dependency. Changes: 2 in the window. Logs: 2 error patterns.",
+      "started_at": "2026-09-14T10:00:06Z",
+      "finished_at": "2026-09-14T10:00:07Z",
+      "details": {"cmdb": 1, "changes": 2, "log_patterns": 2}
+    },
+    {
+      "name": "historical_rca_agent",
+      "summary": "Kept RCA-2025-00114. Dropped RCA-2025-00042: different service and batch workload.",
+      "started_at": "2026-09-14T10:00:07Z",
+      "finished_at": "2026-09-14T10:00:15Z",
+      "details": {"kept": ["RCA-2025-00114"], "dropped": ["RCA-2025-00042"]}
+    },
+    {
+      "name": "rca_reasoning_agent",
+      "summary": "2 hypotheses proposed.",
+      "started_at": "2026-09-14T10:00:15Z",
+      "finished_at": "2026-09-14T10:00:36Z",
+      "details": {}
+    },
+    {
+      "name": "guardrail",
+      "summary": "Draft accepted on attempt 1: schema valid, all 7 citations exist.",
+      "started_at": "2026-09-14T10:00:36Z",
+      "finished_at": "2026-09-14T10:00:37Z",
+      "details": {"attempts": 1}
+    },
+    {
+      "name": "confidence",
+      "summary": "HYP-001: HIGH. HYP-002: LOW.",
+      "started_at": "2026-09-14T10:00:37Z",
+      "finished_at": "2026-09-14T10:00:38Z",
+      "details": {}
+    }
+  ],
+
+  "investigation_summary": "The failures started shortly after the deployment of Payment API v4.18.2 and match a past RCA on the same service with the same failure pattern.",
+  "observed_patterns": [
+    "Database connection acquisition timeouts started 7 minutes after the v4.18.2 deployment.",
+    "HTTP 500 responses and latency increased in the same window.",
+    "The same failure pattern appeared on Payment API in November 2025."
+  ],
+
+  "hypotheses": [
+    {
+      "hypothesis_id": "HYP-001",
+      "candidate_root_cause": "Database connection pool exhaustion caused by connections not being released in Payment API v4.18.2.",
+      "reasons": [
+        "Connection acquisition timeouts began shortly after the v4.18.2 deployment.",
+        "A past RCA on the same service describes the same failure pattern.",
+        "The database itself was not saturated, which points to the application side."
+      ],
+      "supporting_evidence": ["EV-001", "EV-002", "EV-003", "EV-004", "EV-006"],
+      "contradicting_evidence": [],
+      "recommended_validation": [
+        "Compare database connection usage before and after v4.18.2.",
+        "Review the code changes in v4.18.2 for connections that are not closed."
+      ],
+      "confidence": "HIGH",
+      "confidence_points": 8,
+      "confidence_reasons": [
+        "Log evidence of the symptom (+2).",
+        "Change on the affected service inside the window, before detection (+2).",
+        "Past RCA with the same cause on the same service (+2).",
+        "Similar past incident (+1).",
+        "CMDB dependency confirms the technical path (+1).",
+        "8 points from 5 different sources: HIGH."
+      ]
+    },
+    {
+      "hypothesis_id": "HYP-002",
+      "candidate_root_cause": "Capacity limit reached on the payment-db-prod-01 database, independent of the release.",
+      "reasons": [
+        "The timeouts are on the database connection path.",
+        "Payment API depends directly on this database."
+      ],
+      "supporting_evidence": ["EV-001", "EV-004"],
+      "contradicting_evidence": ["EV-007"],
+      "recommended_validation": [
+        "Check database CPU and active sessions for the incident window."
+      ],
+      "confidence": "LOW",
+      "confidence_points": 3,
+      "confidence_reasons": [
+        "Log evidence of the symptom (+2).",
+        "CMDB dependency confirms the technical path (+1).",
+        "3 points: MEDIUM.",
+        "Contradicting evidence EV-007 lowers the level by one band: LOW."
+      ]
+    }
+  ],
+  "single_hypothesis_reason": null,
+  "not_checked": [
+    "No database CPU or session metrics were available for the incident window.",
+    "Logs from the secondary instances used during mitigation were not checked."
+  ],
+  "weakly_supported": false,
+  "suggested_workaround": "Temporarily raise the connection pool limit and roll back to v4.18.1 if timeouts return.",
+  "change_likely_required": true,
+
+  "review": null,
+  "final_root_cause": null
+}

@@ -1,0 +1,28 @@
+{
+  "incident_id": "INC-2026-00482",
+  "title": "Payment API intermittent failures",
+  "description": "Customers experienced intermittent failures when attempting to complete card payments.",
+  "severity": "SEV-1",
+  "status": "Resolved",
+  "service": "Payment API",
+  "business_service": "Online Payments",
+  "environment": "production",
+  "detected_at": "2026-07-14T14:32:00Z",
+  "resolved_at": "2026-07-14T15:17:00Z",
+  "duration_minutes": 45,
+  "affected_regions": ["EU", "UK"],
+  "impact": {
+    "failed_transactions": 18420,
+    "estimated_customers_affected": 12750,
+    "error_rate_peak": "18.7%"
+  },
+  "symptoms": [
+    "HTTP 500 responses from Payment API",
+    "increased database connection timeout errors",
+    "latency above 5 seconds"
+  ],
+  "initial_mitigation": "Payment API pods were restarted and traffic was partially redirected to secondary instances.",
+  "reported_by": "Incident Management",
+  "rca_required": true,
+  "rca_reason": "Recurring incident affecting a critical business service"
+}
