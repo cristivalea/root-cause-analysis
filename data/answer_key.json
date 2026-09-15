@@ -39,7 +39,7 @@
     "story_id": "STORY-007",
     "service": "Notification Service",
     "true_root_cause": "Log rotation failure filling root partition /var/log, crashing active RabbitMQ message broker disk alarms.",
-    "expected_citations": ["LOG-NOTIF-20260319-02", "CI-NOTIF-MQ"]
+    "expected_citations": ["LOG-NOTIF-20260319-02", "RCA-2025-00390", "CI-NOTIF-MQ"]
   },
   "STORY-008": {
     "story_id": "STORY-008",

@@ -1,0 +1,282 @@
+[
+  {
+    "incident_id": "INC-2026-00101",
+    "title": "Payroll batch times out every Monday morning",
+    "description": "Users report HTTP 504s and delayed salary payouts during the Monday payroll batch window. The portal is slow and worker jobs are timing out.",
+    "severity": "SEV-2",
+    "status": "Resolved",
+    "service": "Payroll Service",
+    "business_service": "Payroll & HR",
+    "environment": "production",
+    "detected_at": "2026-07-27T06:40:00Z",
+    "resolved_at": "2026-07-27T08:15:00Z",
+    "duration_minutes": 95,
+    "affected_regions": ["eu-west-1"],
+    "impact": {
+      "failed_transactions": 1520,
+      "estimated_customers_affected": 4700,
+      "error_rate_peak": "18%"
+    },
+    "symptoms": [
+      "HTTP 504 gateway timeout",
+      "Payroll batch job exceeded SLA",
+      "Database connection acquisition latency"
+    ],
+    "initial_mitigation": "Stopped the non-critical batch workers and moved critical salary runs to a lower priority lane.",
+    "reported_by": "Payroll Operations",
+    "rca_required": true,
+    "rca_reason": "Repeated Monday morning degradation during the payroll batch."
+  },
+  {
+    "incident_id": "INC-2026-00102",
+    "title": "Payment API timeout spike after deployment",
+    "description": "Payment API requests slow down sharply immediately after a deployment window. Customers see intermittent timeouts and elevated queue latency.",
+    "severity": "SEV-1",
+    "status": "Resolved",
+    "service": "Payment API",
+    "business_service": "Online Payments",
+    "environment": "production",
+    "detected_at": "2026-07-14T14:32:00Z",
+    "resolved_at": "2026-07-14T16:05:00Z",
+    "duration_minutes": 93,
+    "affected_regions": ["us-east-1", "eu-central-1"],
+    "impact": {
+      "failed_transactions": 18420,
+      "estimated_customers_affected": 62000,
+      "error_rate_peak": "12%"
+    },
+    "symptoms": [
+      "Connection timeout",
+      "Slow transaction retries",
+      "Backlog growth on payment queue"
+    ],
+    "initial_mitigation": "Rolled back the release and reduced concurrency on the payment worker pool.",
+    "reported_by": "Payments Platform",
+    "rca_required": true,
+    "rca_reason": "Repeated production failures in a narrow deployment window."
+  },
+  {
+    "incident_id": "INC-2026-00103",
+    "title": "Customer portal exceptions after regional failover",
+    "description": "An unusual spike of portal errors happens after traffic shifts to a secondary region. The same feature works normally elsewhere.",
+    "severity": "SEV-3",
+    "status": "Closed",
+    "service": "Customer Portal",
+    "business_service": "Customer Services",
+    "environment": "production",
+    "detected_at": "2026-08-10T09:45:00Z",
+    "resolved_at": "2026-08-10T11:10:00Z",
+    "duration_minutes": 85,
+    "affected_regions": ["ap-southeast-1"],
+    "impact": {
+      "failed_transactions": 410,
+      "estimated_customers_affected": 1800,
+      "error_rate_peak": "9%"
+    },
+    "symptoms": [
+      "Session timeouts",
+      "Locked account check loops",
+      "Intermittent cart rendering errors"
+    ],
+    "initial_mitigation": "Forced the region back to primary routing and cleared stale session locks.",
+    "reported_by": "Customer Experience",
+    "rca_required": false,
+    "rca_reason": "One-off regional routing anomaly without strong historical support."
+  },
+  {
+    "incident_id": "INC-2026-00104",
+    "title": "API gateway certificate check error on edge nodes",
+    "description": "Customers encounter handshake errors when connecting through the API gateway. The issue is isolated to a subset of public edge nodes.",
+    "severity": "SEV-1",
+    "status": "Resolved",
+    "service": "API Gateway",
+    "business_service": "Core Banking",
+    "environment": "production",
+    "detected_at": "2026-05-01T03:12:00Z",
+    "resolved_at": "2026-05-01T04:00:00Z",
+    "duration_minutes": 48,
+    "affected_regions": ["global"],
+    "impact": {
+      "failed_transactions": 12600,
+      "estimated_customers_affected": 44000,
+      "error_rate_peak": "21%"
+    },
+    "symptoms": [
+      "TLS handshake failure",
+      "Expired certificate warnings",
+      "Client auth error spikes"
+    ],
+    "initial_mitigation": "Rotated the wildcard certificate manually and restored edge service restart jobs.",
+    "reported_by": "Core Platform",
+    "rca_required": true,
+    "rca_reason": "A public certificate issue affecting the whole banking edge layer."
+  },
+  {
+    "incident_id": "INC-2026-00105",
+    "title": "Settlement service deadlocks during event processing",
+    "description": "Transactions stop being processed for several minutes while the settlement queue waits on a blocked partition leader.",
+    "severity": "SEV-2",
+    "status": "Resolved",
+    "service": "Settlement Service",
+    "business_service": "Core Banking",
+    "environment": "production",
+    "detected_at": "2026-02-12T22:18:00Z",
+    "resolved_at": "2026-02-12T23:45:00Z",
+    "duration_minutes": 87,
+    "affected_regions": ["eu-west-1"],
+    "impact": {
+      "failed_transactions": 2180,
+      "estimated_customers_affected": 9300,
+      "error_rate_peak": "11%"
+    },
+    "symptoms": [
+      "Kafka lag spike",
+      "Consumer group stalls",
+      "Settlement ledger backlog"
+    ],
+    "initial_mitigation": "Restarted the blocked consumer group and replayed the backlog from the last safe offset.",
+    "reported_by": "Treasury Ops",
+    "rca_required": true,
+    "rca_reason": "Repeated stuck queue processing in the settlement stream."
+  },
+  {
+    "incident_id": "INC-2026-00106",
+    "title": "Billing report times out at month close",
+    "description": "At the end of the month the billing pipeline stalls and invoice reports fail to complete within the normal SLA.",
+    "severity": "SEV-2",
+    "status": "Resolved",
+    "service": "Billing Service",
+    "business_service": "Billing",
+    "environment": "production",
+    "detected_at": "2026-06-30T22:50:00Z",
+    "resolved_at": "2026-07-01T02:10:00Z",
+    "duration_minutes": 140,
+    "affected_regions": ["us-east-1"],
+    "impact": {
+      "failed_transactions": 790,
+      "estimated_customers_affected": 2400,
+      "error_rate_peak": "16%"
+    },
+    "symptoms": [
+      "Query timeout",
+      "Aggregator CPU spikes",
+      "Slow invoice reconciliation"
+    ],
+    "initial_mitigation": "Reduced batch concurrency and postponed the non-critical report jobs until after close.",
+    "reported_by": "Finance Engineering",
+    "rca_required": true,
+    "rca_reason": "The issue repeats at the end of the month on a regular schedule."
+  },
+  {
+    "incident_id": "INC-2026-00107",
+    "title": "Notification queue spikes during campaign launch",
+    "description": "Notification delivery slows during a campaign push and the queue begins to back up with delayed messages.",
+    "severity": "SEV-3",
+    "status": "Closed",
+    "service": "Notification Service",
+    "business_service": "Notifications",
+    "environment": "production",
+    "detected_at": "2026-03-19T02:25:00Z",
+    "resolved_at": "2026-03-19T03:10:00Z",
+    "duration_minutes": 45,
+    "affected_regions": ["eu-west-1"],
+    "impact": {
+      "failed_transactions": 2220,
+      "estimated_customers_affected": 11000,
+      "error_rate_peak": "14%"
+    },
+    "symptoms": [
+      "Queue depth growth",
+      "Delivery retries increase",
+      "Disk pressure warnings"
+    ],
+    "initial_mitigation": "Paused the non-essential campaign stream and cleaned disk usage on the broker nodes.",
+    "reported_by": "Digital Marketing Ops",
+    "rca_required": true,
+    "rca_reason": "This follows the same queue pressure pattern seen during previous release bursts."
+  },
+  {
+    "incident_id": "INC-2026-00108",
+    "title": "Auth service restarts during burst traffic",
+    "description": "User authentication starts failing repeatedly under burst traffic as pods are restarted after memory pressure events.",
+    "severity": "SEV-1",
+    "status": "Resolved",
+    "service": "Auth Service",
+    "business_service": "User Authentication",
+    "environment": "production",
+    "detected_at": "2026-04-04T12:10:00Z",
+    "resolved_at": "2026-04-04T13:25:00Z",
+    "duration_minutes": 75,
+    "affected_regions": ["us-east-1"],
+    "impact": {
+      "failed_transactions": 9100,
+      "estimated_customers_affected": 33000,
+      "error_rate_peak": "19%"
+    },
+    "symptoms": [
+      "Pod OOMKilled",
+      "Authentication retries",
+      "Latency spike on /oauth/token"
+    ],
+    "initial_mitigation": "Scaled the auth stack horizontally and reverted the memory-limited deployment.",
+    "reported_by": "IAM Engineering",
+    "rca_required": true,
+    "rca_reason": "Multiple pod kills are tied to the same deployment revision."
+  },
+  {
+    "incident_id": "INC-2026-00109",
+    "title": "Reporting service intermittently fails DNS lookups",
+    "description": "Reports intermittently fail to resolve upstream service names during bursts, causing transient task failures in the reporting pipeline.",
+    "severity": "SEV-3",
+    "status": "Closed",
+    "service": "Reporting Service",
+    "business_service": "Reporting",
+    "environment": "production",
+    "detected_at": "2026-01-15T05:18:00Z",
+    "resolved_at": "2026-01-15T05:58:00Z",
+    "duration_minutes": 40,
+    "affected_regions": ["ap-southeast-1"],
+    "impact": {
+      "failed_transactions": 640,
+      "estimated_customers_affected": 4200,
+      "error_rate_peak": "7%"
+    },
+    "symptoms": [
+      "NXDOMAIN errors",
+      "Upstream resolution timeouts",
+      "Task retries in batch processor"
+    ],
+    "initial_mitigation": "Reduced batch concurrency and redirected traffic to a healthy DNS cluster.",
+    "reported_by": "Data Platform",
+    "rca_required": false,
+    "rca_reason": "Limited evidence and no clear historical match."
+  },
+  {
+    "incident_id": "INC-2026-00110",
+    "title": "User profile serialisation errors after microservice update",
+    "description": "Customer details intermittently fail to load after an application update, producing schema mismatch and serialization exceptions.",
+    "severity": "SEV-2",
+    "status": "Resolved",
+    "service": "User Profile Service",
+    "business_service": "Customer Services",
+    "environment": "production",
+    "detected_at": "2026-05-22T08:15:00Z",
+    "resolved_at": "2026-05-22T09:50:00Z",
+    "duration_minutes": 95,
+    "affected_regions": ["eu-central-1"],
+    "impact": {
+      "failed_transactions": 4300,
+      "estimated_customers_affected": 16000,
+      "error_rate_peak": "13%"
+    },
+    "symptoms": [
+      "Serialization mismatch",
+      "User profile API 500s",
+      "Partial data refresh failures"
+    ],
+    "initial_mitigation": "Rolled back the gateway compatibility patch and re-enabled the previous serializer configuration.",
+    "reported_by": "Customer Identity",
+    "rca_required": true,
+    "rca_reason": "Failure aligns with a recent microservice contract change."
+  }
+]

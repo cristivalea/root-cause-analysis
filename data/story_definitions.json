@@ -7,8 +7,7 @@
     "has_time_pattern": true,
     "time_pattern": "Every Monday between 06:00:00Z and 08:30:00Z",
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00042",
-    "expected_citations": ["LOG-PAYROLL-20260727-22", "RCA-2025-00042", "CI-PAYROLL-APP"]
+    "historical_rca_id": "RCA-2025-00042"
   },
   {
     "story_id": "STORY-002",
@@ -18,8 +17,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00114",
-    "expected_citations": ["LOG-PAY-20260714-14", "CHG-2026-00871", "RCA-2025-00114", "CI-PAYMENT-API"]
+    "historical_rca_id": "RCA-2025-00114"
   },
   {
     "story_id": "STORY-003",
@@ -29,8 +27,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
-    "historical_rca_id": null,
-    "expected_citations": ["LOG-PORTAL-20260810-09"]
+    "historical_rca_id": null
   },
   {
     "story_id": "STORY-004",
@@ -40,8 +37,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2024-00088",
-    "expected_citations": ["LOG-GW-20260501-03", "RCA-2024-00088", "CI-API-GATEWAY"]
+    "historical_rca_id": "RCA-2024-00088"
   },
   {
     "story_id": "STORY-005",
@@ -51,8 +47,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00192",
-    "expected_citations": ["LOG-SETTLE-20260212-44", "CHG-2026-00104", "CI-SETTLE-SERVICE"]
+    "historical_rca_id": "RCA-2025-00192"
   },
   {
     "story_id": "STORY-006",
@@ -62,8 +57,7 @@
     "has_time_pattern": true,
     "time_pattern": "Last business day of every month between 22:00:00Z and 02:00:00Z",
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00230",
-    "expected_citations": ["LOG-BILL-20260630-18", "RCA-2025-00230", "CI-BILLING-DB"]
+    "historical_rca_id": "RCA-2025-00230"
   },
   {
     "story_id": "STORY-007",
@@ -72,9 +66,8 @@
     "business_service": "Notifications",
     "has_time_pattern": false,
     "time_pattern": null,
-    "has_historical_rca": false,
-    "historical_rca_id": null,
-    "expected_citations": ["LOG-NOTIF-20260319-02", "CI-NOTIF-MQ"]
+    "has_historical_rca": true,
+    "historical_rca_id": "RCA-2025-00390"
   },
   {
     "story_id": "STORY-008",
@@ -84,8 +77,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00305",
-    "expected_citations": ["LOG-AUTH-20260404-12", "CHG-2026-00441", "CI-AUTH-APP"]
+    "historical_rca_id": "RCA-2025-00305"
   },
   {
     "story_id": "STORY-009",
@@ -95,8 +87,7 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
-    "historical_rca_id": null,
-    "expected_citations": ["LOG-REP-20260115-05", "CI-REP-APP"]
+    "historical_rca_id": null
   },
   {
     "story_id": "STORY-010",
@@ -106,7 +97,6 @@
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00012",
-    "expected_citations": ["LOG-USER-20260522-88", "CHG-2026-00712", "RCA-2025-00012"]
+    "historical_rca_id": "RCA-2025-00012"
   }
 ]
