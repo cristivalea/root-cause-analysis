@@ -1,0 +1,56 @@
+[
+  {
+    "log_id": "LOG-PAY-20260714-14",
+    "timestamp": "2026-07-14T14:05:12Z",
+    "service": "Payment API",
+    "host": "payment-api-prod-03",
+    "level": "ERROR",
+    "message": "HikariPool-1 - Connection is not available, request timed out after 30000ms.",
+    "error_type": "ConnectionTimeout"
+  },
+  {
+    "log_id": "LOG-PAY-20260714-15",
+    "timestamp": "2026-07-14T14:11:42Z",
+    "service": "Payment API",
+    "host": "payment-api-prod-02",
+    "level": "WARN",
+    "message": "HikariPool-1 active connections reached 96 percent of configured capacity.",
+    "error_type": "ConnectionPoolPressure"
+  },
+  {
+    "log_id": "LOG-PAY-20260714-16",
+    "timestamp": "2026-07-14T14:24:07Z",
+    "service": "Payment API",
+    "host": "payment-api-prod-04",
+    "level": "ERROR",
+    "message": "Transaction retry delayed while waiting for a database connection.",
+    "error_type": "ConnectionTimeout"
+  },
+  {
+    "log_id": "LOG-PAY-20260714-17",
+    "timestamp": "2026-07-14T14:36:50Z",
+    "service": "Payment API",
+    "host": "payment-api-prod-03",
+    "level": "INFO",
+    "message": "Payment worker retry queue depth is returning to baseline after traffic reduction.",
+    "error_type": null
+  },
+  {
+    "log_id": "LOG-PAY-20260713-03",
+    "timestamp": "2026-07-13T10:18:00Z",
+    "service": "Payment API",
+    "host": "payment-api-prod-02",
+    "level": "INFO",
+    "message": "Payment API health checks completed successfully.",
+    "error_type": null
+  },
+  {
+    "log_id": "LOG-BILL-20260714-18",
+    "timestamp": "2026-07-14T14:18:00Z",
+    "service": "Billing Service",
+    "host": "billing-prod-01",
+    "level": "INFO",
+    "message": "Invoice reconciliation batch checkpoint completed.",
+    "error_type": null
+  }
+]

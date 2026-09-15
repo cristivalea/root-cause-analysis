@@ -1,0 +1,22 @@
+[
+  {
+    "source_ci": "CI-PAYMENT-API",
+    "target_ci": "CI-PAYMENT-DB",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PAYMENT-API",
+    "target_ci": "CI-PAYMENT-QUEUE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-PAYMENT-API",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-BILLING-APP",
+    "target_ci": "CI-BILLING-DB",
+    "relationship_type": "depends_on"
+  }
+]

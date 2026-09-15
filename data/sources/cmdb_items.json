@@ -1,0 +1,65 @@
+[
+  {
+    "ci_id": "CI-PAYMENT-API",
+    "name": "payment-api",
+    "type": "application",
+    "service": "Payment API",
+    "environment": "production",
+    "owner_team": "Payments Platform Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PAYMENT-DB",
+    "name": "payment-postgresql",
+    "type": "database",
+    "service": "Payment API",
+    "environment": "production",
+    "owner_team": "Database Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PAYMENT-QUEUE",
+    "name": "payment-retry-queue",
+    "type": "queue",
+    "service": "Payment API",
+    "environment": "production",
+    "owner_team": "Payments Platform Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-API-GATEWAY",
+    "name": "public-api-gateway",
+    "type": "gateway",
+    "service": "API Gateway",
+    "environment": "production",
+    "owner_team": "Core Platform",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-BILLING-DB",
+    "name": "billing-postgresql",
+    "type": "database",
+    "service": "Billing Service",
+    "environment": "production",
+    "owner_team": "Finance Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-BILLING-APP",
+    "name": "billing-service",
+    "type": "application",
+    "service": "Billing Service",
+    "environment": "production",
+    "owner_team": "Finance Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-USER-PROFILE-APP",
+    "name": "user-profile-service",
+    "type": "application",
+    "service": "User Profile Service",
+    "environment": "production",
+    "owner_team": "Customer Identity",
+    "criticality": "high"
+  }
+]

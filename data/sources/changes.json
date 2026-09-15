@@ -1,0 +1,54 @@
+[
+  {
+    "change_id": "CHG-2026-00871",
+    "title": "Deploy Payment API v4.18.2",
+    "description": "Deploy the payment retry-handler changes to production.",
+    "type": "normal",
+    "service": "Payment API",
+    "ci_id": "CI-PAYMENT-API",
+    "version": "4.18.2",
+    "implemented_at": "2026-07-14T13:58:00Z",
+    "implemented_by": "Payments Platform Engineering",
+    "risk": "medium",
+    "rollback": false
+  },
+  {
+    "change_id": "CHG-2026-00872",
+    "title": "Rotate API gateway access logs",
+    "description": "Routine log configuration update on the shared gateway.",
+    "type": "standard",
+    "service": "API Gateway",
+    "ci_id": "CI-API-GATEWAY",
+    "version": null,
+    "implemented_at": "2026-07-14T13:21:00Z",
+    "implemented_by": "Core Platform",
+    "risk": "low",
+    "rollback": true
+  },
+  {
+    "change_id": "CHG-2026-00873",
+    "title": "Update payment dashboard thresholds",
+    "description": "Adjust monitoring thresholds for payment latency dashboards.",
+    "type": "normal",
+    "service": "Payment API",
+    "ci_id": "CI-PAYMENT-API",
+    "version": null,
+    "implemented_at": "2026-07-14T14:10:00Z",
+    "implemented_by": "Observability Engineering",
+    "risk": "low",
+    "rollback": true
+  },
+  {
+    "change_id": "CHG-2026-00712",
+    "title": "Deploy User Profile v3.2",
+    "description": "Deploy the user profile contract update.",
+    "type": "normal",
+    "service": "User Profile Service",
+    "ci_id": "CI-USER-PROFILE-APP",
+    "version": "3.2",
+    "implemented_at": "2026-05-22T07:40:00Z",
+    "implemented_by": "Customer Identity",
+    "risk": "medium",
+    "rollback": true
+  }
+]

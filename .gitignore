@@ -9,6 +9,7 @@ venv/
 
 # ChromaDB local storage
 chroma_db/
+data/*.sqlite3
 
 # IDE
 .idea/
