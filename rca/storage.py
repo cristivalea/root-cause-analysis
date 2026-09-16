@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -143,3 +145,97 @@ def load_sources(db_path: Path, sources_dir: Path) -> None:
             ],
         )
         connection.commit()
+
+
+# --------------------------------------------------------------------------------------
+# Reading
+# --------------------------------------------------------------------------------------
+# Times are compared with julianday(), so values with different time zone offsets still
+# compare correctly.
+
+
+def _connect_read_only(db_path: Path) -> sqlite3.Connection:
+    """Open the source database for reading. A missing file is an error, not an empty database."""
+    if not db_path.exists():
+        raise FileNotFoundError(
+            f"Source database not found: {db_path}. Run scripts/load_sources_sqlite.py first."
+        )
+    return sqlite3.connect(f"{db_path.resolve().as_uri()}?mode=ro", uri=True)
+
+
+def _read_payloads(db_path: Path, sql: str, params: list[Any]) -> list[dict[str, Any]]:
+    with closing(_connect_read_only(db_path)) as connection:
+        rows = connection.execute(sql, params).fetchall()
+    return [json.loads(row[0]) for row in rows]
+
+
+def _placeholders(values: list[Any]) -> str:
+    return ", ".join("?" for _ in values)
+
+
+def get_incident(db_path: Path, incident_id: str) -> Incident | None:
+    payloads = _read_payloads(db_path, "SELECT payload FROM incidents WHERE incident_id = ?", [incident_id])
+    return Incident.model_validate(payloads[0]) if payloads else None
+
+
+def list_incidents(db_path: Path) -> list[Incident]:
+    """All incidents, newest first."""
+    payloads = _read_payloads(db_path, "SELECT payload FROM incidents ORDER BY julianday(detected_at) DESC", [])
+    return [Incident.model_validate(item) for item in payloads]
+
+
+def get_config_items_for_service(db_path: Path, service: str) -> list[ConfigItem]:
+    payloads = _read_payloads(db_path, "SELECT payload FROM cmdb_items WHERE service = ? ORDER BY ci_id", [service])
+    return [ConfigItem.model_validate(item) for item in payloads]
+
+
+def get_config_items(db_path: Path, ci_ids: list[str]) -> list[ConfigItem]:
+    if not ci_ids:
+        return []
+    payloads = _read_payloads(
+        db_path,
+        f"SELECT payload FROM cmdb_items WHERE ci_id IN ({_placeholders(ci_ids)}) ORDER BY ci_id",
+        ci_ids,
+    )
+    return [ConfigItem.model_validate(item) for item in payloads]
+
+
+def get_relationships(db_path: Path, source_ci_ids: list[str]) -> list[CIRelationship]:
+    """The dependencies of the given components: each result is source_ci depends on target_ci."""
+    if not source_ci_ids:
+        return []
+    with closing(_connect_read_only(db_path)) as connection:
+        rows = connection.execute(
+            "SELECT source_ci, target_ci, relationship_type FROM cmdb_relationships "
+            f"WHERE source_ci IN ({_placeholders(source_ci_ids)}) ORDER BY source_ci, target_ci",
+            source_ci_ids,
+        ).fetchall()
+    return [CIRelationship(source_ci=row[0], target_ci=row[1], relationship_type=row[2]) for row in rows]
+
+
+def get_changes(db_path: Path, services: list[str], start: datetime, end: datetime) -> list[Change]:
+    """Changes on the given services inside the window (edges included), oldest first."""
+    if not services:
+        return []
+    payloads = _read_payloads(
+        db_path,
+        f"SELECT payload FROM changes WHERE service IN ({_placeholders(services)}) "
+        "AND julianday(implemented_at) BETWEEN julianday(?) AND julianday(?) "
+        "ORDER BY julianday(implemented_at)",
+        [*services, start.isoformat(), end.isoformat()],
+    )
+    return [Change.model_validate(item) for item in payloads]
+
+
+def get_logs(db_path: Path, service: str, start: datetime, end: datetime, levels: list[str]) -> list[LogEntry]:
+    """Log lines of a service inside the window (edges included), with the given levels, oldest first."""
+    if not levels:
+        return []
+    payloads = _read_payloads(
+        db_path,
+        f"SELECT payload FROM logs WHERE service = ? AND level IN ({_placeholders(levels)}) "
+        "AND julianday(timestamp) BETWEEN julianday(?) AND julianday(?) "
+        "ORDER BY julianday(timestamp)",
+        [service, *levels, start.isoformat(), end.isoformat()],
+    )
+    return [LogEntry.model_validate(item) for item in payloads]
