@@ -108,6 +108,45 @@ class LogEntry(SourceRecord):
 
 
 # --------------------------------------------------------------------------------------
+# Tool results
+# --------------------------------------------------------------------------------------
+
+
+class Dependency(BaseModel):
+    """One direct dependency: a component of the service depends on another component."""
+
+    component: ConfigItem
+    depends_on: ConfigItem
+    relationship_type: Literal["depends_on", "hosted_on", "connects_to"]
+
+
+class ServiceDependencies(BaseModel):
+    """Result of the CMDB lookup: the components of a service and what they depend on."""
+
+    service: str
+    components: list[ConfigItem]
+    dependencies: list[Dependency]
+
+    @property
+    def related_services(self) -> list[str]:
+        """Other services this service depends on, for the change lookup."""
+        return sorted({item.depends_on.service for item in self.dependencies} - {self.service})
+
+
+class LogGroup(BaseModel):
+    """Result of the log lookup: log lines of one level and error type, summarised."""
+
+    service: str
+    level: Literal["ERROR", "WARN", "INFO"]
+    error_type: str | None
+    count: int
+    first_seen: datetime
+    last_seen: datetime
+    hosts: list[str]
+    examples: list[LogEntry]  # the first few lines, kept as citations
+
+
+# --------------------------------------------------------------------------------------
 # Application data
 # --------------------------------------------------------------------------------------
 
