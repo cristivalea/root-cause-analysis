@@ -159,7 +159,7 @@
       "confidence_points": 8,
       "confidence_reasons": [
         "Log evidence of the symptom (+2).",
-        "Change on the affected service inside the window, before detection (+2).",
+        "Change on the affected service or a direct dependency, before the first error (+2).",
         "Past RCA with the same cause on the same service (+2).",
         "Similar past incident (+1).",
         "CMDB dependency confirms the technical path (+1).",
