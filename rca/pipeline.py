@@ -116,16 +116,6 @@ def _incident_text(incident: Incident) -> str:
     return " | ".join(part for part in parts if part)
 
 
-# def _search(collection: str, text: str, before: datetime, limit: int) -> list[dict[str, Any]]:
-#     """Search ChromaDB for records older than `before`, as a flat list, the closest first."""
-#     results = rag.query_collection(collection, text, limit=limit, before_timestamp=int(before.timestamp()))
-#     return [
-#         {"id": result_id, "document": document, "metadata": metadata or {}, "distance": distance}
-#         for result_id, document, metadata, distance in zip(
-#             results["ids"][0], results["documents"][0], results["metadatas"][0], results["distances"][0]
-#         )
-#     ]
-
 def _search(collection: str, text: str, before: datetime, limit: int) -> list[dict[str, Any]]:
     """Search ChromaDB for records older than `before`, as a flat list, the closest first."""
     results = rag.query_collection(collection, text, limit=limit, before_timestamp=int(before.timestamp()))

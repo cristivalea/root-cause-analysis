@@ -25,31 +25,26 @@ ALL_SOURCES = ["logs", "changes", "cmdb", "historical_rcas", "historical_inciden
 PAYMENT_RCA_DATE = 1763647200  # 2025-11-20
 
 
-def chroma(*rows):
-    """A ChromaDB query result: rows of (id, document, metadata, distance)."""
-    return {
-        "ids": [[row[0] for row in rows]],
-        "documents": [[row[1] for row in rows]],
-        "metadatas": [[row[2] for row in rows]],
-        "distances": [[row[3] for row in rows]],
-    }
+def results(*rows):
+    """What rca.rag.query_collection returns: one dict per record, the closest first."""
+    return [
+        {"id": row[0], "document": row[1], "metadata": row[2], "score": row[3]}
+        for row in rows
+    ]
 
 
-INCIDENT_RESULTS = chroma(
+INCIDENT_RESULTS = results(
     ("INC-2025-00401", "Payment API card authorisation slow", {"service": "Payment API"}, 0.11),
     ("INC-2026-00106", "Billing Service batch failure", {"service": "Billing Service"}, 0.26),
 )
 # As in a real run: the closest section of the Payment API RCA is its Timeline, which has no symptoms.
-RCA_RESULTS = chroma(
+RCA_RESULTS = results(
     ("RCA-2025-00114::Timeline", "13:58 UTC: Release deployment completed on Payment API pods.",
      {"document_id": "RCA-2025-00114", "section_name": "Timeline", "service": "Payment API",
       "completion_date": PAYMENT_RCA_DATE}, 0.25),
     ("RCA-2025-00042::Timeline", "Payroll batch waits on PostgreSQL connections.",
      {"document_id": "RCA-2025-00042", "section_name": "Timeline", "service": "Payroll Service",
       "completion_date": 1750000000}, 0.30),
-    ("RCA-2025-00114::Summary", "Intermittent HTTP 500 errors and latency above 5 seconds.",
-     {"document_id": "RCA-2025-00114", "section_name": "Summary", "service": "Payment API",
-      "completion_date": PAYMENT_RCA_DATE}, 0.35),
 )
 
 

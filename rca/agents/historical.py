@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from rca.llm import ask_json
+from rca.llm import LLMOutputError, ask_json
 from rca.models import Evidence, InvestigationPlan
 
 
@@ -89,33 +89,38 @@ def review_historical_rcas(
 
     review = ask_json(
         instructions=(
-            "You are the Historical RCA Agent. Review each retrieved historical RCA section "
-            "against the investigation service and search queries. "
-            "A result is relevant if: "
-            "1. It belongs to the same service. "
-            "2. It belongs to a different service but describes similar technical symptoms "
-            "(e.g., connection pools, latency spikes, memory leaks). "
-            "Mark a result 'relevant' in either case, and explain the connection in the reason. "
-            "Return one decision for every input result, using the exact citation provided."
+            "You are the Historical RCA Agent. Review each retrieved past record (an RCA or an "
+            "incident) against the investigation service and search queries. "
+            "A record is relevant only when it is about the same service as the investigation and "
+            "its symptoms meaningfully match. The search finds records that use similar words, and "
+            "similar words are not enough: a past record about another service is not relevant, "
+            "however close its wording is (for example a connection pool problem in a payroll batch "
+            "is not evidence about a payment service). "
+            "Return one decision for every input result, using the exact citation provided, and "
+            "explain every decision briefly."
         ),
         user_input=_prompt_input(plan, results),
         schema=HistoricalRCAReview,
     )
 
-    # 1. Validare anti-halucinare și decizii lipsă
+    # 1. Validare anti-halucinare și decizii lipsă.
+    # Greșelile modelului sunt raportate cu LLMOutputError, ca în restul aplicației: pipeline-ul le
+    # tratează la fel ca pe un răspuns invalid și continuă investigația fără istoric.
     expected_citations = set(result_by_id.keys())
     received_citations = {decision.citation for decision in review.decisions}
 
     invented_citations = received_citations - expected_citations
     if invented_citations:
-        raise ValueError(
-            f"Model returned invalid or hallucinated citations: {invented_citations}"
+        raise LLMOutputError(
+            f"The answer cites results that were not retrieved: {sorted(invented_citations)}",
+            review.model_dump_json(),
         )
 
     missing_citations = expected_citations - received_citations
     if missing_citations:
-        raise ValueError(
-            f"Model did not provide decisions for all retrieved sections. Missing: {missing_citations}"
+        raise LLMOutputError(
+            f"The answer has no decision for these results: {sorted(missing_citations)}",
+            review.model_dump_json(),
         )
 
     # 2. Agregare evidențe per document_id (pentru a evita creșterea artificială a încrederii)
