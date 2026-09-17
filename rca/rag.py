@@ -251,15 +251,50 @@ def query_collection(
     before_timestamp: int | None = None,
     max_distance: float | None = DEFAULT_MAX_DISTANCE,
     model: str = DEFAULT_MODEL,
-) -> dict[str, Any]:
+) -> list[dict[str, Any]]:
     client = chromadb.PersistentClient(path=str(ROOT / "chroma_db"))
     collection = client.get_collection(name=collection_name)
 
+    if collection.count() == 0:
+        return []
+
     query_embedding = embed_texts([query_text], model=model)[0]
     where_filter = _combine_filters(where, _historical_date_filter(collection_name, before_timestamp))
+    
+    n_results = min(max(limit * 3, limit), collection.count())
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=min(max(limit * 3, limit), collection.count()),
+        n_results=n_results,
         where=where_filter,
     )
-    return _filter_by_distance(results, max_distance, limit)
+
+    filtered = _filter_by_distance(results, max_distance, limit)
+
+    ids = (filtered.get("ids") or [[]])[0]
+    documents = (filtered.get("documents") or [[]])[0]
+    metadatas = (filtered.get("metadatas") or [[]])[0]
+    distances = (filtered.get("distances") or [[]])[0]
+
+    if not ids:
+        return []
+
+    # Keep only the best section per document (sau incident)
+    best_results: dict[str, dict[str, Any]] = {}
+    for i in range(len(ids)):
+        meta = metadatas[i] if i < len(metadatas) and isinstance(metadatas[i], dict) else {}
+        dist = distances[i] if i < len(distances) else 0.0
+        doc_text = documents[i] if i < len(documents) else ""
+        item_id = ids[i]
+
+        # Pentru RCA-uri avem document_id, pentru Incidente avem incident_id
+        doc_key = meta.get("document_id") or meta.get("incident_id") or item_id
+
+        if doc_key not in best_results or dist < best_results[doc_key]["score"]:
+            best_results[doc_key] = {
+                "id": item_id,
+                "document": doc_text,
+                "metadata": meta,
+                "score": dist,
+            }
+
+    return list(best_results.values())[:limit]

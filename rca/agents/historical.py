@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 
@@ -27,16 +28,25 @@ class HistoricalRCAReview(BaseModel):
 
 
 def _result_id(result: dict[str, Any]) -> str:
-    return str(result.get("id") or result.get("citation") or result.get("document_id") or "")
+    return str(result.get("id") or "")
 
 
 def _result_text(result: dict[str, Any]) -> str:
-    return str(result.get("document") or result.get("text") or result.get("description") or "")
+    return str(result.get("document") or result.get("text") or "")
 
 
 def _result_metadata(result: dict[str, Any]) -> dict[str, Any]:
     metadata = result.get("metadata") or result.get("metadatas") or {}
     return metadata if isinstance(metadata, dict) else {}
+
+
+def _normalize_rca_id(raw_id: str) -> str:
+    """Extract clean document ID (e.g., 'RCA-2025-00114') stripping section suffixes."""
+    cleaned = raw_id.strip()
+    match = re.match(r"(RCA-\d{4}-\d+)", cleaned)
+    if match:
+        return match.group(1)
+    return cleaned.split("::")[0].strip()
 
 
 def _timestamp(metadata: dict[str, Any]) -> datetime | None:
@@ -72,36 +82,71 @@ def review_historical_rcas(
     results: list[dict[str, Any]],
 ) -> tuple[HistoricalRCAReview, list[Evidence]]:
     """Classify retrieved RCA sections and convert relevant ones into ledger evidence."""
+    if not results:
+        return HistoricalRCAReview(decisions=[]), []
+
+    result_by_id = {_result_id(result): result for result in results}
 
     review = ask_json(
         instructions=(
             "You are the Historical RCA Agent. Review each retrieved historical RCA section "
-            "against the investigation service and search queries. Mark a result relevant only "
-            "when its service and symptoms meaningfully match the investigation. A similar word "
-            "from another service is not enough. Return one decision for every input result, "
-            "using the exact citation provided. Explain every decision briefly."
+            "against the investigation service and search queries. "
+            "A result is relevant if: "
+            "1. It belongs to the same service. "
+            "2. It belongs to a different service but describes similar technical symptoms "
+            "(e.g., connection pools, latency spikes, memory leaks). "
+            "Mark a result 'relevant' in either case, and explain the connection in the reason. "
+            "Return one decision for every input result, using the exact citation provided."
         ),
         user_input=_prompt_input(plan, results),
         schema=HistoricalRCAReview,
     )
 
-    result_by_id = {_result_id(result): result for result in results}
+    # 1. Validare anti-halucinare și decizii lipsă
+    expected_citations = set(result_by_id.keys())
+    received_citations = {decision.citation for decision in review.decisions}
+
+    invented_citations = received_citations - expected_citations
+    if invented_citations:
+        raise ValueError(
+            f"Model returned invalid or hallucinated citations: {invented_citations}"
+        )
+
+    missing_citations = expected_citations - received_citations
+    if missing_citations:
+        raise ValueError(
+            f"Model did not provide decisions for all retrieved sections. Missing: {missing_citations}"
+        )
+
+    # 2. Agregare evidențe per document_id (pentru a evita creșterea artificială a încrederii)
     evidence: list[Evidence] = []
+    seen_rca_ids: set[str] = set()
+
     for decision in review.decisions:
-        result = result_by_id.get(decision.citation)
-        if not decision.relevant or result is None:
+        if not decision.relevant:
             continue
 
+        result = result_by_id[decision.citation]
         metadata = _result_metadata(result)
-        section_name = metadata.get("section_name", "unknown section")
-        description = f"Relevant historical RCA section '{section_name}': {decision.reason}"
+        
+        # ID-ul curat: preferăm metadata['document_id'], altfel fallback pe parsarea citation-ului
+        raw_doc_id = metadata.get("document_id") or decision.citation
+        clean_rca_id = _normalize_rca_id(str(raw_doc_id))
+
+        if clean_rca_id in seen_rca_ids:
+            continue
+
+        seen_rca_ids.add(clean_rca_id)
+        section_name = metadata.get("section_name", "historical context")
+        description = f"Relevant historical RCA '{clean_rca_id}' ({section_name}): {decision.reason}"
+
         evidence.append(
             Evidence(
                 evidence_id=f"EV-{len(evidence) + 1:03d}",
                 type="HISTORICAL_RCA",
-                source=str(metadata.get("document_id", decision.citation)),
+                source=clean_rca_id,
                 description=description,
-                citation=decision.citation,
+                citation=clean_rca_id,
                 timestamp=_timestamp(metadata),
             )
         )

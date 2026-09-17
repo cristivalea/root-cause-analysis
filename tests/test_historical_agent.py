@@ -40,7 +40,7 @@ RESULTS = [
 ]
 
 
-def test_historical_agent_keeps_payment_rca_and_rejects_payroll_distractor(monkeypatch):
+def test_historical_agent_keeps_relevant_symptoms_even_if_service_differs(monkeypatch):
     def fake_ask_json(instructions, user_input, schema):
         assert schema is HistoricalRCAReview
         return HistoricalRCAReview(decisions=[
@@ -51,8 +51,8 @@ def test_historical_agent_keeps_payment_rca_and_rejects_payroll_distractor(monke
             ),
             HistoricalRCADecision(
                 citation="RCA-2025-00042::Root Cause",
-                relevant=False,
-                reason="The RCA belongs to Payroll Service, not Payment API.",
+                relevant=True,
+                reason="Different service but similar connection pool symptoms.",
             ),
         ])
 
@@ -60,22 +60,26 @@ def test_historical_agent_keeps_payment_rca_and_rejects_payroll_distractor(monke
 
     review, evidence = review_historical_rcas(PLAN, RESULTS)
 
-    assert [decision.citation for decision in review.decisions if decision.relevant] == [
-        "RCA-2025-00114::Root Cause"
-    ]
-    assert len(evidence) == 1
-    assert evidence[0].citation == "RCA-2025-00114::Root Cause"
-    assert evidence[0].type == "HISTORICAL_RCA"
-    assert evidence[0].evidence_id == "EV-001"
+    relevant_citations = [decision.citation for decision in review.decisions if decision.relevant]
+    assert "RCA-2025-00114::Root Cause" in relevant_citations
+    assert "RCA-2025-00042::Root Cause" in relevant_citations
+    assert len(evidence) == 2
+    assert evidence[0].citation == "RCA-2025-00114"
+    assert evidence[1].citation == "RCA-2025-00042"
+    assert evidence[1].type == "HISTORICAL_RCA"
+    assert evidence[1].evidence_id == "EV-002"
+
 
 
 @pytest.mark.live
 @pytest.mark.skipif(not config.GROQ_API_KEY, reason="GROQ_API_KEY is not set")
-def test_historical_agent_live_keeps_payment_rca_and_rejects_payroll_distractor():
+def test_historical_agent_live_accepts_similar_symptoms():
     review, evidence = historical.review_historical_rcas(PLAN, RESULTS)
 
     decisions = {decision.citation: decision for decision in review.decisions}
 
     assert decisions["RCA-2025-00114::Root Cause"].relevant is True
-    assert decisions["RCA-2025-00042::Root Cause"].relevant is False
-    assert [item.citation for item in evidence] == ["RCA-2025-00114::Root Cause"]
+    # Now we expect RCA-2025-00042 to be relevant because of the new prompt instructions
+    assert decisions["RCA-2025-00042::Root Cause"].relevant is True
+    assert "RCA-2025-00042" in [item.citation for item in evidence]
+
