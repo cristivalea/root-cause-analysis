@@ -268,7 +268,9 @@ def query_collection(
         where=where_filter,
     )
 
-    filtered = _filter_by_distance(results, max_distance, limit)
+    # Keep every result under the threshold: the list is shortened to `limit` after the
+    # sections of the same document are merged, otherwise fewer documents come back.
+    filtered = _filter_by_distance(results, max_distance, n_results)
 
     ids = (filtered.get("ids") or [[]])[0]
     documents = (filtered.get("documents") or [[]])[0]
@@ -297,4 +299,4 @@ def query_collection(
                 "score": dist,
             }
 
-    return list(best_results.values())[:limit]
+    return sorted(best_results.values(), key=lambda item: item["score"])[:limit]
