@@ -154,7 +154,8 @@ EvidenceType = Literal["LOG", "CHANGE", "CMDB", "HISTORICAL_RCA", "HISTORICAL_IN
 SourceName = Literal["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
 ConfidenceLevel = Literal["HIGH", "MEDIUM", "LOW"]
 # MVP states. MORE_EVIDENCE_REQUIRED and TECHNICALLY_VALIDATED come with the full review flow.
-RCAStatus = Literal["INVESTIGATING", "PENDING_REVIEW", "ESCALATED", "REJECTED", "FINAL"]
+# DRAFT: investigation finished, but the Problem Manager has not sent it to the expert yet.
+RCAStatus = Literal["INVESTIGATING", "DRAFT", "PENDING_REVIEW", "ESCALATED", "REJECTED", "FINAL"]
 
 
 class Evidence(BaseModel):

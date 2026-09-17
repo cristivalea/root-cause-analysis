@@ -82,3 +82,70 @@ def next_rca_id(year: int, db_path: Path = DB_PATH) -> str:
         ).fetchone()
     number = int(row[0].rsplit("-", 1)[1]) + 1 if row else 1
     return f"RCA-{year}-{number:05d}"
+
+
+def apply_review(
+    rca_id: str,
+    reviewer: str,
+    decision: str,
+    comment: str,
+    hypothesis_id: str | None = None,
+    db_path: Path = DB_PATH,
+) -> RCARecord:
+    """Apply the Technical Expert's decision to a stored RCA and return the updated record.
+
+    APPROVE needs the id of the approved hypothesis and makes the RCA FINAL with its
+    candidate root cause. REJECT marks the record REJECTED. REANALYZE sends the record
+    back to INVESTIGATING, keeping the comment as a thing that was not checked yet.
+    """
+    from datetime import datetime, timezone
+
+    from rca.models import ReviewDecision
+
+    record = get_rca(rca_id, db_path=db_path)
+    if record is None:
+        raise ValueError(f"RCA '{rca_id}' was not found.")
+
+    now = datetime.now(timezone.utc)
+    if decision == "APPROVE":
+        hypothesis = next((h for h in record.hypotheses if h.hypothesis_id == hypothesis_id), None)
+        if hypothesis is None:
+            raise ValueError(f"Hypothesis '{hypothesis_id}' was not found on {rca_id}.")
+        record.review = ReviewDecision(
+            reviewer=reviewer, decision="APPROVE", hypothesis_id=hypothesis_id,
+            comment=comment, decided_at=now,
+        )
+        record.final_root_cause = hypothesis.candidate_root_cause
+        record.status = "FINAL"
+        record.completed_at = now
+    elif decision == "REJECT":
+        record.review = ReviewDecision(
+            reviewer=reviewer, decision="REJECT", hypothesis_id=None,
+            comment=comment, decided_at=now,
+        )
+        record.status = "REJECTED"
+        record.completed_at = now
+    elif decision == "REANALYZE":
+        record.status = "INVESTIGATING"
+        record.not_checked = record.not_checked + [f"Technical Expert asked for re-analysis: {comment}"]
+    else:
+        raise ValueError(f"Unknown decision '{decision}'.")
+
+    save_rca(record, db_path=db_path)
+    return record
+
+
+def submit_for_review(rca_id: str, db_path: Path = DB_PATH) -> RCARecord:
+    """Mark a stored DRAFT record as sent to the Technical Expert (PENDING_REVIEW).
+
+    The pipeline saves the result as a draft; the Problem Manager sends it to the
+    expert explicitly, from the interface. A record that already left the draft
+    state is returned unchanged.
+    """
+    record = get_rca(rca_id, db_path=db_path)
+    if record is None:
+        raise ValueError(f"RCA '{rca_id}' was not found.")
+    if record.status == "DRAFT":
+        record.status = "PENDING_REVIEW"
+        save_rca(record, db_path=db_path)
+    return record

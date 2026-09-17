@@ -494,10 +494,16 @@ def confidence(state: InvestigationState) -> dict:
 
 
 def save_rca(state: InvestigationState) -> dict:
-    """Save the RCA record: the draft waiting for the Technical Expert, or the escalated case."""
+    """Save the RCA record: the draft result, or the escalated case.
+
+    A finished investigation is stored as DRAFT: the Problem Manager sends it to the
+    Technical Expert explicitly (store.submit_for_review), never automatically.
+    """
     db_path = _db_path(state)
     now = _now()
-    draft = state.get("draft") if state["status"] == "PENDING_REVIEW" else None
+    draft = state["draft"] if state["status"] == "PENDING_REVIEW" else None
+    if draft is not None:
+        state["status"] = "DRAFT"
 
     record = RCARecord(
         rca_id=store.next_rca_id(now.year, db_path=db_path),

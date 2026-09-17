@@ -184,6 +184,38 @@ def list_incidents(db_path: Path) -> list[Incident]:
     return [Incident.model_validate(item) for item in payloads]
 
 
+def upsert_incident(db_path: Path, incident: Incident) -> None:
+    """Add an incident to the source database, or replace it if the id already exists."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(db_path)) as connection:
+        initialize_database(connection)
+        connection.execute(
+            """INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(incident_id) DO UPDATE SET
+               service=excluded.service, business_service=excluded.business_service,
+               severity=excluded.severity, status=excluded.status,
+               environment=excluded.environment, detected_at=excluded.detected_at,
+               resolved_at=excluded.resolved_at, payload=excluded.payload""",
+            (
+                incident.incident_id, incident.service, incident.business_service,
+                incident.severity, incident.status, incident.environment,
+                incident.detected_at.isoformat(),
+                incident.resolved_at.isoformat() if incident.resolved_at else None,
+                json.dumps(incident.model_dump(mode="json")),
+            ),
+        )
+        connection.commit()
+
+
+def delete_incident(db_path: Path, incident_id: str) -> None:
+    """Remove an incident from the source database."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    with closing(sqlite3.connect(db_path)) as connection:
+        initialize_database(connection)
+        connection.execute("DELETE FROM incidents WHERE incident_id = ?", (incident_id,))
+        connection.commit()
+
+
 def get_config_items_for_service(db_path: Path, service: str) -> list[ConfigItem]:
     payloads = _read_payloads(db_path, "SELECT payload FROM cmdb_items WHERE service = ? ORDER BY ci_id", [service])
     return [ConfigItem.model_validate(item) for item in payloads]
