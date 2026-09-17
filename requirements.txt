@@ -7,6 +7,12 @@ groq==1.7.0
 langgraph==1.2.11
 pydantic==2.13.5
 
+# LangGraph Studio: the local server that shows the graph (langgraph dev)
+langgraph-cli[inmem]==0.4.31
+langgraph-api==0.14.1
+# chromadb accepts any version; this one matches the OpenTelemetry packages langgraph-api needs
+opentelemetry-exporter-otlp-proto-grpc==1.42.1
+
 # UI
 streamlit==1.63.0
 

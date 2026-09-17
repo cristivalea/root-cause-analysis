@@ -69,6 +69,11 @@ def check_draft(draft: DraftRCA, evidence_ids: set[str]) -> list[str]:
     return problems
 
 
+def format_feedback(problems: list[str]) -> str:
+    """The problems of a refused answer, as they are added to the next request."""
+    return "\n".join(f"- {problem}" for problem in problems)
+
+
 def run_with_retries(
     ask: Callable[[str | None], T],
     check: Callable[[T], list[str]],
@@ -92,7 +97,7 @@ def run_with_retries(
         attempts.append(Attempt(number=number, problems=problems))
         if not problems:
             return GuardrailResult(value=value, attempts=attempts)
-        feedback = "\n".join(f"- {problem}" for problem in problems)
+        feedback = format_feedback(problems)
 
     return GuardrailResult(value=None, attempts=attempts)
 

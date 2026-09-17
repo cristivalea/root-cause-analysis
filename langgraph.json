@@ -1,0 +1,8 @@
+{
+  "python_version": "3.12",
+  "dependencies": ["."],
+  "graphs": {
+    "rca_investigation": "./rca/pipeline.py:graph"
+  },
+  "env": ".env"
+}
