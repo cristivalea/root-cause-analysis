@@ -11,6 +11,9 @@ venv/
 chroma_db/
 data/*.sqlite3
 
+# LangGraph Studio local server state
+.langgraph_api/
+
 # IDE
 .idea/
 .vscode/
