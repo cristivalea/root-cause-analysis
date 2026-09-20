@@ -1,0 +1,65 @@
+# Theme of the Root Cause Analysis interface.
+#
+# The visual language is set here, not with custom CSS: Streamlit applies these tokens to
+# every element and they survive upgrades. Colours are used only for severity, status,
+# the primary action, warnings and success states.
+#
+# Both a light and a dark variant are defined, so the user can switch in the app menu.
+# The older screens (rca/app.py, rca/expert_app.py) were written for a dark background;
+# run them with `--theme.base dark` while they still exist.
+
+[client]
+# No "Deploy" button: this is an internal tool, not a Streamlit demo. The menu stays,
+# because it is where the light and dark themes are switched.
+toolbarMode = "minimal"
+
+[theme]
+base = "light"
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 15
+baseFontWeight = 400
+headingFontSizes = ["32px", "23px", "19px", "16px", "14px", "13px"]
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+baseRadius = "medium"
+buttonRadius = "medium"
+showWidgetBorder = true
+linkUnderline = false
+
+[theme.light]
+primaryColor = "#2457d6"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f5f6f8"
+textColor = "#1b2130"
+borderColor = "#e2e5eb"
+linkColor = "#2457d6"
+codeBackgroundColor = "#f5f6f8"
+dataframeHeaderBackgroundColor = "#f5f6f8"
+dataframeBorderColor = "#e2e5eb"
+redColor = "#c0341d"
+orangeColor = "#a85a08"
+yellowColor = "#8a6410"
+greenColor = "#116b45"
+blueColor = "#2457d6"
+violetColor = "#6339c0"
+grayColor = "#5a6372"
+chartCategoricalColors = ["#2457d6", "#116b45", "#a85a08", "#6339c0", "#c0341d", "#5a6372", "#8a6410"]
+
+[theme.dark]
+primaryColor = "#4c7dff"
+backgroundColor = "#101419"
+secondaryBackgroundColor = "#181d25"
+textColor = "#e4e8ef"
+borderColor = "#262d38"
+linkColor = "#7fa5ff"
+codeBackgroundColor = "#181d25"
+dataframeHeaderBackgroundColor = "#181d25"
+dataframeBorderColor = "#262d38"
+redColor = "#f08a7a"
+orangeColor = "#e0a35c"
+yellowColor = "#d9bd6a"
+greenColor = "#5ac091"
+blueColor = "#7fa5ff"
+violetColor = "#a98cf0"
+grayColor = "#98a1b0"
+chartCategoricalColors = ["#7fa5ff", "#5ac091", "#e0a35c", "#a98cf0", "#f08a7a", "#98a1b0", "#d9bd6a"]

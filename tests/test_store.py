@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from rca import store
 from rca.models import RCARecord
 from rca.store import get_rca, list_rcas, next_rca_id, save_rca
 
@@ -55,3 +56,77 @@ def test_new_rca_ids_continue_the_numbering_of_the_year(tmp_path):
 
     assert next_rca_id(2026, db_path) == "RCA-2026-00138"
     assert next_rca_id(2027, db_path) == "RCA-2027-00001"
+
+
+# ---- The review decisions and the case they belong to ----
+
+
+def test_asking_for_more_detail_is_recorded_as_a_decision(tmp_path):
+    """The old behaviour lost who asked and what for; the request is part of the case."""
+    db = tmp_path / "rca.sqlite3"
+    record = sample_record()
+    record.status = "PENDING_REVIEW"
+    store.save_rca(record, db_path=db)
+
+    updated = store.apply_review(
+        record.rca_id, "Ana", "REQUEST_MORE_DETAILS", "Check the connection pool settings.",
+        db_path=db, requested_checks=["connection pool size"],
+    )
+
+    assert updated.status == "MORE_DETAILS_REQUESTED"
+    assert updated.review is not None
+    assert updated.review.decision == "REQUEST_MORE_DETAILS"
+    assert updated.review.reviewer == "Ana"
+    assert updated.review.requested_checks == ["connection pool size"]
+    assert updated.final_root_cause is None
+
+
+def test_the_older_name_of_that_decision_still_works(tmp_path):
+    db = tmp_path / "rca.sqlite3"
+    record = sample_record()
+    record.status = "PENDING_REVIEW"
+    store.save_rca(record, db_path=db)
+
+    updated = store.apply_review(record.rca_id, "Ana", "REANALYZE", "More detail please.", db_path=db)
+    assert updated.review.decision == "REQUEST_MORE_DETAILS"
+    assert updated.status == "MORE_DETAILS_REQUESTED"
+
+
+def test_a_second_investigation_joins_the_case_instead_of_replacing_it(tmp_path):
+    db = tmp_path / "rca.sqlite3"
+    first = sample_record()
+    first.status = "REJECTED"
+    store.save_rca(first, db_path=db)
+
+    second = sample_record()
+    second.rca_id = "RCA-2026-00099"
+    store.save_rca(second, db_path=db)
+
+    linked = store.start_next_cycle(first.rca_id, second.rca_id, db_path=db)
+
+    assert linked.case == first.rca_id
+    assert linked.cycle == 2
+    assert linked.parent_rca_id == first.rca_id
+    assert store.get_rca(first.rca_id, db_path=db) is not None  # nothing was overwritten
+
+    case = store.list_case(first.rca_id, db_path=db)
+    assert [item.rca_id for item in case] == [first.rca_id, second.rca_id]
+
+
+def test_analyses_are_grouped_into_cases(tmp_path):
+    db = tmp_path / "rca.sqlite3"
+    first = sample_record()
+    store.save_rca(first, db_path=db)
+    second = sample_record()
+    second.rca_id = "RCA-2026-00099"
+    store.save_rca(second, db_path=db)
+    store.start_next_cycle(first.rca_id, second.rca_id, db_path=db)
+
+    alone = sample_record()
+    alone.rca_id = "RCA-2026-00077"
+    alone.incident_id = "INC-2026-00101"
+    store.save_rca(alone, db_path=db)
+
+    cases = store.list_cases(db_path=db)
+    assert len(cases) == 2
+    assert {len(case) for case in cases} == {1, 2}

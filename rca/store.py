@@ -91,12 +91,17 @@ def apply_review(
     comment: str,
     hypothesis_id: str | None = None,
     db_path: Path = DB_PATH,
+    requested_checks: list[str] | None = None,
 ) -> RCARecord:
     """Apply the Technical Expert's decision to a stored RCA and return the updated record.
 
     APPROVE needs the id of the approved hypothesis and makes the RCA FINAL with its
-    candidate root cause. REJECT marks the record REJECTED. REANALYZE sends the record
-    back to INVESTIGATING, keeping the comment as a thing that was not checked yet.
+    candidate root cause. REJECT marks the record REJECTED. REQUEST_MORE_DETAILS records
+    what the expert wants verified and marks the record MORE_DETAILS_REQUESTED; the next
+    investigation of the case answers it (see `start_next_cycle`).
+
+    Each decision is stored as a ReviewDecision, so who decided, when and why stays with
+    the record. "REANALYZE" is still accepted as the older name of REQUEST_MORE_DETAILS.
     """
     from datetime import datetime, timezone
 
@@ -125,9 +130,13 @@ def apply_review(
         )
         record.status = "REJECTED"
         record.completed_at = now
-    elif decision == "REANALYZE":
-        record.status = "INVESTIGATING"
-        record.not_checked = record.not_checked + [f"Technical Expert asked for re-analysis: {comment}"]
+    elif decision in ("REQUEST_MORE_DETAILS", "REANALYZE"):
+        record.review = ReviewDecision(
+            reviewer=reviewer, decision="REQUEST_MORE_DETAILS", hypothesis_id=None,
+            comment=comment, decided_at=now, requested_checks=requested_checks or [],
+        )
+        record.status = "MORE_DETAILS_REQUESTED"
+        record.not_checked = record.not_checked + [f"Technical Expert asked for more detail: {comment}"]
     else:
         raise ValueError(f"Unknown decision '{decision}'.")
 
@@ -149,3 +158,41 @@ def submit_for_review(rca_id: str, db_path: Path = DB_PATH) -> RCARecord:
         record.status = "PENDING_REVIEW"
         save_rca(record, db_path=db_path)
     return record
+
+
+def start_next_cycle(previous_rca_id: str, new_rca_id: str, db_path: Path = DB_PATH) -> RCARecord:
+    """Tie a new analysis to the case of the one before it, and return the new record.
+
+    An incident can be investigated several times: rejected, or sent back for more detail.
+    Each investigation is kept whole; the case is what holds them together, in order.
+    """
+    previous = get_rca(previous_rca_id, db_path=db_path)
+    new_record = get_rca(new_rca_id, db_path=db_path)
+    if previous is None or new_record is None:
+        raise ValueError(f"Both '{previous_rca_id}' and '{new_rca_id}' must exist.")
+
+    case_id = previous.case
+    if previous.case_id != case_id:
+        previous.case_id = case_id
+        save_rca(previous, db_path=db_path)
+
+    new_record.case_id = case_id
+    new_record.cycle = previous.cycle + 1
+    new_record.parent_rca_id = previous.rca_id
+    save_rca(new_record, db_path=db_path)
+    return new_record
+
+
+def list_case(case_id: str, db_path: Path = DB_PATH) -> list[RCARecord]:
+    """Every analysis of one case, oldest cycle first."""
+    records = [record for record in list_rcas(db_path=db_path) if record.case == case_id]
+    return sorted(records, key=lambda record: (record.cycle, record.created_at))
+
+
+def list_cases(db_path: Path = DB_PATH) -> list[list[RCARecord]]:
+    """The cases, newest first, each one as its list of analyses."""
+    cases: dict[str, list[RCARecord]] = {}
+    for record in list_rcas(db_path=db_path):
+        cases.setdefault(record.case, []).append(record)
+    ordered = [sorted(items, key=lambda item: (item.cycle, item.created_at)) for items in cases.values()]
+    return sorted(ordered, key=lambda items: items[-1].created_at, reverse=True)

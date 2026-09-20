@@ -153,9 +153,18 @@ class LogGroup(BaseModel):
 EvidenceType = Literal["LOG", "CHANGE", "CMDB", "HISTORICAL_RCA", "HISTORICAL_INCIDENT"]
 SourceName = Literal["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
 ConfidenceLevel = Literal["HIGH", "MEDIUM", "LOW"]
-# MVP states. MORE_EVIDENCE_REQUIRED and TECHNICALLY_VALIDATED come with the full review flow.
+# The states an RCA goes through.
 # DRAFT: investigation finished, but the Problem Manager has not sent it to the expert yet.
-RCAStatus = Literal["INVESTIGATING", "DRAFT", "PENDING_REVIEW", "ESCALATED", "REJECTED", "FINAL"]
+# MORE_DETAILS_REQUESTED: the Technical Expert asked for a further investigation of this case.
+RCAStatus = Literal[
+    "INVESTIGATING",
+    "DRAFT",
+    "PENDING_REVIEW",
+    "MORE_DETAILS_REQUESTED",
+    "ESCALATED",
+    "REJECTED",
+    "FINAL",
+]
 
 
 class Evidence(BaseModel):
@@ -231,13 +240,17 @@ class InvestigationStep(BaseModel):
 
 
 class ReviewDecision(BaseModel):
-    """The decision of the Technical Expert."""
+    """The decision of the Technical Expert.
+
+    REQUEST_MORE_DETAILS is a decision like the other two: it is recorded with who asked,
+    when, and what they want verified, so the request survives as part of the case."""
 
     reviewer: str
-    decision: Literal["APPROVE", "REJECT"]
+    decision: Literal["APPROVE", "REJECT", "REQUEST_MORE_DETAILS"]
     hypothesis_id: str | None = None  # the approved hypothesis
     comment: str
     decided_at: datetime
+    requested_checks: list[str] = []  # what the expert wants the next investigation to verify
 
 
 class RCARecord(BaseModel):
@@ -248,6 +261,12 @@ class RCARecord(BaseModel):
     status: RCAStatus
     owner: str
     created_at: datetime
+
+    # An incident can be investigated more than once: rejected, or sent back for more detail.
+    # Those investigations belong to one case and keep their order, so nothing is overwritten.
+    case_id: str | None = None  # None means this analysis is the case
+    cycle: int = 1
+    parent_rca_id: str | None = None
     completed_at: datetime | None = None
     duration_seconds: float | None = None
 
@@ -267,6 +286,11 @@ class RCARecord(BaseModel):
 
     review: ReviewDecision | None = None
     final_root_cause: str | None = None
+
+    @property
+    def case(self) -> str:
+        """The case this analysis belongs to. An analysis with no case is its own case."""
+        return self.case_id or self.rca_id
 
     @model_validator(mode="after")
     def final_root_cause_requires_human_approval(self):

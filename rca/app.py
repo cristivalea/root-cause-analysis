@@ -1,4 +1,9 @@
-"""Problem Management AI — Streamlit interface for the RCA investigation pipeline.
+"""SUPERSEDED. This screen has been replaced by the interface in `rca/ui/`, which is run
+with `streamlit run rca/ui/main.py`. It is kept for now so nothing depends on a file that
+has disappeared; it is no longer maintained, and it expects a dark background
+(`--theme.base dark`) because the new theme is light by default.
+
+Problem Management AI — Streamlit interface for the RCA investigation pipeline.
 
 One page, three views:
 1. The incident list — pick an incident (menu: filters, add, delete, reload from sources).
