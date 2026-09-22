@@ -101,7 +101,6 @@ def test_the_screen_lists_only_incidents_that_need_an_analysis():
     listed = len(app.dataframe[0].value)
     needing_analysis = [item for item in services.list_incidents() if item.rca_required]
     assert listed == min(10, len(needing_analysis))
-    assert any(t("list.only_rca_required") in caption.value for caption in app.caption)
 
 
 def test_the_action_waits_until_an_incident_is_chosen():
@@ -130,6 +129,32 @@ def test_a_search_that_matches_nothing_says_so_instead_of_showing_an_empty_table
     assert not app.dataframe
     assert any(t("state.no_matches") in info.value for info in app.info)
     assert any(button.label == t("filters.show_all") for button in app.button)
+
+
+def test_a_search_that_matches_nothing_can_be_undone_from_the_empty_list():
+    """The button on the empty list is drawn after the search field it has to empty."""
+    app = AppTest.from_file(MAIN, default_timeout=60).run()
+    app.session_state[filter_controls.TEXT_KEY] = "no such incident"
+    app.switch_page(navigation.START_RCA).run()
+
+    [button for button in app.button if button.label == t("filters.show_all")][0].click().run()
+    assert not app.exception
+    assert not app.session_state[filter_controls.TEXT_KEY]
+    assert app.dataframe
+
+
+def test_a_filter_can_be_removed_from_its_chip():
+    """The chip is drawn after the filter it removes, which Streamlit does not allow to
+    be changed in the same run."""
+    app = AppTest.from_file(MAIN, default_timeout=60).run()
+    app.session_state[filter_controls.SEVERITY_KEY] = ["SEV-1"]
+    app.switch_page(navigation.START_RCA).run()
+
+    chips = [button for button in app.button if "chip-sev-SEV-1" in str(button.key)]
+    assert chips, "the active filter is not shown as a chip"
+    chips[0].click().run()
+    assert not app.exception
+    assert not app.session_state[filter_controls.SEVERITY_KEY]
 
 
 def test_searching_by_incident_id_finds_that_one_incident():

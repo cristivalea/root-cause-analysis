@@ -12,7 +12,7 @@ confirmation step, and nothing overwrites the analysis that was read.
 
 import streamlit as st
 
-from rca.ui import formatting, navigation, services, state, theme
+from rca.ui import formatting, services, state, theme
 from rca.ui.components import rca_draft
 from rca.ui.components.cause_diagram import cause_diagram
 from rca.ui.components.incident_card import incident_summary
@@ -220,20 +220,17 @@ def review(rca_id: str) -> None:
 
     incident = services.get_incident(record.incident_id)
 
-    if st.button(t("review.back_to_queue"), icon=theme.ICONS["back"], type="tertiary"):
-        back_to_queue()
-
     left, right = st.columns([5, 4], gap="large")
 
     with left:
-        rca_draft.header(record)
-        st.caption(f"{t('review.for_incident')} `{record.incident_id}` · "
-                   f"{t('cycle.number', number=record.cycle)}")
-        if record.status in DECIDABLE:
-            decisions(record)
-        else:
+        if record.status not in DECIDABLE:
             outcome(record)
-        rca_draft.rca_draft(record)
+        rca_draft.rca_draft(
+            record,
+            with_metadata=True,
+            context=f"{t('review.for_incident')} `{record.incident_id}` · "
+                    f"{t('cycle.number', number=record.cycle)}",
+        )
 
     with right:
         if incident is not None:
@@ -241,12 +238,13 @@ def review(rca_id: str) -> None:
                 incident_summary(incident)
         cause_diagram(record, incident.title if incident else None)
 
+    # The decisions close the page: the whole analysis has been read by the time they
+    # are in reach.
+    if record.status in DECIDABLE:
+        decisions(record)
 
-page_header(
-    t("review.title"),
-    t("review.subtitle"),
-    back_to=navigation.HOME,
-)
+
+page_header(t("review.title"), t("review.subtitle"))
 
 if not state.is_technical_expert():
     st.info(t("review.wrong_role"), icon=":material/badge:")

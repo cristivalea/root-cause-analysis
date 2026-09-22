@@ -14,6 +14,7 @@ from rca.models import RCARecord
 from rca.ui import formatting, navigation, services, state, theme
 from rca.ui.components import badges, rca_draft
 from rca.ui.components.page_header import page_header
+from rca.ui.components.search_box import filter_while_typing, search_field
 from rca.ui.strings import t
 
 SEARCH_KEY = "history_search"
@@ -62,14 +63,10 @@ def search_and_filters(cases: list[list[RCARecord]], titles: dict[str, str]):
         pass
 
     with st.container(horizontal=True, vertical_alignment="bottom", gap="small"):
-        st.text_input(
-            t("history.search"),
-            placeholder=t("history.search_placeholder"),
-            key=SEARCH_KEY,
-            icon=":material/search:",
-            width="stretch",
-        )
-        with st.popover(t("filters.button"), icon=":material/filter_list:"):
+        search_field(t("history.search"), key=SEARCH_KEY,
+                     placeholder=t("history.search_placeholder"), hide_label=True)
+        with st.popover(t("filters.button"), icon=":material/filter_list:",
+                        key="history-filters"):
             st.multiselect(
                 t("history.filter_status"),
                 options=list(STATUSES),
@@ -81,6 +78,7 @@ def search_and_filters(cases: list[list[RCARecord]], titles: dict[str, str]):
                 options=sorted(set(services_by_incident.values())),
                 key=SERVICE_KEY,
             )
+    filter_while_typing(SEARCH_KEY)
 
     chosen_services = set(st.session_state.get(SERVICE_KEY) or ())
     incidents_of_service = {
@@ -246,7 +244,7 @@ def case_view(case_id: str) -> None:
         cycle_block(item)
 
 
-page_header(t("history.title"), t("history.subtitle"), back_to=navigation.HOME)
+page_header(t("history.title"), t("history.subtitle"))
 
 case_id = st.query_params.get("case")
 if case_id:

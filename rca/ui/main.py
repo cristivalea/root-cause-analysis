@@ -5,7 +5,7 @@ Run it with:
     streamlit run rca/ui/main.py
 
 This file is the shell: it sets the page up, decides which pages the current role can open,
-draws the one bar that is on every screen, and then runs the page. Everything the user
+draws the one control that is on every screen, and then runs the page. Everything the user
 actually reads lives in the pages, the components and `strings.py`.
 
 The older screens (`rca/app.py`, `rca/expert_app.py`) still run on their own and are left
@@ -29,12 +29,12 @@ st.set_page_config(
 )
 
 state.initialise()
+theme.apply_layout()
 
 
 def app_bar() -> None:
-    """The name of the application, and who the person is working as."""
-    with st.container(horizontal=True, vertical_alignment="center", horizontal_alignment="distribute"):
-        st.markdown(f":gray[**{t('app.name')}**]")
+    """Who the person is working as, opposite the navigation at the top of the page."""
+    with st.container(horizontal=True, horizontal_alignment="right", key="app-bar"):
         widget_key = state.role_widget_key()
         st.segmented_control(
             t("role.label"),

@@ -33,13 +33,12 @@ def hero() -> None:
 
 def how_it_works() -> None:
     """The four steps of an RCA, so nobody has to guess what the button leads to."""
-    st.subheader(t("home.how_it_works"))
+    st.header(t("home.how_it_works"))
     for column, step in zip(st.columns(len(STEPS), gap="medium"), STEPS):
         with column, st.container(border=True, height="stretch"):
             st.markdown(f":gray[**{t(f'{step}.number')}**]")
             st.markdown(f"**{t(f'{step}.title')}**")
             st.caption(t(f"{step}.text"))
-    st.caption(t("home.closing"))
 
 
 def waiting_for_the_expert() -> None:
