@@ -128,19 +128,21 @@ def failure_panel(message: str, incident_id: str | None) -> None:
 
 
 def send_panel(record) -> None:
-    """The one action of this screen, and what it leads to."""
+    """The one action of this screen, and what it leads to.
+
+    It stands at the end of the analysis, on its own: the next step is taken once the
+    whole investigation has been read.
+    """
     if record.status == "DRAFT":
-        with st.container(border=True):
-            if st.button(t("send.action"), type="primary", icon=":material/send:", help=t("send.help")):
-                try:
-                    services.submit_for_review(record.rca_id)
-                except services.ServiceError as error:
-                    st.error(t("state.error_data"), icon=theme.ICONS["error"])
-                    st.caption(t("state.error_detail", detail=error))
-                    return
-                st.session_state[SENT_KEY] = True
-                st.rerun()
-            st.caption(t("send.help"))
+        if st.button(t("send.action"), type="primary", icon=":material/send:", help=t("send.help")):
+            try:
+                services.submit_for_review(record.rca_id)
+            except services.ServiceError as error:
+                st.error(t("state.error_data"), icon=theme.ICONS["error"])
+                st.caption(t("state.error_detail", detail=error))
+                return
+            st.session_state[SENT_KEY] = True
+            st.rerun()
         return
 
     if record.status == "PENDING_REVIEW":
@@ -175,7 +177,7 @@ def analysis_panel(record) -> None:
     if record.status == "ESCALATED":
         st.warning(t("investigation.escalated"), icon=":material/warning:")
         st.caption(t("investigation.escalated_hint"))
-        rca_draft.header(record)
+        rca_draft.metadata(record)
         if st.button(t("investigation.try_again"), icon=":material/refresh:"):
             state.request_investigation()
             show(None)
@@ -185,22 +187,19 @@ def analysis_panel(record) -> None:
                 st.markdown(record.investigation_summary)
         return
 
-    rca_draft.header(record)
-    if record.cycle > 1:
-        st.caption(t("cycle.number", number=record.cycle))
+    rca_draft.rca_draft(
+        record,
+        with_metadata=True,
+        context=t("cycle.number", number=record.cycle) if record.cycle > 1 else None,
+    )
+    # What happens next comes after the whole analysis, never before it.
     if record.status in ("REJECTED", "MORE_DETAILS_REQUESTED"):
         next_cycle_panel(record)
     else:
         send_panel(record)
-    rca_draft.rca_draft(record)
 
 
-page_header(
-    t("investigation.title"),
-    t("investigation.subtitle"),
-    back_to=navigation.START_RCA,
-    back_label=t("nav.start_rca"),
-)
+page_header(t("investigation.title"), t("investigation.subtitle"))
 
 record = active_record()
 asked_for = st.query_params.get("rca")

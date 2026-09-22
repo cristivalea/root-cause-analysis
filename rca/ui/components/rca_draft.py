@@ -32,22 +32,31 @@ def _evidence_line(item: Evidence) -> str:
     return f"{style.icon} **{_evidence_label(item)}** · `{item.citation}`{when}"
 
 
-def header(record: RCARecord) -> None:
-    """Which analysis this is, where it stands, and what it cost to produce."""
-    with st.container(horizontal=True, vertical_alignment="center", gap="small", wrap=True):
-        st.markdown(f"`{record.rca_id}`")
-        badges.rca_status_badge(record.status)
+def metadata(record: RCARecord, *, context: str | None = None) -> None:
+    """Which analysis this is, where it stands, and what it cost to produce.
+
+    Read from the top down: the analysis, then its status, then the two numbers, then the
+    case it belongs to. The first two lines carry the answer to "which one am I looking
+    at", so they are the ones that can be read at a glance.
+    """
+    st.markdown(f"#### `{record.rca_id}`")
+    badges.rca_status_badge(record.status)
     facts = [
         f"{t('draft.duration')}: {formatting.seconds(record.duration_seconds)}",
         f"{t('draft.evidence_count')}: {len(record.evidence)}",
     ]
     st.caption(" · ".join(facts))
+    if context:
+        st.caption(context)
 
 
-def candidate_causes(record: RCARecord) -> None:
+def candidate_causes(record: RCARecord, *, with_metadata: bool = False,
+                     context: str | None = None) -> None:
     """Each candidate cause with its confidence, its reasons and the evidence behind it."""
     st.subheader(t("draft.candidate_causes"))
     st.caption(t("draft.candidate_note"))
+    if with_metadata:
+        metadata(record, context=context)
 
     if not record.hypotheses:
         st.info(t("draft.no_hypotheses"), icon=":material/info:")
@@ -152,9 +161,15 @@ def extra_checks(review) -> list[str]:
     return checks
 
 
-def rca_draft(record: RCARecord) -> None:
-    """The whole analysis, in the order it is read."""
-    candidate_causes(record)
+def rca_draft(record: RCARecord, *, with_metadata: bool = False,
+              context: str | None = None) -> None:
+    """The whole analysis, in the order it is read.
+
+    A screen that shows one analysis on its own asks for the metadata, which then sits
+    under the title of the first section. The history already says which analysis it is
+    around the analysis itself, so it leaves it out.
+    """
+    candidate_causes(record, with_metadata=with_metadata, context=context)
     summary(record)
     related_incidents(record)
     next_steps(record)

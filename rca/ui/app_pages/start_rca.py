@@ -93,10 +93,11 @@ def selection_area(incident) -> None:
                 incident_details_dialog(incident)
             if st.button(t("selection.clear"), type="tertiary", icon=":material/close:"):
                 state.select_incident(None)
+                table.clear_selection()
                 st.rerun()
 
 
-page_header(t("start_rca.title"), t("start_rca.subtitle"), back_to=navigation.HOME)
+page_header(t("start_rca.title"), t("start_rca.subtitle"))
 
 incidents = load_incidents()
 if not incidents:
@@ -127,7 +128,6 @@ else:
         st.rerun()
 
     pager(len(visible), page, total_pages, first + 1, first + len(rows))
-    st.caption(t("list.only_rca_required"))
 
 selected_id = state.selected_incident_id()
 selected_incident = next((item for item in incidents if item.incident_id == selected_id), None)

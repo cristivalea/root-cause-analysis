@@ -25,7 +25,6 @@ EN: dict[str, str] = {
     "nav.investigation": "Investigation",
     "nav.review": "Technical review",
     "nav.history": "RCA history",
-    "nav.back_to_home": "Home",
     # ---- Roles ----
     "role.label": "Working as",
     "role.problem_manager": "Problem Manager",
@@ -54,8 +53,6 @@ EN: dict[str, str] = {
     "home.step_4.title": "Get technical approval",
     "home.step_4.text": "Send the analysis to a Technical Expert, who validates it, rejects "
                         "it, or asks for more detail.",
-    "home.closing": "The investigation gathers and connects the evidence. A Technical "
-                    "Expert decides the cause.",
     "home.expert.waiting_one": "One analysis is waiting for your review.",
     "home.expert.waiting_many": "{count} analyses are waiting for your review.",
     "home.expert.waiting_none": "Nothing is waiting for your review right now.",
@@ -118,7 +115,6 @@ EN: dict[str, str] = {
     "filters.service": "Service",
     "filters.status": "Status",
     "filters.date": "Detected between",
-    "filters.clear_all": "Clear all filters",
     "filters.show_all": "Show all incidents",
     "filters.chip_date": "Detected {range}",
     "filters.chip_date_from": "from {date}",
@@ -131,13 +127,11 @@ EN: dict[str, str] = {
     "table.severity": "Severity",
     "table.status": "Status",
     "table.date": "Detected",
-    "table.action": "Action",
-    "table.details_action": "Details",
+    "table.details": "Details",
     "list.showing": "Showing {first}-{last} of {total} incidents",
     "list.page": "Page {page} of {pages}",
     "list.previous": "Previous",
     "list.next": "Next",
-    "list.only_rca_required": "Only incidents that need a root cause analysis are listed.",
     "list.select_hint": "Select one incident to continue.",
     # ---- The selected incident and the action ----
     "selection.title": "Selected incident",

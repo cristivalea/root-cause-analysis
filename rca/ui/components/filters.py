@@ -11,6 +11,7 @@ import streamlit as st
 
 from rca.models import Incident
 from rca.ui.components import badges
+from rca.ui.components.search_box import filter_while_typing, search_field
 from rca.ui.filtering import IncidentFilters
 from rca.ui.strings import t
 
@@ -46,24 +47,38 @@ def current_filters() -> IncidentFilters:
     )
 
 
-def _remove_value(key: str, value: str) -> None:
-    st.session_state[key] = [item for item in st.session_state.get(key, []) if item != value]
+# A filter is removed by a chip under the search, or by the button on the empty list, and
+# both are drawn after the controls themselves. Streamlit refuses to change the value of a
+# control that has already been drawn in the same run, so the change is remembered here and
+# made at the start of the next run, before the controls exist.
+PENDING_KEY = "incidents_filters_pending"
+
+
+def _apply_pending() -> None:
+    """Carry out the change asked for on the previous run. Runs before the controls."""
+    for key, value in (st.session_state.pop(PENDING_KEY, None) or {}).items():
+        if value is None:
+            st.session_state.pop(key, None)
+        else:
+            st.session_state[key] = value
+
+
+def _change(values: dict) -> None:
+    st.session_state[PENDING_KEY] = values
     st.rerun()
+
+
+def _remove_value(key: str, value: str) -> None:
+    _change({key: [item for item in st.session_state.get(key, []) if item != value]})
 
 
 def _clear_dates() -> None:
-    st.session_state.pop(DATES_KEY, None)
-    st.rerun()
+    _change({DATES_KEY: None})
 
 
 def clear_all() -> None:
     """Back to the whole list."""
-    st.session_state[TEXT_KEY] = ""
-    st.session_state[SEVERITY_KEY] = []
-    st.session_state[SERVICE_KEY] = []
-    st.session_state[STATUS_KEY] = []
-    st.session_state.pop(DATES_KEY, None)
-    st.rerun()
+    _change({TEXT_KEY: "", SEVERITY_KEY: [], SERVICE_KEY: [], STATUS_KEY: [], DATES_KEY: None})
 
 
 def _panel(incidents: list[Incident]) -> None:
@@ -96,8 +111,12 @@ def _panel(incidents: list[Incident]) -> None:
 
 
 def _chips(filters: IncidentFilters) -> None:
-    """One removable chip per active filter, so it is clear what is narrowing the list."""
-    if not filters.is_active:
+    """One removable chip per active filter, so it is clear what is narrowing the list.
+
+    The search text has no chip: it is in the field, where it can be read and changed.
+    """
+    if not (filters.severities or filters.services or filters.statuses
+            or filters.date_from or filters.date_to):
         return
     with st.container(horizontal=True, gap="small", wrap=True):
         for severity in filters.severities:
@@ -121,8 +140,6 @@ def _chips(filters: IncidentFilters) -> None:
             label = t("filters.chip_date", range=" ".join(parts))
             if st.button(label, key="chip-dates", icon=":material/close:", help=t("filters.remove")):
                 _clear_dates()
-        if st.button(t("filters.clear_all"), key="chip-clear-all", type="tertiary"):
-            clear_all()
 
 
 def _active_count(filters: IncidentFilters) -> int:
@@ -132,18 +149,18 @@ def _active_count(filters: IncidentFilters) -> int:
 
 def search_and_filters(incidents: list[Incident]) -> IncidentFilters:
     """The search field, the Filters button and the active chips. Returns what to show."""
+    _apply_pending()
     count = _active_count(current_filters())
     with st.container(horizontal=True, vertical_alignment="bottom", gap="small"):
-        st.text_input(
-            t("search.label"),
-            placeholder=t("search.placeholder"),
-            key=TEXT_KEY,
-            icon=":material/search:",
-            width="stretch",
-        )
+        search_field(t("search.label"), key=TEXT_KEY, placeholder=t("search.placeholder"),
+                     hide_label=True)
         label = t("filters.active", count=count) if count else t("filters.button")
-        with st.popover(label, icon=":material/filter_list:"):
+        # The key keeps the panel the same control when its label gains the number of
+        # active filters: without it Streamlit sees a new control, and the click that
+        # should close the panel reopens it.
+        with st.popover(label, icon=":material/filter_list:", key="incident-filters"):
             _panel(incidents)
+    filter_while_typing(TEXT_KEY)
 
     filters = current_filters()
     _chips(filters)

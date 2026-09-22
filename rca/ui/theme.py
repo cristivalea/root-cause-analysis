@@ -13,6 +13,8 @@ Two rules from the brief are encoded here:
 
 from dataclasses import dataclass
 
+import streamlit as st
+
 # Streamlit badge colours: red, orange, yellow, green, blue, violet, gray.
 BadgeColor = str
 
@@ -77,6 +79,7 @@ EVIDENCE: dict[str, Style] = {
 
 FALLBACK = Style("gray")
 
+
 # Icons used by the shell and the shared components, named once so they stay consistent.
 ICONS = {
     "home": ":material/home:",
@@ -94,3 +97,20 @@ ICONS = {
 def style_for(styles: dict[str, Style], value: str) -> Style:
     """The style of a value, or a neutral one when the data holds something unexpected."""
     return styles.get(value, FALLBACK)
+
+
+# The only place the interface corrects Streamlit's own spacing. The page starts right
+# under the bar that carries the navigation, so the role control sits on the first line of
+# the page, opposite the navigation, and the title of the screen follows immediately.
+LAYOUT = """
+<style>
+  .stMainBlockContainer { padding-top: 4.25rem; }
+  .st-key-app-bar { margin-bottom: 0.25rem; }
+  [class*="st-key-live-search-"] { flex: 0 0 0; width: 0; height: 0; overflow: hidden; }
+</style>
+"""
+
+
+def apply_layout() -> None:
+    """Place the top of every screen. Called once, by the entry point."""
+    st.html(LAYOUT)

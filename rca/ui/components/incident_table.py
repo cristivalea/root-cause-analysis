@@ -17,6 +17,12 @@ from rca.ui.strings import t
 
 DETAILS_CLICK_KEY = "incident_table_details_click"
 DETAILS_REQUEST_KEY = "incident_details_requested_for"
+# The table keeps its own selection in the browser, under its key. Clearing the selection
+# in the application is not enough to empty it, so the table is drawn again under a new
+# key, which is what this number counts.
+TABLE_GENERATION_KEY = "incident_table_generation"
+
+DETAILS_ICON = ":material/info:"
 
 SEVERITIES = ("SEV-1", "SEV-2", "SEV-3", "SEV-4")
 STATUSES = ("Resolved", "Closed")
@@ -31,7 +37,7 @@ def _frame(incidents: list[Incident]) -> pd.DataFrame:
             "severity": [[badges.severity_label(incident.severity)] for incident in incidents],
             "status": [[badges.incident_status_label(incident.status)] for incident in incidents],
             "detected": [incident.detected_at for incident in incidents],
-            "details": [t("table.details_action") for _ in incidents],
+            "details": [DETAILS_ICON for _ in incidents],
         }
     )
 
@@ -55,8 +61,10 @@ def _column_config() -> dict:
         ),
         "detected": st.column_config.DatetimeColumn(t("table.date"), width=105, format="DD MMM YYYY"),
         "details": st.column_config.ButtonColumn(
-            t("table.action"),
+            t("table.details"),
             width=85,
+            help=t("selection.view_details"),
+            type="tertiary",
             key=DETAILS_CLICK_KEY,
             on_click=_details_clicked,
         ),
@@ -72,6 +80,11 @@ def _details_clicked() -> None:
     row = click["row"] if isinstance(click, dict) else click.row
     if 0 <= row < len(shown):
         st.session_state[DETAILS_REQUEST_KEY] = shown[row]
+
+
+def clear_selection() -> None:
+    """Forget what the table has selected, in the table as well as in the application."""
+    st.session_state[TABLE_GENERATION_KEY] = st.session_state.get(TABLE_GENERATION_KEY, 0) + 1
 
 
 def requested_details() -> str | None:
@@ -98,7 +111,7 @@ def incident_table(incidents: list[Incident], *, selected_id: str | None) -> str
         selection_mode="single-row",
         on_select="rerun",
         selection_default={"selection": {"rows": default_rows}} if default_rows else None,
-        key=f"incident_table_{hash(tuple(shown_ids))}",
+        key=f"incident_table_{st.session_state.get(TABLE_GENERATION_KEY, 0)}_{hash(tuple(shown_ids))}",
     )
 
     rows = list(event.selection.rows)
