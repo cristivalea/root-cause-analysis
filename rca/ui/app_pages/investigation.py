@@ -78,28 +78,57 @@ def steps_panel(record=None, *, running: bool = False, failed: bool = False) -> 
     )
 
 
+# def run_investigation(incident_id: str, right) -> None:
+#     """Run the investigation, showing each step on the right as it finishes."""
+#     finished: list = []
+#     slot = right.empty()
+
+#     def draw() -> None:
+#         with slot.container():
+#             st.subheader(t("investigation.steps_title"))
+#             timeline(finished, running=True)
+
+#     draw()
+
+#     def on_step(step) -> None:
+#         finished.append(step)
+#         draw()
+
+#     try:
+#         record = services.start_investigation(
+#             incident_id,
+#             owner=state.role_name(state.PROBLEM_MANAGER),
+#             on_step=on_step,
+#         )
+#     except services.ServiceError as error:
+#         state.set_investigation_error(str(error))
+#         st.rerun()
+
+#     state.set_investigation_error(None)
+#     previous = st.session_state.pop(NEXT_CYCLE_KEY, None)
+#     if previous:
+#         try:
+#             services.link_to_case(previous, record.rca_id)
+#         except services.ServiceError:
+#             pass  # the analysis is saved either way; only the link to the case is lost
+#     show(record.rca_id)
+#     st.session_state.pop(SENT_KEY, None)
+#     st.rerun()
+
 def run_investigation(incident_id: str, right) -> None:
-    """Run the investigation, showing each step on the right as it finishes."""
-    finished: list = []
+    """Run the investigation via FastAPI, showing progress while it executes."""
     slot = right.empty()
 
-    def draw() -> None:
-        with slot.container():
-            st.subheader(t("investigation.steps_title"))
-            timeline(finished, running=True)
-
-    draw()
-
-    def on_step(step) -> None:
-        finished.append(step)
-        draw()
+    with slot.container():
+        st.subheader(t("investigation.steps_title"))
+        timeline([], running=True)
 
     try:
-        record = services.start_investigation(
-            incident_id,
-            owner=state.role_name(state.PROBLEM_MANAGER),
-            on_step=on_step,
-        )
+        with st.spinner("AI Multi-Agent Pipeline is analyzing incident logs, changes and CMDB..."):
+            record = services.start_investigation(
+                incident_id,
+                owner=state.role_name(state.PROBLEM_MANAGER),
+            )
     except services.ServiceError as error:
         state.set_investigation_error(str(error))
         st.rerun()
@@ -110,7 +139,7 @@ def run_investigation(incident_id: str, right) -> None:
         try:
             services.link_to_case(previous, record.rca_id)
         except services.ServiceError:
-            pass  # the analysis is saved either way; only the link to the case is lost
+            pass
     show(record.rca_id)
     st.session_state.pop(SENT_KEY, None)
     st.rerun()

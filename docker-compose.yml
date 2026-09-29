@@ -1,0 +1,32 @@
+services:
+  backend-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rca-fastapi-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    volumes:
+      - ./data:/app/data
+    command: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+
+  frontend-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rca-streamlit-ui
+    ports:
+      - "8501:8501"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - API_URL=http://backend-api:8000
+    volumes:
+      - ./data:/app/data
+    command: streamlit run rca/ui/main.py --server.port 8501 --server.address 0.0.0.0
+    depends_on:
+      - backend-api
+    restart: unless-stopped
