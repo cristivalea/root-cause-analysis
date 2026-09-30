@@ -15,8 +15,233 @@
     "relationship_type": "connects_to"
   },
   {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-GW-EDGE-NODES",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-GW-WAF",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-GW-RATE-LIMITER",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-CERT-MANAGER",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-AUTH-APP",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-API-GATEWAY",
+    "target_ci": "CI-USER-PROFILE-APP",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-AUTH-APP",
+    "target_ci": "CI-AUTH-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-AUTH-APP",
+    "target_ci": "CI-SESSION-REDIS",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-AUTH-APP",
+    "target_ci": "CI-AUTH-EMAIL-QUEUE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-AUTH-APP",
+    "target_ci": "CI-MFA-PROVIDER",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-AUTH-APP",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
+  },
+  {
     "source_ci": "CI-BILLING-APP",
     "target_ci": "CI-BILLING-DB",
     "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-BILLING-APP",
+    "target_ci": "CI-BILLING-PDF",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-BILLING-APP",
+    "target_ci": "CI-TAX-ENGINE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-BILLING-SCHEDULER",
+    "target_ci": "CI-BILLING-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-BILLING-PDF",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-SETTLE-SERVICE",
+    "target_ci": "CI-KAFKA-CLUSTER",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-SETTLE-SERVICE",
+    "target_ci": "CI-SCHEMA-REGISTRY",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-SETTLE-SERVICE",
+    "target_ci": "CI-SETTLE-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-SETTLE-SERVICE",
+    "target_ci": "CI-CLEARING-HOUSE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PORTAL-CDN",
+    "target_ci": "CI-PORTAL-WEB",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PORTAL-WEB",
+    "target_ci": "CI-PORTAL-LOCK-REDIS",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PORTAL-WEB",
+    "target_ci": "CI-PORTAL-SEARCH",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PORTAL-WEB",
+    "target_ci": "CI-PORTAL-CART-CACHE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PORTAL-WEB",
+    "target_ci": "CI-API-GATEWAY",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-NOTIF-WORKER",
+    "target_ci": "CI-NOTIF-MQ",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-NOTIF-WORKER",
+    "target_ci": "CI-NOTIF-TEMPLATES",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-NOTIF-WORKER",
+    "target_ci": "CI-SMS-GATEWAY",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-NOTIF-WORKER",
+    "target_ci": "CI-PUSH-PROVIDER",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-NOTIF-MQ",
+    "target_ci": "CI-NOTIF-BROKER-HOST",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-PAYROLL-APP",
+    "target_ci": "CI-PAYROLL-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-PAYROLL-WORKER",
+    "target_ci": "CI-PAYROLL-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-PAYROLL-WORKER",
+    "target_ci": "CI-BANK-SFTP",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-PAYROLL-WORKER",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-USER-PROFILE-APP",
+    "target_ci": "CI-USER-PROFILE-DB",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-USER-PROFILE-APP",
+    "target_ci": "CI-USER-PROFILE-CACHE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-USER-PROFILE-APP",
+    "target_ci": "CI-AVATAR-STORAGE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-REP-APP",
+    "target_ci": "CI-REP-WAREHOUSE",
+    "relationship_type": "depends_on"
+  },
+  {
+    "source_ci": "CI-REP-APP",
+    "target_ci": "CI-REP-CACHE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-REP-APP",
+    "target_ci": "CI-COREDNS",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-REP-INGEST",
+    "target_ci": "CI-REP-WAREHOUSE",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-REP-INGEST",
+    "target_ci": "CI-KAFKA-CLUSTER",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-COREDNS",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-CERT-MANAGER",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
+  },
+  {
+    "source_ci": "CI-SCHEMA-REGISTRY",
+    "target_ci": "CI-KAFKA-CLUSTER",
+    "relationship_type": "connects_to"
+  },
+  {
+    "source_ci": "CI-LOG-PIPELINE",
+    "target_ci": "CI-K8S-PROD",
+    "relationship_type": "hosted_on"
   }
 ]

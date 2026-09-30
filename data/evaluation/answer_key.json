@@ -1,62 +1,2680 @@
 {
   "STORY-001": {
     "story_id": "STORY-001",
+    "title": "Monday morning payroll batch overload",
+    "kind": "success",
     "service": "Payroll Service",
-    "true_root_cause": "PostgreSQL connection pool exhaustion caused by unthrottled concurrent worker threads during the Monday morning scheduled payroll run.",
-    "expected_citations": ["LOG-PAYROLL-20260727-22", "LOG-PAYROLL-20260727-25", "RCA-2025-00042", "CI-PAYROLL-APP"]
+    "target_incident": "INC-2026-00101",
+    "cluster_incidents": [
+      "INC-2025-00104",
+      "INC-2025-00119",
+      "INC-2026-00139",
+      "INC-2026-00167",
+      "INC-2026-00188",
+      "INC-2026-00196"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": "Mondays between 06:00 and 08:30 UTC, during the weekly payroll batch",
+    "true_root_cause": "Worker autoscaling, enabled by CHG-2026-00262 in March 2026, lets the Monday payroll batch grow to 96 threads with no limit per connection pool. The threads use all PostgreSQL connections shared with the employee portal, so portal requests time out. The change replaced the 32-thread cap that was the corrective action of RCA-2025-00042.",
+    "root_cause_category": "Capacity / Resource Exhaustion",
+    "expected_citations": [
+      "LOG-PAYROLL-20260727-09",
+      "LOG-PAYROLL-20260727-07",
+      "RCA-2025-00042",
+      "CI-PAYROLL-DB",
+      "INC-2025-00119"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00953",
+        "why": "Tax table load on Friday; no link to connections or Monday mornings."
+      },
+      {
+        "citation": "RCA-2025-00042",
+        "why": "Right cause class, but its fix (32 threads) is no longer in place; the answer must say why the problem came back."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": "CHG-2026-00262 is older than the 7 day maximum window, so the investigation cannot see it. The autoscaler log lines and the recurrence start (March 2026) point to it; the expert confirms it."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did employees get HTTP 504 on Monday morning?",
+        "because": "The payroll portal API could not get a database connection within 30 seconds.",
+        "evidence": [
+          "LOG-PAYROLL-20260727-09",
+          "LOG-PAYROLL-20260727-19"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why was no connection available?",
+        "because": "payroll-postgresql reached its limit of 200 connections.",
+        "evidence": [
+          "LOG-PAYROLL-20260727-06",
+          "LOG-PAYROLL-20260727-14"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did it reach the limit?",
+        "because": "The Monday batch scaled to 96 worker threads, each holding a connection.",
+        "evidence": [
+          "LOG-PAYROLL-20260727-02",
+          "LOG-PAYROLL-20260727-07"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why could the batch scale that far?",
+        "because": "Autoscaling with a maximum of 96 threads replaced the fixed cap of 32 threads in March 2026.",
+        "evidence": [
+          "CHG-2026-00262",
+          "RCA-2025-00042"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the old cap lost?",
+        "because": "The autoscaling change was not checked against the corrective action of the 2025 RCA, and the portal still has no reserved connections.",
+        "evidence": [
+          "RCA-2025-00042"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Autoscaling up to 96 threads (CHG-2026-00262)",
+          "evidence": [
+            "CHG-2026-00262"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "No connection cap per client and no reserved connections for the portal",
+          "evidence": [
+            "RCA-2025-00042"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "200 connections shared by the batch and the portal",
+          "evidence": [
+            "LOG-PAYROLL-20260727-06",
+            "CI-PAYROLL-DB"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Portal and batch depend on the same payroll-postgresql",
+          "evidence": [
+            "CI-PAYROLL-DB"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Pool alerts fire at 97%, after saturation",
+          "evidence": [
+            "LOG-PAYROLL-20260727-06"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Previous RCA corrective action not protected by a regression check",
+          "evidence": [
+            "RCA-2025-00042"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-03-11T18:00:00Z",
+        "what": "Change: Enable autoscaling for payroll batch workers",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00262"
+      },
+      {
+        "at": "2026-07-24T16:00:00Z",
+        "what": "Change: Load July tax withholding tables",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00953"
+      },
+      {
+        "at": "2026-07-27T06:04:10Z",
+        "what": "Batch workers scale up",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-02"
+      },
+      {
+        "at": "2026-07-27T06:18:30Z",
+        "what": "Database connections close to the limit",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-06"
+      },
+      {
+        "at": "2026-07-27T06:21:40Z",
+        "what": "Batch workers reach 96 threads",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-07"
+      },
+      {
+        "at": "2026-07-27T06:26:12Z",
+        "what": "First connection timeouts",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-09"
+      },
+      {
+        "at": "2026-07-27T06:31:05Z",
+        "what": "Database refuses new connections",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-14"
+      },
+      {
+        "at": "2026-07-27T06:38:40Z",
+        "what": "Employee portal returns 504",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAYROLL-20260727-19"
+      },
+      {
+        "at": "2026-07-27T06:40:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-01"
+      },
+      {
+        "at": "2026-07-27T06:44:00Z",
+        "what": "Assigned: HR Systems Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-02"
+      },
+      {
+        "at": "2026-07-27T07:05:00Z",
+        "what": "Reassigned: Database Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-03"
+      },
+      {
+        "at": "2026-07-27T07:30:00Z",
+        "what": "Reassigned: HR Systems Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-04"
+      },
+      {
+        "at": "2026-07-27T07:52:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-05"
+      },
+      {
+        "at": "2026-07-27T08:15:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00101-06"
+      }
+    ]
   },
   "STORY-002": {
     "story_id": "STORY-002",
+    "title": "Payment API connection leak after v4.18.2",
+    "kind": "success",
     "service": "Payment API",
+    "target_incident": "INC-2026-00482",
+    "cluster_incidents": [
+      "INC-2025-00401"
+    ],
+    "distractor_incidents": [
+      "INC-2026-00371",
+      "INC-2026-00411"
+    ],
+    "time_pattern": null,
     "true_root_cause": "HikariCP database connection leak introduced in Payment API v4.18.2 due to unclosed sessions in the transaction retry block.",
-    "expected_citations": ["LOG-PAY-20260714-14", "CHG-2026-00871", "RCA-2025-00114", "CI-PAYMENT-API"]
+    "root_cause_category": "Software Defect",
+    "expected_citations": [
+      "LOG-PAY-20260714-14",
+      "LOG-PAY-20260714-15",
+      "CHG-2026-00871",
+      "RCA-2025-00114",
+      "CI-PAYMENT-DB"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00873",
+        "why": "Dashboard thresholds changed 5 minutes after the first error: cannot be the cause."
+      },
+      {
+        "citation": "CHG-2026-00872",
+        "why": "Change on the API Gateway, which is not a dependency of the Payment API."
+      },
+      {
+        "citation": "INC-2026-00371",
+        "why": "Similar wording, but the cause was the fraud scoring vendor."
+      },
+      {
+        "citation": "INC-2026-00411",
+        "why": "Similar wording, but the cause was the card acquirer."
+      },
+      {
+        "citation": "RCA-2025-00042",
+        "why": "Connection pool exhaustion on another service (Payroll)."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": null
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did card payments fail with HTTP 500?",
+        "because": "Requests waited 30 seconds for a database connection and failed.",
+        "evidence": [
+          "LOG-PAY-20260714-14"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why was no connection available?",
+        "because": "The pool was at 96-100% while traffic was normal.",
+        "evidence": [
+          "LOG-PAY-20260714-15",
+          "LOG-PAY-20260714-26"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why was the pool full?",
+        "because": "Connections were held and not returned; leak detection names the retry handler.",
+        "evidence": [
+          "LOG-PAY-20260714-23"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why were they held?",
+        "because": "v4.18.2 changed the retry handler, and the new retry block does not close the session on the error path.",
+        "evidence": [
+          "CHG-2026-00871"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why did it reach production again?",
+        "because": "The 2025 fix had no automated test for the error path, and leak detection did not page anyone.",
+        "evidence": [
+          "RCA-2025-00114"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Payment API v4.18.2 retry handler change",
+          "evidence": [
+            "CHG-2026-00871"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Leak detection only logs, it does not alert",
+          "evidence": [
+            "LOG-PAY-20260714-23"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "50 connections per pod, used up in 6 minutes",
+          "evidence": [
+            "LOG-PAY-20260714-26"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Payment API connects to payment-postgresql",
+          "evidence": [
+            "CI-PAYMENT-DB"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Pool at 96% at 14:11 did not page; customers reported first at 14:32",
+          "evidence": [
+            "LOG-PAY-20260714-15"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "No test for the retry error path despite RCA-2025-00114",
+          "evidence": [
+            "RCA-2025-00114"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-07-08T09:30:00Z",
+        "what": "Change: Deploy Payment API v4.18.1",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00845"
+      },
+      {
+        "at": "2026-07-14T13:21:00Z",
+        "what": "Change: Rotate API gateway access logs",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00872"
+      },
+      {
+        "at": "2026-07-14T13:58:00Z",
+        "what": "Change: Deploy Payment API v4.18.2",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00871"
+      },
+      {
+        "at": "2026-07-14T14:05:12Z",
+        "what": "First connection timeout, 7 minutes after the deploy",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAY-20260714-14"
+      },
+      {
+        "at": "2026-07-14T14:10:00Z",
+        "what": "Change: Update payment dashboard thresholds",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00873"
+      },
+      {
+        "at": "2026-07-14T14:11:42Z",
+        "what": "Connection pool at 96%",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAY-20260714-15"
+      },
+      {
+        "at": "2026-07-14T14:14:05Z",
+        "what": "Leak detection names the retry handler",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAY-20260714-23"
+      },
+      {
+        "at": "2026-07-14T14:32:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00482-01"
+      },
+      {
+        "at": "2026-07-14T14:35:00Z",
+        "what": "Assigned: Payments Platform Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00482-02"
+      },
+      {
+        "at": "2026-07-14T14:58:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00482-03"
+      },
+      {
+        "at": "2026-07-14T15:17:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00482-04"
+      }
+    ]
   },
   "STORY-003": {
     "story_id": "STORY-003",
+    "title": "Customer Portal session errors after a regional failover (no useful history)",
+    "kind": "edge",
     "service": "Customer Portal",
-    "true_root_cause": "Distributed lock race condition under rare localized network partitioning; no prior recorded incidents or historical RCAs.",
-    "expected_citations": ["LOG-PORTAL-20260810-09"]
+    "target_incident": "INC-2026-00103",
+    "cluster_incidents": [],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "Session locks live in a Redis instance that stays in eu-west-1. After the failover to eu-central-1, lock calls took 80-120 ms instead of 2 ms, longer than the 100 ms lock lease, so locks expired while still in use. Two web nodes then wrote the same session, the version check rejected one write and the customer was logged out.",
+    "root_cause_category": "Software Defect",
+    "expected_citations": [
+      "LOG-PORTAL-20260810-03",
+      "LOG-PORTAL-20260810-02",
+      "LOG-PORTAL-20260810-01",
+      "CI-PORTAL-LOCK-REDIS"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00996",
+        "why": "Banner content change two hours earlier; it is before the first error, so it earns confidence points if cited, but it touches no session code."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "REQUEST_MORE_DETAILS",
+      "note": "Without history the best possible support is logs plus CMDB. A HIGH result here means the innocent banner change was cited as support. The expert should ask for the lock lease configuration before approving."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why were customers logged out?",
+        "because": "Their session writes were rejected with a version conflict.",
+        "evidence": [
+          "LOG-PORTAL-20260810-04"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why were the writes rejected?",
+        "because": "Two web nodes held the same session lock at the same time.",
+        "evidence": [
+          "LOG-PORTAL-20260810-03"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did two nodes hold the lock?",
+        "because": "The lock lease expired while the first node was still using it.",
+        "evidence": [
+          "LOG-PORTAL-20260810-03"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did the lease expire?",
+        "because": "After the failover the lock store was 40-60 times slower than the 100 ms lease allows.",
+        "evidence": [
+          "LOG-PORTAL-20260810-02",
+          "LOG-PORTAL-20260810-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the lock store so far away?",
+        "because": "The lock Redis exists only in eu-west-1; the failover plan does not include it. (Not in the sources: needs the architecture review.)",
+        "evidence": [],
+        "verifiable_from_sources": false
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [],
+      "Configuration": [
+        {
+          "factor": "Lock lease of 100 ms, too short for cross-region calls",
+          "evidence": [
+            "LOG-PORTAL-20260810-03"
+          ]
+        }
+      ],
+      "Capacity": [],
+      "Dependencies": [
+        {
+          "factor": "Session lock Redis only in eu-west-1",
+          "evidence": [
+            "CI-PORTAL-LOCK-REDIS"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "No alert on lock store latency",
+          "evidence": [
+            "LOG-PORTAL-20260810-02"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Regional failover plan does not cover the lock store",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-08-10T07:30:00Z",
+        "what": "Change: Update portal marketing banners",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00996"
+      },
+      {
+        "at": "2026-08-10T09:31:00Z",
+        "what": "Traffic moved to eu-central-1",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260810-01"
+      },
+      {
+        "at": "2026-08-10T09:33:00Z",
+        "what": "Lock store calls 40-60 times slower",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260810-02"
+      },
+      {
+        "at": "2026-08-10T09:38:20Z",
+        "what": "First session lock failures",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260810-03"
+      },
+      {
+        "at": "2026-08-10T09:40:00Z",
+        "what": "Session writes rejected, users logged out",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260810-04"
+      },
+      {
+        "at": "2026-08-10T09:45:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-01"
+      },
+      {
+        "at": "2026-08-10T09:51:00Z",
+        "what": "Assigned: Digital Commerce Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-02"
+      },
+      {
+        "at": "2026-08-10T10:05:00Z",
+        "what": "Reassigned: Network Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-03"
+      },
+      {
+        "at": "2026-08-10T10:33:00Z",
+        "what": "Reassigned: Digital Commerce Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-04"
+      },
+      {
+        "at": "2026-08-10T11:05:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-05"
+      },
+      {
+        "at": "2026-08-10T11:20:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00103-06"
+      }
+    ]
   },
   "STORY-004": {
     "story_id": "STORY-004",
+    "title": "API Gateway wildcard certificate expired",
+    "kind": "success",
     "service": "API Gateway",
-    "true_root_cause": "Expired wild-card TLS certificate on edge proxy nodes due to a failed automated cert-manager renewal hook.",
-    "expected_citations": ["LOG-GW-20260501-03", "RCA-2024-00088", "CI-API-GATEWAY"]
+    "target_incident": "INC-2026-00104",
+    "cluster_incidents": [
+      "INC-2024-00891"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "cert-manager could not renew the wildcard certificate after 6 April because the DNS provider API token it uses for DNS-01 challenges was rotated (CHG-2026-00361) without updating the cert-manager secret. Renewal failed every day, the expiry warnings on the edge nodes were logged but not alerted, and the certificate expired at 03:00 on 1 May.",
+    "root_cause_category": "Certificate / Credential Expiry",
+    "expected_citations": [
+      "LOG-GW-20260501-01",
+      "LOG-GW-20260424-01",
+      "RCA-2024-00088",
+      "CI-CERT-MANAGER"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00468",
+        "why": "OS patching the night before; OpenSSL was updated, which looks suspicious, but the certificate simply expired at 03:00."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": "The credential rotation is 25 days before the incident, outside the window, and the cert-manager logs belong to the Kubernetes Platform, which the log tool does not read for this service. The expert confirms the renewal failure from those logs."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why could clients not connect?",
+        "because": "The TLS handshake failed on every edge node.",
+        "evidence": [
+          "LOG-GW-20260501-02"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why did the handshake fail?",
+        "because": "The wildcard certificate expired at 03:00.",
+        "evidence": [
+          "LOG-GW-20260501-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why was it not renewed in time?",
+        "because": "Automatic renewal failed every day since 6 April.",
+        "evidence": [
+          "LOG-K8S-20260406-01",
+          "LOG-GW-20260424-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did renewal fail?",
+        "because": "The DNS provider token used by cert-manager was rotated without updating its secret.",
+        "evidence": [
+          "CHG-2026-00361"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was nobody warned?",
+        "because": "Expiry warnings were logged but not alerted; after RCA-2024-00088 the renewal was automated but not monitored.",
+        "evidence": [
+          "RCA-2024-00088"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "DNS API token rotation (CHG-2026-00361)",
+          "evidence": [
+            "CHG-2026-00361"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "cert-manager secret not updated with the new token",
+          "evidence": [
+            "LOG-K8S-20260406-01"
+          ]
+        }
+      ],
+      "Capacity": [],
+      "Dependencies": [
+        {
+          "factor": "Gateway depends on cert-manager for its certificate",
+          "evidence": [
+            "CI-CERT-MANAGER"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Expiry warnings logged for a week, never alerted",
+          "evidence": [
+            "LOG-GW-20260424-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Rotation runbook has no list of the systems using the token",
+          "evidence": [
+            "RCA-2024-00088"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-04-06T10:00:00Z",
+        "what": "Change: Rotate DNS provider API credentials",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00361"
+      },
+      {
+        "at": "2026-04-06T11:00:00Z",
+        "what": "Daily renewal failures (cert-manager)",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-K8S-20260406-01"
+      },
+      {
+        "at": "2026-04-24T00:05:00Z",
+        "what": "Edge nodes warn about the coming expiry",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-GW-20260424-01"
+      },
+      {
+        "at": "2026-04-30T22:00:00Z",
+        "what": "Change: Monthly OS patching of edge proxy nodes",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00468"
+      },
+      {
+        "at": "2026-05-01T03:00:02Z",
+        "what": "Certificate expired",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-GW-20260501-01"
+      },
+      {
+        "at": "2026-05-01T03:00:05Z",
+        "what": "Clients fail the TLS handshake",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-GW-20260501-02"
+      },
+      {
+        "at": "2026-05-01T03:12:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00104-01"
+      },
+      {
+        "at": "2026-05-01T03:16:00Z",
+        "what": "Assigned: Core Platform",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00104-02"
+      },
+      {
+        "at": "2026-05-01T04:10:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00104-03"
+      },
+      {
+        "at": "2026-05-01T04:35:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00104-04"
+      }
+    ]
   },
   "STORY-005": {
     "story_id": "STORY-005",
+    "title": "Settlement consumer stuck on an incompatible message",
+    "kind": "edge",
     "service": "Settlement Service",
-    "true_root_cause": "Kafka consumer group deadlock caused by poisoned payload deserialization blocking all downstream event partitions.",
-    "expected_citations": ["LOG-SETTLE-20260212-44", "CHG-2026-00104", "CI-SETTLE-SERVICE"]
+    "target_incident": "INC-2026-00105",
+    "cluster_incidents": [
+      "INC-2025-00982"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "Schema v7 of settlement-events was registered with compatibility NONE (CHG-2026-00188) and changed the type of 'amount'. Producers started writing v7 at about 21:55. The settlement consumer, still on v6, could not deserialize the first v7 record and, without a dead-letter queue, retried the same offset forever. It stopped polling, exceeded max.poll.interval.ms and triggered rebalances. The rebalances are a consequence, not the cause.",
+    "root_cause_category": "Configuration Error",
+    "expected_citations": [
+      "LOG-SETTLE-20260212-01",
+      "CHG-2026-00188",
+      "CI-SCHEMA-REGISTRY"
+    ],
+    "red_herrings": [
+      {
+        "citation": "RCA-2025-00192",
+        "why": "Same service and same symptoms (rebalances, lag), but a different cause. Here the rebalances start 9 minutes after the deserialization errors."
+      },
+      {
+        "citation": "CHG-2026-00181",
+        "why": "Broker restart two days before; brokers were healthy during the incident."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": "A second hypothesis based on RCA-2025-00192 (rebalance storm) is expected and should be ranked lower because the deserialization errors come first."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did the settlement backlog grow?",
+        "because": "The consumer group stopped processing settlement-events.",
+        "evidence": [
+          "LOG-SETTLE-20260212-04"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why did it stop?",
+        "because": "One consumer retried the same record forever and the group kept rebalancing.",
+        "evidence": [
+          "LOG-SETTLE-20260212-01",
+          "LOG-SETTLE-20260212-08"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did it retry forever?",
+        "because": "The record could not be deserialized and there is no dead-letter queue.",
+        "evidence": [
+          "LOG-SETTLE-20260212-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why could it not be deserialized?",
+        "because": "Schema v7 changed the type of 'amount'; the consumer still used v6.",
+        "evidence": [
+          "CHG-2026-00188"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was an incompatible schema accepted?",
+        "because": "Compatibility was set to NONE for the subject to allow the change, without checking the consumers.",
+        "evidence": [
+          "CHG-2026-00188",
+          "CI-SCHEMA-REGISTRY"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Schema v7 with compatibility NONE",
+          "evidence": [
+            "CHG-2026-00188"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "No dead-letter queue on the consumer",
+          "evidence": [
+            "LOG-SETTLE-20260212-01"
+          ]
+        }
+      ],
+      "Capacity": [],
+      "Dependencies": [
+        {
+          "factor": "Settlement consumer depends on the schema registry",
+          "evidence": [
+            "CI-SCHEMA-REGISTRY"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Rebalance alert fired, deserialization errors did not",
+          "evidence": [
+            "LOG-SETTLE-20260212-08"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Schema changes not reviewed with consumer teams",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-02-10T20:00:00Z",
+        "what": "Change: Rolling restart of kafka-prod-cluster brokers",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00181"
+      },
+      {
+        "at": "2026-02-12T21:05:00Z",
+        "what": "Change: Register settlement-events schema v7",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00188"
+      },
+      {
+        "at": "2026-02-12T21:58:14Z",
+        "what": "Consumer cannot read the new records",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-SETTLE-20260212-01"
+      },
+      {
+        "at": "2026-02-12T22:03:00Z",
+        "what": "Backlog grows",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-SETTLE-20260212-04"
+      },
+      {
+        "at": "2026-02-12T22:07:00Z",
+        "what": "Consumer group rebalances",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-SETTLE-20260212-08"
+      },
+      {
+        "at": "2026-02-12T22:18:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-01"
+      },
+      {
+        "at": "2026-02-12T22:25:00Z",
+        "what": "Assigned: Treasury Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-02"
+      },
+      {
+        "at": "2026-02-12T22:58:00Z",
+        "what": "Reassigned: Streaming Platform Team",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-03"
+      },
+      {
+        "at": "2026-02-12T23:53:00Z",
+        "what": "Reassigned: Treasury Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-04"
+      },
+      {
+        "at": "2026-02-13T00:20:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-05"
+      },
+      {
+        "at": "2026-02-13T00:40:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00105-06"
+      }
+    ]
   },
   "STORY-006": {
     "story_id": "STORY-006",
+    "title": "Month-end billing aggregation times out",
+    "kind": "success",
     "service": "Billing Service",
-    "true_root_cause": "Missing composite database index on invoice table dropped during maintenance, causing full table scans during monthly closing.",
-    "expected_citations": ["LOG-BILL-20260630-18", "RCA-2025-00230", "CI-BILLING-DB"]
+    "target_incident": "INC-2026-00106",
+    "cluster_incidents": [
+      "INC-2025-00512",
+      "INC-2025-00548"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": "Last business day of the month, 22:00-02:00 UTC, during the month-end aggregation",
+    "true_root_cause": "The pg_repack rebuild of invoice_lines on 24 June (CHG-2026-00766) recreated the indexes from an outdated DDL file that did not contain the composite index (account_id, billing_period) added after RCA-2025-00230. The month-end aggregation then used full table scans, hit the statement timeout and the closing run failed.",
+    "root_cause_category": "Configuration Error",
+    "expected_citations": [
+      "LOG-BILL-20260630-07",
+      "LOG-BILL-20260630-02",
+      "RCA-2025-00230",
+      "CI-BILLING-DB",
+      "CHG-2026-00766"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00790",
+        "why": "Release 4 hours before the run; it only changes e-mail wording and a PDF footer."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "REQUEST_MORE_DETAILS",
+      "note": "With a window of a few hours the application finds the missing index pattern (logs + RCA-2025-00230) but not why the index is missing. The expert asks for database changes in the last 7 days; the second cycle finds CHG-2026-00766."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did the month-end run fail?",
+        "because": "The aggregation queries hit the statement timeout.",
+        "evidence": [
+          "LOG-BILL-20260630-07"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why were the queries so slow?",
+        "because": "They scanned the whole invoice_lines table.",
+        "evidence": [
+          "LOG-BILL-20260630-02"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why a full scan?",
+        "because": "The composite index on (account_id, billing_period) is missing again.",
+        "evidence": [
+          "LOG-BILL-20260630-02",
+          "RCA-2025-00230"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why is it missing?",
+        "because": "The table rebuild on 24 June recreated only 3 indexes, from an outdated DDL file.",
+        "evidence": [
+          "CHG-2026-00766",
+          "LOG-BILL-20260624-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the DDL file outdated?",
+        "because": "The 2025 index was created by hand and never added to the stored DDL.",
+        "evidence": [
+          "RCA-2025-00230"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Table rebuild with pg_repack (CHG-2026-00766)",
+          "evidence": [
+            "CHG-2026-00766"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Stored DDL without the composite index",
+          "evidence": [
+            "LOG-BILL-20260624-01"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "1.28 million lines scanned per query at month end",
+          "evidence": [
+            "LOG-BILL-20260630-02",
+            "LOG-BILL-20260630-04"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Billing Service depends on billing-postgresql",
+          "evidence": [
+            "CI-BILLING-DB"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Missing index shows only once a month",
+          "evidence": [
+            "LOG-BILL-20260529-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "2025 corrective action not added to the DDL source",
+          "evidence": [
+            "RCA-2025-00230"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-06-24T21:00:00Z",
+        "what": "Change: Rebuild invoice_lines table to reclaim space",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00766"
+      },
+      {
+        "at": "2026-06-30T18:10:00Z",
+        "what": "Change: Deploy Billing Service v2.31.0",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00790"
+      },
+      {
+        "at": "2026-06-30T22:05:00Z",
+        "what": "Aggregation query scans the whole table",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-BILL-20260630-02"
+      },
+      {
+        "at": "2026-06-30T22:20:00Z",
+        "what": "Database CPU high",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-BILL-20260630-04"
+      },
+      {
+        "at": "2026-06-30T22:31:00Z",
+        "what": "Aggregation queries time out",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-BILL-20260630-07"
+      },
+      {
+        "at": "2026-06-30T22:50:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-01"
+      },
+      {
+        "at": "2026-06-30T22:58:00Z",
+        "what": "Assigned: Finance Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-02"
+      },
+      {
+        "at": "2026-06-30T23:25:00Z",
+        "what": "Reassigned: Database Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-03"
+      },
+      {
+        "at": "2026-07-01T00:20:00Z",
+        "what": "Reassigned: Finance Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-04"
+      },
+      {
+        "at": "2026-07-01T01:20:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-05"
+      },
+      {
+        "at": "2026-07-01T02:10:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00106-06"
+      }
+    ]
   },
   "STORY-007": {
     "story_id": "STORY-007",
+    "title": "Notification broker disk full during a campaign",
+    "kind": "edge",
     "service": "Notification Service",
-    "true_root_cause": "Log rotation failure filling root partition /var/log, crashing active RabbitMQ message broker disk alarms.",
-    "expected_citations": ["LOG-NOTIF-20260319-02", "RCA-2025-00390", "CI-NOTIF-MQ"]
+    "target_incident": "INC-2026-00107",
+    "cluster_incidents": [
+      "INC-2025-01581"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "The hardened OS baseline applied on 16 March (CHG-2026-00329) replaced the logrotate configuration and left out /var/log/rabbitmq, undoing the corrective action of RCA-2025-00390. Broker logs grew for three days until the disk passed the RabbitMQ free space limit and the broker blocked all publishers. The campaign only made the logs grow faster.",
+    "root_cause_category": "Configuration Error",
+    "expected_citations": [
+      "LOG-NOTIF-20260317-01",
+      "LOG-NOTIF-20260319-03",
+      "CHG-2026-00329",
+      "RCA-2025-00390",
+      "CI-NOTIF-BROKER-HOST"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00341",
+        "why": "The campaign started 20 minutes before the alarm, but the disk had been filling for two days; it earns no points because it is after the first warning."
+      },
+      {
+        "citation": "INC-2025-01581",
+        "why": "Also 'during a campaign', which makes traffic look like the cause."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": "With a window shorter than 3 days the baseline change (CHG-2026-00329) is not found; the draft should then list the log rotation configuration as not checked, and the expert confirms the change."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why were notifications not delivered?",
+        "because": "Workers could not publish to the broker.",
+        "evidence": [
+          "LOG-NOTIF-20260319-06"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why could they not publish?",
+        "because": "RabbitMQ raised a disk alarm and blocked all publishers.",
+        "evidence": [
+          "LOG-NOTIF-20260319-03"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why was the disk full?",
+        "because": "/var/log/rabbitmq grew to 36 GB in three days.",
+        "evidence": [
+          "LOG-NOTIF-20260317-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did the logs grow?",
+        "because": "The new OS baseline replaced logrotate without the RabbitMQ entry.",
+        "evidence": [
+          "CHG-2026-00329",
+          "LOG-NOTIF-20260316-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the 2025 fix undone?",
+        "because": "The baseline was built without the settings added after RCA-2025-00390.",
+        "evidence": [
+          "RCA-2025-00390"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Hardened OS baseline (CHG-2026-00329)",
+          "evidence": [
+            "CHG-2026-00329"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "logrotate without /var/log/rabbitmq",
+          "evidence": [
+            "LOG-NOTIF-20260316-01"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "Campaign traffic made the logs grow faster",
+          "evidence": [
+            "CHG-2026-00341"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Broker runs on rabbitmq-prod hosts",
+          "evidence": [
+            "CI-NOTIF-BROKER-HOST"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Disk warnings from 72% to 96% never alerted",
+          "evidence": [
+            "LOG-NOTIF-20260317-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Baseline not checked against previous RCA actions",
+          "evidence": [
+            "RCA-2025-00390"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-03-16T10:00:00Z",
+        "what": "Change: Apply new hardened OS baseline to broker hosts",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00329"
+      },
+      {
+        "at": "2026-03-17T14:00:00Z",
+        "what": "Broker disk fills up over two days",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-NOTIF-20260317-01"
+      },
+      {
+        "at": "2026-03-19T01:55:00Z",
+        "what": "Change: Start APAC spring campaign send schedule",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00341"
+      },
+      {
+        "at": "2026-03-19T02:18:00Z",
+        "what": "RabbitMQ disk alarm blocks publishers",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-NOTIF-20260319-03"
+      },
+      {
+        "at": "2026-03-19T02:19:40Z",
+        "what": "Workers cannot publish",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-NOTIF-20260319-06"
+      },
+      {
+        "at": "2026-03-19T02:25:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00107-01"
+      },
+      {
+        "at": "2026-03-19T02:30:00Z",
+        "what": "Assigned: Messaging Platform",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00107-02"
+      },
+      {
+        "at": "2026-03-19T02:55:00Z",
+        "what": "Reassigned: Platform Operations",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00107-03"
+      },
+      {
+        "at": "2026-03-19T03:35:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00107-04"
+      },
+      {
+        "at": "2026-03-19T04:05:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00107-05"
+      }
+    ]
   },
   "STORY-008": {
     "story_id": "STORY-008",
+    "title": "Auth Service pods killed after a resource profile change",
+    "kind": "success",
     "service": "Auth Service",
-    "true_root_cause": "Incorrect cgroup memory limits (256Mi vs required 1Gi) introduced in Kubernetes deployment manifest update.",
-    "expected_citations": ["LOG-AUTH-20260404-12", "CHG-2026-00441", "CI-AUTH-APP"]
+    "target_incident": "INC-2026-00108",
+    "cluster_incidents": [
+      "INC-2025-01305"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "Helm chart 5.2.0 (CHG-2026-00412) applied the standard 'small' resource profile, lowering the memory limit of the Auth Service from 1Gi to 256Mi. The JVM fit at normal traffic, but with the Easter traffic its heap grew past the limit and the pods were killed again and again.",
+    "root_cause_category": "Configuration Error",
+    "expected_citations": [
+      "LOG-AUTH-20260404-07",
+      "LOG-AUTH-20260404-05",
+      "CHG-2026-00412"
+    ],
+    "red_herrings": [
+      {
+        "citation": "RCA-2025-00305",
+        "why": "Same symptoms (OOMKilled at peak) but a different cause (unbounded cache), already fixed."
+      },
+      {
+        "citation": "LOG-AUTH-20260404-02",
+        "why": "The traffic surge is real, but pods with the old 1Gi limit handled more in 2025 after the fix."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": null
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did logins fail?",
+        "because": "Auth Service pods were killed and restarted repeatedly.",
+        "evidence": [
+          "LOG-AUTH-20260404-07",
+          "LOG-AUTH-20260404-09"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why were they killed?",
+        "because": "They exceeded their memory limit.",
+        "evidence": [
+          "LOG-AUTH-20260404-07"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did they exceed it?",
+        "because": "The limit was 256Mi and the heap grew with the Easter traffic.",
+        "evidence": [
+          "LOG-AUTH-20260404-05",
+          "LOG-AUTH-20260404-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why was the limit 256Mi?",
+        "because": "Chart 5.2.0 applied the 'small' profile to all IAM workloads.",
+        "evidence": [
+          "CHG-2026-00412"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was that not caught?",
+        "because": "The chart change was not load-tested and the profile was not compared with real usage.",
+        "evidence": [
+          "CHG-2026-00412"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Helm chart 5.2.0 with the 'small' profile",
+          "evidence": [
+            "CHG-2026-00412"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Memory limit 256Mi instead of 1Gi",
+          "evidence": [
+            "LOG-AUTH-20260404-01"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "Easter traffic three times the baseline",
+          "evidence": [
+            "LOG-AUTH-20260404-02"
+          ]
+        }
+      ],
+      "Dependencies": [],
+      "Monitoring": [
+        {
+          "factor": "Heap warnings not alerted",
+          "evidence": [
+            "LOG-AUTH-20260404-05"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "No load test for resource profile changes",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-04-04T09:40:00Z",
+        "what": "Change: Deploy auth-service Helm chart 5.2.0",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00412"
+      },
+      {
+        "at": "2026-04-04T11:30:00Z",
+        "what": "Easter campaign traffic",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260404-02"
+      },
+      {
+        "at": "2026-04-04T11:40:00Z",
+        "what": "Heap close to the new small limit",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260404-05"
+      },
+      {
+        "at": "2026-04-04T11:58:00Z",
+        "what": "Pods killed for memory",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260404-07"
+      },
+      {
+        "at": "2026-04-04T12:10:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00108-01"
+      },
+      {
+        "at": "2026-04-04T12:13:00Z",
+        "what": "Assigned: IAM Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00108-02"
+      },
+      {
+        "at": "2026-04-04T12:50:00Z",
+        "what": "Change: Emergency: set auth-service memory limit to 1Gi",
+        "role": "fix",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00414"
+      },
+      {
+        "at": "2026-04-04T12:50:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00108-03"
+      },
+      {
+        "at": "2026-04-04T13:02:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00108-04"
+      }
+    ]
   },
   "STORY-009": {
     "story_id": "STORY-009",
+    "title": "Nightly reporting DNS timeouts after CoreDNS scale-down",
+    "kind": "success",
     "service": "Reporting Service",
-    "true_root_cause": "CoreDNS concurrency limits exceeded during burst traffic, causing intermittent NXDOMAIN errors across pods.",
-    "expected_citations": ["LOG-REP-20260115-05", "CI-REP-APP"]
+    "target_incident": "INC-2026-00109",
+    "cluster_incidents": [
+      "INC-2026-00012",
+      "INC-2026-00016"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": "Every night around 05:00 UTC, when the nightly report batch starts",
+    "true_root_cause": "CoreDNS was scaled down from 6 to 2 replicas on 12 January (CHG-2026-00053). The nightly report batch starts 184 tasks with a parallelism of 64 at 05:00 and every task resolves several host names without a local DNS cache. The two replicas reached their concurrent query limit, dropped queries, and the tasks timed out and retried.",
+    "root_cause_category": "Capacity / Resource Exhaustion",
+    "expected_citations": [
+      "LOG-REP-20260115-02",
+      "CHG-2026-00053",
+      "CI-COREDNS",
+      "INC-2026-00016"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00058",
+        "why": "Reporting release on 13 January at 11:00, after the first night of DNS errors: it earns no points."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": "Needs a window that starts before 12 January 16:00 (3 days). With a window of one night only, the change is not seen and the result is MEDIUM."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why were the finance reports late?",
+        "because": "Report tasks failed and retried many times.",
+        "evidence": [
+          "LOG-REP-20260115-04"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why did they fail?",
+        "because": "They could not resolve internal host names (DNS timeouts).",
+        "evidence": [
+          "LOG-REP-20260115-02"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did DNS time out?",
+        "because": "CoreDNS reached its concurrent query limit when the batch started.",
+        "evidence": [
+          "LOG-K8S-20260113-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did it reach the limit?",
+        "because": "CoreDNS was reduced from 6 to 2 replicas on 12 January.",
+        "evidence": [
+          "CHG-2026-00053"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the batch load not considered?",
+        "because": "The scale-down was based on average usage, not on the 05:00 peak of the batch.",
+        "evidence": [
+          "CHG-2026-00053",
+          "LOG-REP-20260112-01"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "CoreDNS scaled from 6 to 2 replicas",
+          "evidence": [
+            "CHG-2026-00053"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "No local DNS cache in the batch workers",
+          "evidence": [
+            "LOG-REP-20260115-02"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "64 parallel tasks at 05:00",
+          "evidence": [
+            "LOG-REP-20260115-01"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Reporting Service depends on CoreDNS",
+          "evidence": [
+            "CI-COREDNS"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "CoreDNS limit warnings not alerted",
+          "evidence": [
+            "LOG-K8S-20260113-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Capacity change based on averages only",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-01-12T16:00:00Z",
+        "what": "Change: Reduce CoreDNS replicas from 6 to 2",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00053"
+      },
+      {
+        "at": "2026-01-13T05:00:30Z",
+        "what": "CoreDNS at its concurrency limit",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-K8S-20260113-01"
+      },
+      {
+        "at": "2026-01-13T05:01:00Z",
+        "what": "First night with DNS timeouts",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-REP-20260113-01"
+      },
+      {
+        "at": "2026-01-13T11:00:00Z",
+        "what": "Change: Deploy Reporting Service v3.8.0",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00058"
+      },
+      {
+        "at": "2026-01-15T05:00:40Z",
+        "what": "DNS timeouts during the batch",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-REP-20260115-02"
+      },
+      {
+        "at": "2026-01-15T05:18:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00109-01"
+      },
+      {
+        "at": "2026-01-15T05:28:00Z",
+        "what": "Assigned: Data Platform",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00109-02"
+      },
+      {
+        "at": "2026-01-15T06:03:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00109-03"
+      },
+      {
+        "at": "2026-01-15T06:40:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00109-04"
+      }
+    ]
   },
   "STORY-010": {
     "story_id": "STORY-010",
+    "title": "User Profile contract field reused after v3.2",
+    "kind": "success",
     "service": "User Profile Service",
-    "true_root_cause": "Protobuf contract field tag collision between User Profile v3.2 and upstream Gateway.",
-    "expected_citations": ["LOG-USER-20260522-88", "CHG-2026-00712", "RCA-2025-00012"]
+    "target_incident": "INC-2026-00110",
+    "cluster_incidents": [
+      "INC-2025-00615"
+    ],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "User Profile v3.2 (CHG-2026-00712) reused protobuf field number 7, freed by the removed middle_name field, for the new preferred_language field with a different type. The API Gateway transcoder still used the v3.1 descriptor and decoded field 7 wrongly. The breaking-change check added after RCA-2025-00012 runs only in the gateway repository, not in the profile repository.",
+    "root_cause_category": "Software Defect",
+    "expected_citations": [
+      "LOG-USER-20260522-03",
+      "CHG-2026-00712",
+      "RCA-2025-00012"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-00698",
+        "why": "Database patch two days before; the database was healthy."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": null
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did customers see wrong profile data?",
+        "because": "The gateway rejected or mis-decoded profile responses.",
+        "evidence": [
+          "LOG-USER-20260522-03"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why?",
+        "because": "Field 7 had a different type in v3.2 than in the gateway's v3.1 contract.",
+        "evidence": [
+          "LOG-USER-20260522-03",
+          "LOG-USER-20260522-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did field 7 change type?",
+        "because": "v3.2 reused the number of the removed middle_name field.",
+        "evidence": [
+          "CHG-2026-00712"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why was reuse possible?",
+        "because": "The removed field was not reserved, as in the 2025 incident.",
+        "evidence": [
+          "RCA-2025-00012"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why did the 2025 check not stop it?",
+        "because": "The breaking-change check runs only in the gateway repository.",
+        "evidence": [
+          "RCA-2025-00012"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "User Profile v3.2 contract update",
+          "evidence": [
+            "CHG-2026-00712"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Gateway transcoder on descriptor v3.1",
+          "evidence": [
+            "LOG-USER-20260522-01"
+          ]
+        }
+      ],
+      "Capacity": [],
+      "Dependencies": [
+        {
+          "factor": "API Gateway decodes profile responses",
+          "evidence": [
+            "CI-USER-PROFILE-APP"
+          ]
+        }
+      ],
+      "Monitoring": [],
+      "Process": [
+        {
+          "factor": "Breaking-change check only in one repository",
+          "evidence": [
+            "RCA-2025-00012"
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-05-20T21:00:00Z",
+        "what": "Change: Patch user-profile-db",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00698"
+      },
+      {
+        "at": "2026-05-22T07:40:00Z",
+        "what": "Change: Deploy User Profile v3.2",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-00712"
+      },
+      {
+        "at": "2026-05-22T07:45:00Z",
+        "what": "Gateway still uses the old contract",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-USER-20260522-01"
+      },
+      {
+        "at": "2026-05-22T07:52:00Z",
+        "what": "Field 7 decoded with the wrong type",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-USER-20260522-03"
+      },
+      {
+        "at": "2026-05-22T08:15:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00110-01"
+      },
+      {
+        "at": "2026-05-22T08:21:00Z",
+        "what": "Assigned: Customer Identity",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00110-02"
+      },
+      {
+        "at": "2026-05-22T08:57:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00110-03"
+      },
+      {
+        "at": "2026-05-22T09:20:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00110-04"
+      }
+    ]
+  },
+  "STORY-011": {
+    "story_id": "STORY-011",
+    "title": "Merchant webhooks blocked after a vendor IP change",
+    "kind": "edge",
+    "service": "Payment API",
+    "target_incident": "INC-2026-00468",
+    "cluster_incidents": [],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "The webhook relay provider moved its service to new IP addresses on 8 September at 09:00. Our egress proxy allows the relay only by IP address, so every delivery was denied. The provider's notice, sent two weeks earlier, was never turned into a change. The v4.21.0 deployment at 09:45 is unrelated: the failures started 43 minutes before it.",
+    "root_cause_category": "Third-Party / Vendor",
+    "expected_citations": [
+      "LOG-PAY-20260908-01"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-01102",
+        "why": "Deployed after the first failure and it even changes the webhook payload, which makes it look guilty. It earns no confidence points."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "weakly_supported": null,
+      "expert_decision": "REQUEST_MORE_DETAILS",
+      "note": "The egress proxy logs belong to Network Services and the vendor notice is not in any source; the CMDB also has no link from the Payment API to the egress proxy. A HIGH result that blames v4.21.0 is a wrong answer."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why did merchants not get payment confirmations?",
+        "because": "Every webhook delivery attempt failed.",
+        "evidence": [
+          "LOG-PAY-20260908-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why did deliveries fail?",
+        "because": "Connections to the webhook relay timed out at our egress proxy.",
+        "evidence": [
+          "LOG-PAY-20260908-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why did they time out?",
+        "because": "The egress proxy denied the relay's new IP addresses.",
+        "evidence": [
+          "LOG-NET-20260908-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why were the addresses unknown?",
+        "because": "The relay moved to new IP ranges and our allowlist is by IP. (Vendor notice not in the sources.)",
+        "evidence": [],
+        "verifiable_from_sources": false
+      },
+      {
+        "step": 5,
+        "why": "Why was the allowlist not updated in advance?",
+        "because": "The vendor notice was never turned into a change; no owner for vendor notices.",
+        "evidence": [],
+        "verifiable_from_sources": false
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Vendor IP change without a matching change on our side",
+          "evidence": []
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Egress allowlist by IP address",
+          "evidence": [
+            "LOG-NET-20260908-01"
+          ]
+        }
+      ],
+      "Capacity": [],
+      "Dependencies": [
+        {
+          "factor": "Payment API depends on the egress proxy, missing from the CMDB",
+          "evidence": []
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Webhook failures alerted only after merchants called (78 minutes)",
+          "evidence": [
+            "LOG-PAY-20260908-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Vendor notices without an owner",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-09-08T09:01:58Z",
+        "what": "Egress proxy denies the new relay addresses",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-NET-20260908-01"
+      },
+      {
+        "at": "2026-09-08T09:02:11Z",
+        "what": "Webhook deliveries start failing",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAY-20260908-01"
+      },
+      {
+        "at": "2026-09-08T09:30:00Z",
+        "what": "Retry backlog grows",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PAY-20260908-04"
+      },
+      {
+        "at": "2026-09-08T09:45:00Z",
+        "what": "Change: Deploy Payment API v4.21.0",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01102"
+      },
+      {
+        "at": "2026-09-08T10:20:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-01"
+      },
+      {
+        "at": "2026-09-08T10:29:00Z",
+        "what": "Assigned: Payments Platform Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-02"
+      },
+      {
+        "at": "2026-09-08T11:15:00Z",
+        "what": "Reassigned: Network Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-03"
+      },
+      {
+        "at": "2026-09-08T12:10:00Z",
+        "what": "Awaiting vendor: Network Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-04"
+      },
+      {
+        "at": "2026-09-08T13:10:00Z",
+        "what": "Change: Add webhook relay IP ranges to the egress allowlist",
+        "role": "fix",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01109"
+      },
+      {
+        "at": "2026-09-08T13:25:00Z",
+        "what": "Reassigned: Payments Platform Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-05"
+      },
+      {
+        "at": "2026-09-08T13:40:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-06"
+      },
+      {
+        "at": "2026-09-08T13:55:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00468-07"
+      }
+    ]
+  },
+  "STORY-012": {
+    "story_id": "STORY-012",
+    "title": "Customer Portal origin overload after a CDN rule change",
+    "kind": "edge",
+    "service": "Customer Portal",
+    "target_incident": "INC-2026-00449",
+    "cluster_incidents": [],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "The CDN rule (CHG-2026-01058) added 'Vary: Cookie' to the product pages. Every logged-in customer has a unique cookie, so the CDN stored a separate copy per customer and almost every request went to the origin. The hit ratio fell from 94% to 6%, and the origin, sized for about 10% of the traffic, saturated at the evening peak. The release 15 minutes later was not involved.",
+    "root_cause_category": "Configuration Error",
+    "expected_citations": [
+      "LOG-PORTAL-20260826-01",
+      "CHG-2026-01058"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-01060",
+        "why": "Heavier product pages look like a good explanation, but the hit ratio was already falling 9 minutes before the release; it earns no points."
+      },
+      {
+        "citation": "RCA-2024-00272",
+        "why": "Past RCA on the same CDN, but a different failure (wrong content, not load)."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "weakly_supported": false,
+      "expert_decision": "APPROVE",
+      "note": null
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why were portal pages slow?",
+        "because": "Product page requests timed out at the origin.",
+        "evidence": [
+          "LOG-PORTAL-20260826-08"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why did the origin time out?",
+        "because": "It received about ten times its normal traffic.",
+        "evidence": [
+          "LOG-PORTAL-20260826-04"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why so much origin traffic?",
+        "because": "The CDN hit ratio fell from 94% to 6%.",
+        "evidence": [
+          "LOG-PORTAL-20260826-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did the hit ratio fall?",
+        "because": "The new rule varies the cache by cookie, one copy per customer.",
+        "evidence": [
+          "CHG-2026-01058"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the effect not foreseen?",
+        "because": "The rule was a standard change, tested with one logged-out browser.",
+        "evidence": [
+          "CHG-2026-01058"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "CDN rule 'Vary: Cookie' (CHG-2026-01058)",
+          "evidence": [
+            "CHG-2026-01058"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Cache key includes the whole cookie",
+          "evidence": [
+            "LOG-PORTAL-20260826-01"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "Origin sized for 10% of the traffic",
+          "evidence": [
+            "LOG-PORTAL-20260826-04"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Portal relies on the CDN for product pages",
+          "evidence": [
+            "CI-PORTAL-CDN"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Hit ratio warning at 18:26, first alert at 19:05",
+          "evidence": [
+            "LOG-PORTAL-20260826-01"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "CDN rule changes raised as standard changes",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-08-26T18:20:00Z",
+        "what": "Change: Update CDN cache rules for product pages",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01058"
+      },
+      {
+        "at": "2026-08-26T18:26:00Z",
+        "what": "CDN hit ratio collapses",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260826-01"
+      },
+      {
+        "at": "2026-08-26T18:35:00Z",
+        "what": "Change: Customer Portal release 2026.08.4",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01060"
+      },
+      {
+        "at": "2026-08-26T18:40:00Z",
+        "what": "Origin traffic 10 times normal",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260826-04"
+      },
+      {
+        "at": "2026-08-26T18:52:00Z",
+        "what": "Product pages time out",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-PORTAL-20260826-08"
+      },
+      {
+        "at": "2026-08-26T19:05:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00449-01"
+      },
+      {
+        "at": "2026-08-26T19:10:00Z",
+        "what": "Assigned: Digital Commerce Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00449-02"
+      },
+      {
+        "at": "2026-08-26T20:05:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00449-03"
+      },
+      {
+        "at": "2026-08-26T20:20:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00449-04"
+      }
+    ]
+  },
+  "STORY-013": {
+    "story_id": "STORY-013",
+    "title": "Session store evictions after a token lifetime change (log gap)",
+    "kind": "edge",
+    "service": "Auth Service",
+    "target_incident": "INC-2026-00491",
+    "cluster_incidents": [],
+    "distractor_incidents": [],
+    "time_pattern": null,
+    "true_root_cause": "The refresh token lifetime was extended from 1 to 30 days (CHG-2026-01118) without resizing the session store. Sessions stopped expiring, memory grew about 10% a day and reached maxmemory on 14-15 September. Redis then evicted keys with allkeys-lru, including active sessions, and at the Tuesday morning peak many users lost their session. The log shipper upgrade at 07:30 hid most of the incident logs.",
+    "root_cause_category": "Capacity / Resource Exhaustion",
+    "expected_citations": [
+      "LOG-AUTH-20260911-01",
+      "LOG-AUTH-20260915-03",
+      "CHG-2026-01118",
+      "CI-SESSION-REDIS"
+    ],
+    "red_herrings": [
+      {
+        "citation": "CHG-2026-01130",
+        "why": "Redis patch the evening before; memory was already at 91% before it."
+      },
+      {
+        "citation": "CHG-2026-01134",
+        "why": "Explains the missing logs, not the failure."
+      }
+    ],
+    "expected_outcome": {
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "weakly_supported": null,
+      "expert_decision": "REQUEST_MORE_DETAILS",
+      "note": "First cycle with a window of a few hours: few log lines and a gap, so weak support is the correct result. Second cycle with a 7 day window: memory growth and CHG-2026-01118 give HIGH."
+    },
+    "five_whys": [
+      {
+        "step": 1,
+        "why": "Why were users logged out?",
+        "because": "Their sessions were no longer in the session store.",
+        "evidence": [
+          "LOG-AUTH-20260915-03"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 2,
+        "why": "Why were the sessions gone?",
+        "because": "Redis evicted keys because it was full (allkeys-lru).",
+        "evidence": [
+          "LOG-AUTH-20260914-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 3,
+        "why": "Why was Redis full?",
+        "because": "Memory grew about 10% a day since 11 September.",
+        "evidence": [
+          "LOG-AUTH-20260911-01"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 4,
+        "why": "Why did memory grow?",
+        "because": "Refresh tokens now live 30 days instead of 1, so sessions stopped expiring.",
+        "evidence": [
+          "CHG-2026-01118"
+        ],
+        "verifiable_from_sources": true
+      },
+      {
+        "step": 5,
+        "why": "Why was the store not resized?",
+        "because": "The change was a standard change with no capacity check.",
+        "evidence": [
+          "CHG-2026-01118"
+        ],
+        "verifiable_from_sources": true
+      }
+    ],
+    "fishbone": {
+      "Change / Release": [
+        {
+          "factor": "Refresh token lifetime 30 days (CHG-2026-01118)",
+          "evidence": [
+            "CHG-2026-01118"
+          ]
+        }
+      ],
+      "Configuration": [
+        {
+          "factor": "Eviction policy allkeys-lru on a session store",
+          "evidence": [
+            "LOG-AUTH-20260914-01"
+          ]
+        }
+      ],
+      "Capacity": [
+        {
+          "factor": "4GB maxmemory sized for 1 day sessions",
+          "evidence": [
+            "LOG-AUTH-20260911-01"
+          ]
+        }
+      ],
+      "Dependencies": [
+        {
+          "factor": "Auth Service keeps sessions in session-store-redis",
+          "evidence": [
+            "CI-SESSION-REDIS"
+          ]
+        }
+      ],
+      "Monitoring": [
+        {
+          "factor": "Memory warnings for 4 days not alerted; log gap during the incident",
+          "evidence": [
+            "LOG-AUTH-20260911-01",
+            "LOG-AUTH-20260915-02"
+          ]
+        }
+      ],
+      "Process": [
+        {
+          "factor": "Token lifetime change without a capacity review",
+          "evidence": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "at": "2026-09-10T11:00:00Z",
+        "what": "Change: Extend refresh token lifetime from 1 to 30 days",
+        "role": "cause",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01118"
+      },
+      {
+        "at": "2026-09-11T09:00:00Z",
+        "what": "Session store memory grows every day",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260911-01"
+      },
+      {
+        "at": "2026-09-14T20:00:00Z",
+        "what": "Change: Patch session-store-redis nodes",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01130"
+      },
+      {
+        "at": "2026-09-14T21:00:00Z",
+        "what": "First evictions",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260914-01"
+      },
+      {
+        "at": "2026-09-15T07:30:00Z",
+        "what": "Change: Upgrade fluent-bit log shipper",
+        "role": "innocent",
+        "source": "CHANGE",
+        "citation": "CHG-2026-01134"
+      },
+      {
+        "at": "2026-09-15T08:05:00Z",
+        "what": "Incident detected",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-01"
+      },
+      {
+        "at": "2026-09-15T08:09:00Z",
+        "what": "Assigned: IAM Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-02"
+      },
+      {
+        "at": "2026-09-15T08:25:00Z",
+        "what": "Awaiting caller: IAM Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-03"
+      },
+      {
+        "at": "2026-09-15T08:40:00Z",
+        "what": "Assigned: IAM Engineering",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-04"
+      },
+      {
+        "at": "2026-09-15T08:45:10Z",
+        "what": "Log shipper dropped the incident logs",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260915-02"
+      },
+      {
+        "at": "2026-09-15T08:46:00Z",
+        "what": "Sessions missing",
+        "role": "log",
+        "source": "LOG",
+        "citation": "LOG-AUTH-20260915-03"
+      },
+      {
+        "at": "2026-09-15T08:55:00Z",
+        "what": "Workaround applied",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-05"
+      },
+      {
+        "at": "2026-09-15T09:10:00Z",
+        "what": "Service restored",
+        "role": "incident",
+        "source": "INCIDENT_EVENT",
+        "citation": "EVT-2026-00491-06"
+      }
+    ]
   }
 }

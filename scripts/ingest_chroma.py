@@ -12,6 +12,8 @@ DATA_DIR = ROOT / "data"
 DEFAULT_MODEL = "nomic-embed-text"
 sys.path.insert(0, str(ROOT))
 
+import chromadb
+
 from rca.rag import build_incident_records, ensure_ollama_model, load_rca_records, upsert_records
 
 
@@ -20,12 +22,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default=DEFAULT_MODEL, help="Ollama embedding model name")
     parser.add_argument("--incidents", type=Path, default=DATA_DIR / "sources" / "incidents.json", help="Path to the real incident dataset")
     parser.add_argument("--rca-folder", type=Path, default=DATA_DIR / "knowledge_base" / "rcas", help="Folder containing RCA markdown files")
+    parser.add_argument("--reset", action="store_true", help="delete both collections first, so removed records disappear")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     ensure_ollama_model(args.model)
+
+    if args.reset:
+        client = chromadb.PersistentClient(path=str(ROOT / "chroma_db"))
+        for name in ("historical_incidents", "historical_rcas"):
+            if name in [collection.name for collection in client.list_collections()]:
+                client.delete_collection(name)
 
     incidents = build_incident_records(args.incidents)
     rca_docs = load_rca_records(args.rca_folder)

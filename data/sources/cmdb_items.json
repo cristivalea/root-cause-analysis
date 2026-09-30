@@ -36,13 +36,67 @@
     "criticality": "high"
   },
   {
-    "ci_id": "CI-BILLING-DB",
-    "name": "billing-postgresql",
-    "type": "database",
-    "service": "Billing Service",
+    "ci_id": "CI-GW-EDGE-NODES",
+    "name": "edge-proxy-nodes",
+    "type": "host",
+    "service": "API Gateway",
     "environment": "production",
-    "owner_team": "Finance Engineering",
+    "owner_team": "Core Platform",
     "criticality": "high"
+  },
+  {
+    "ci_id": "CI-GW-WAF",
+    "name": "edge-waf-policy",
+    "type": "gateway",
+    "service": "API Gateway",
+    "environment": "production",
+    "owner_team": "Security Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-GW-RATE-LIMITER",
+    "name": "gateway-rate-limiter",
+    "type": "cache",
+    "service": "API Gateway",
+    "environment": "production",
+    "owner_team": "Core Platform",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-AUTH-APP",
+    "name": "auth-service",
+    "type": "application",
+    "service": "Auth Service",
+    "environment": "production",
+    "owner_team": "IAM Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-AUTH-DB",
+    "name": "auth-postgresql",
+    "type": "database",
+    "service": "Auth Service",
+    "environment": "production",
+    "owner_team": "Database Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-SESSION-REDIS",
+    "name": "session-store-redis",
+    "type": "cache",
+    "service": "Auth Service",
+    "environment": "production",
+    "owner_team": "IAM Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-AUTH-EMAIL-QUEUE",
+    "name": "auth-email-queue",
+    "type": "queue",
+    "service": "Auth Service",
+    "environment": "production",
+    "owner_team": "IAM Engineering",
+    "criticality": "medium"
   },
   {
     "ci_id": "CI-BILLING-APP",
@@ -54,12 +108,381 @@
     "criticality": "high"
   },
   {
+    "ci_id": "CI-BILLING-DB",
+    "name": "billing-postgresql",
+    "type": "database",
+    "service": "Billing Service",
+    "environment": "production",
+    "owner_team": "Finance Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-BILLING-PDF",
+    "name": "invoice-pdf-renderer",
+    "type": "application",
+    "service": "Billing Service",
+    "environment": "production",
+    "owner_team": "Finance Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-BILLING-SCHEDULER",
+    "name": "billing-job-scheduler",
+    "type": "application",
+    "service": "Billing Service",
+    "environment": "production",
+    "owner_team": "Finance Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-SETTLE-SERVICE",
+    "name": "settlement-consumer",
+    "type": "application",
+    "service": "Settlement Service",
+    "environment": "production",
+    "owner_team": "Treasury Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-SETTLE-DB",
+    "name": "settlement-ledger-db",
+    "type": "database",
+    "service": "Settlement Service",
+    "environment": "production",
+    "owner_team": "Database Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PORTAL-WEB",
+    "name": "customer-portal-web",
+    "type": "application",
+    "service": "Customer Portal",
+    "environment": "production",
+    "owner_team": "Digital Commerce Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PORTAL-CDN",
+    "name": "customer-portal-cdn",
+    "type": "gateway",
+    "service": "Customer Portal",
+    "environment": "production",
+    "owner_team": "Digital Commerce Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PORTAL-LOCK-REDIS",
+    "name": "portal-session-lock-redis",
+    "type": "cache",
+    "service": "Customer Portal",
+    "environment": "production",
+    "owner_team": "Digital Commerce Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-PORTAL-SEARCH",
+    "name": "portal-search-index",
+    "type": "application",
+    "service": "Customer Portal",
+    "environment": "production",
+    "owner_team": "Digital Commerce Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-PORTAL-CART-CACHE",
+    "name": "portal-cart-cache",
+    "type": "cache",
+    "service": "Customer Portal",
+    "environment": "production",
+    "owner_team": "Digital Commerce Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-NOTIF-WORKER",
+    "name": "notification-worker",
+    "type": "application",
+    "service": "Notification Service",
+    "environment": "production",
+    "owner_team": "Messaging Platform",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-NOTIF-MQ",
+    "name": "notification-rabbitmq",
+    "type": "queue",
+    "service": "Notification Service",
+    "environment": "production",
+    "owner_team": "Messaging Platform",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-NOTIF-BROKER-HOST",
+    "name": "rabbitmq-prod-hosts",
+    "type": "host",
+    "service": "Notification Service",
+    "environment": "production",
+    "owner_team": "Platform Operations",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-NOTIF-TEMPLATES",
+    "name": "notification-templates",
+    "type": "application",
+    "service": "Notification Service",
+    "environment": "production",
+    "owner_team": "Messaging Platform",
+    "criticality": "low"
+  },
+  {
+    "ci_id": "CI-PAYROLL-APP",
+    "name": "payroll-portal-api",
+    "type": "application",
+    "service": "Payroll Service",
+    "environment": "production",
+    "owner_team": "HR Systems Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PAYROLL-WORKER",
+    "name": "payroll-batch-workers",
+    "type": "application",
+    "service": "Payroll Service",
+    "environment": "production",
+    "owner_team": "HR Systems Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-PAYROLL-DB",
+    "name": "payroll-postgresql",
+    "type": "database",
+    "service": "Payroll Service",
+    "environment": "production",
+    "owner_team": "Database Engineering",
+    "criticality": "high"
+  },
+  {
     "ci_id": "CI-USER-PROFILE-APP",
     "name": "user-profile-service",
     "type": "application",
     "service": "User Profile Service",
     "environment": "production",
     "owner_team": "Customer Identity",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-USER-PROFILE-DB",
+    "name": "user-profile-db",
+    "type": "database",
+    "service": "User Profile Service",
+    "environment": "production",
+    "owner_team": "Database Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-USER-PROFILE-CACHE",
+    "name": "user-profile-cache",
+    "type": "cache",
+    "service": "User Profile Service",
+    "environment": "production",
+    "owner_team": "Customer Identity",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-AVATAR-STORAGE",
+    "name": "avatar-object-storage",
+    "type": "storage",
+    "service": "User Profile Service",
+    "environment": "production",
+    "owner_team": "Customer Identity",
+    "criticality": "low"
+  },
+  {
+    "ci_id": "CI-REP-APP",
+    "name": "reporting-batch",
+    "type": "application",
+    "service": "Reporting Service",
+    "environment": "production",
+    "owner_team": "Data Platform",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-REP-WAREHOUSE",
+    "name": "reporting-warehouse",
+    "type": "database",
+    "service": "Reporting Service",
+    "environment": "production",
+    "owner_team": "Data Platform",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-REP-CACHE",
+    "name": "dashboard-cache",
+    "type": "cache",
+    "service": "Reporting Service",
+    "environment": "production",
+    "owner_team": "Data Platform",
+    "criticality": "low"
+  },
+  {
+    "ci_id": "CI-REP-INGEST",
+    "name": "reporting-ingestion-pipeline",
+    "type": "application",
+    "service": "Reporting Service",
+    "environment": "production",
+    "owner_team": "Data Platform",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-K8S-PROD",
+    "name": "k8s-prod-cluster",
+    "type": "host",
+    "service": "Kubernetes Platform",
+    "environment": "production",
+    "owner_team": "Platform Operations",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-COREDNS",
+    "name": "coredns",
+    "type": "application",
+    "service": "Kubernetes Platform",
+    "environment": "production",
+    "owner_team": "Platform Operations",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-CERT-MANAGER",
+    "name": "cert-manager",
+    "type": "application",
+    "service": "Kubernetes Platform",
+    "environment": "production",
+    "owner_team": "Platform Operations",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-KAFKA-CLUSTER",
+    "name": "kafka-prod-cluster",
+    "type": "queue",
+    "service": "Event Streaming Platform",
+    "environment": "production",
+    "owner_team": "Streaming Platform Team",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-SCHEMA-REGISTRY",
+    "name": "schema-registry",
+    "type": "application",
+    "service": "Event Streaming Platform",
+    "environment": "production",
+    "owner_team": "Streaming Platform Team",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-EGRESS-PROXY",
+    "name": "egress-proxy-firewall",
+    "type": "gateway",
+    "service": "Network Services",
+    "environment": "production",
+    "owner_team": "Network Engineering",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-LOG-PIPELINE",
+    "name": "fluent-bit-log-shipper",
+    "type": "application",
+    "service": "Observability Platform",
+    "environment": "production",
+    "owner_team": "Observability Engineering",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-CARD-ACQUIRER",
+    "name": "card-acquirer-gateway",
+    "type": "gateway",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-FRAUD-ENGINE",
+    "name": "fraud-scoring-provider",
+    "type": "application",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-FX-PROVIDER",
+    "name": "fx-rate-provider",
+    "type": "application",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-TOKEN-VAULT",
+    "name": "card-tokenisation-vault",
+    "type": "application",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-MFA-PROVIDER",
+    "name": "otp-mfa-provider",
+    "type": "application",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-SMS-GATEWAY",
+    "name": "sms-gateway-provider",
+    "type": "gateway",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-PUSH-PROVIDER",
+    "name": "mobile-push-provider",
+    "type": "gateway",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-CLEARING-HOUSE",
+    "name": "clearing-house-link",
+    "type": "gateway",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "high"
+  },
+  {
+    "ci_id": "CI-TAX-ENGINE",
+    "name": "tax-calculation-provider",
+    "type": "application",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
+    "criticality": "medium"
+  },
+  {
+    "ci_id": "CI-BANK-SFTP",
+    "name": "bank-transfer-sftp",
+    "type": "storage",
+    "service": "External Vendors",
+    "environment": "production",
+    "owner_team": "Vendor Management",
     "criticality": "high"
   }
 ]

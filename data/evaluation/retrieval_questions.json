@@ -1,0 +1,412 @@
+[
+  {
+    "question_id": "RQ-001",
+    "source": "STORY-001",
+    "incident_id": "INC-2026-00101",
+    "service": "Payroll Service",
+    "before": "2026-07-27T06:40:00Z",
+    "query": "Payroll batch times out every Monday morning | Users report HTTP 504s and delayed salary payouts during the Monday payroll batch window. The employee portal is slow and worker jobs are timing out. | HTTP 504 gateway timeout | Payroll batch job exceeded SLA | Database connection acquisition latency",
+    "relevant_incidents": [
+      "INC-2025-00104",
+      "INC-2025-00119",
+      "INC-2026-00139",
+      "INC-2026-00167",
+      "INC-2026-00188",
+      "INC-2026-00196"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00042"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-002",
+    "source": "STORY-002",
+    "incident_id": "INC-2026-00482",
+    "service": "Payment API",
+    "before": "2026-07-14T14:32:00Z",
+    "query": "Payment API intermittent failures | Customers experienced intermittent failures when attempting to complete card payments. | HTTP 500 responses from Payment API | Increased database connection timeout errors | Latency above 5 seconds",
+    "relevant_incidents": [
+      "INC-2025-00401"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00114"
+    ],
+    "misleading_records": [
+      "INC-2026-00371",
+      "INC-2026-00411"
+    ]
+  },
+  {
+    "question_id": "RQ-003",
+    "source": "STORY-003",
+    "incident_id": "INC-2026-00103",
+    "service": "Customer Portal",
+    "before": "2026-08-10T09:45:00Z",
+    "query": "Customer portal exceptions after regional failover | Customers saw error pages and were logged out while using the portal. The errors started a few minutes after traffic was moved from eu-west-1 to eu-central-1 during a network event. | Session timeouts | HTTP 500 on account pages | Customers logged out",
+    "relevant_incidents": [],
+    "relevant_rcas": [],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-004",
+    "source": "STORY-004",
+    "incident_id": "INC-2026-00104",
+    "service": "API Gateway",
+    "before": "2026-05-01T03:12:00Z",
+    "query": "API gateway certificate check error on edge nodes | Mobile apps and partners could not connect to the public API. Clients reported certificate validation errors from the edge nodes. | TLS handshake failures | Certificate validation errors in mobile apps | Partner API calls failing",
+    "relevant_incidents": [
+      "INC-2024-00891"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00088"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-005",
+    "source": "STORY-005",
+    "incident_id": "INC-2026-00105",
+    "service": "Settlement Service",
+    "before": "2026-02-12T22:18:00Z",
+    "query": "Settlement event processing stopped | Settlement events stopped being processed and the backlog grew for more than two hours. End-of-day settlement files were delayed. | Consumer lag growing on settlement-events | Settlement backlog | Consumer group rebalancing repeatedly",
+    "relevant_incidents": [
+      "INC-2025-00982"
+    ],
+    "relevant_rcas": [],
+    "misleading_records": [
+      "RCA-2025-00192"
+    ]
+  },
+  {
+    "question_id": "RQ-006",
+    "source": "STORY-006",
+    "incident_id": "INC-2026-00106",
+    "service": "Billing Service",
+    "before": "2026-06-30T22:50:00Z",
+    "query": "Billing report times out at month close | The month-end invoice aggregation did not finish and finance reports timed out during the closing run. | Invoice query timeouts | Aggregation backlog | Database CPU at 95%",
+    "relevant_incidents": [
+      "INC-2025-00512",
+      "INC-2025-00548"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00230"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-007",
+    "source": "STORY-007",
+    "incident_id": "INC-2026-00107",
+    "service": "Notification Service",
+    "before": "2026-03-19T02:25:00Z",
+    "query": "Notification queue spikes during campaign launch | Notifications stopped being delivered shortly after the APAC spring campaign started. Queue depth grew quickly and order confirmations were delayed. | Queue depth growth | Publishers blocked | Order confirmation e-mails delayed",
+    "relevant_incidents": [
+      "INC-2025-01581"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00390"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-008",
+    "source": "STORY-008",
+    "incident_id": "INC-2026-00108",
+    "service": "Auth Service",
+    "before": "2026-04-04T12:10:00Z",
+    "query": "Auth service restarts during burst traffic | Logins failed for many customers for about 50 minutes. Auth Service pods restarted repeatedly while traffic was higher than usual because of the Easter campaign. | Pods restarting (OOMKilled) | Login failures | Authentication retries",
+    "relevant_incidents": [
+      "INC-2025-01305"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00305"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-009",
+    "source": "STORY-009",
+    "incident_id": "INC-2026-00109",
+    "service": "Reporting Service",
+    "before": "2026-01-15T05:18:00Z",
+    "query": "Reporting service intermittently fails DNS lookups | Nightly finance reports failed or finished late. Many report tasks retried because they could not resolve the warehouse host name. | NXDOMAIN and DNS timeout errors | Task retries in batch processor | Morning finance reports late",
+    "relevant_incidents": [
+      "INC-2026-00012",
+      "INC-2026-00016"
+    ],
+    "relevant_rcas": [],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-010",
+    "source": "STORY-010",
+    "incident_id": "INC-2026-00110",
+    "service": "User Profile Service",
+    "before": "2026-05-22T08:15:00Z",
+    "query": "User profile serialisation errors after microservice update | Customer details failed to load on the account page for part of the requests after the morning deployment. Some fields showed wrong values. | Deserialization failures at the gateway | Wrong values in profile fields | HTTP 502 on /v1/profile",
+    "relevant_incidents": [
+      "INC-2025-00615"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00012"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-011",
+    "source": "STORY-011",
+    "incident_id": "INC-2026-00468",
+    "service": "Payment API",
+    "before": "2026-09-08T10:20:00Z",
+    "query": "Merchants not receiving payment confirmation webhooks | Several large merchants reported that payment confirmations stopped arriving in the morning. Payments themselves were processed normally. | Webhook delivery failures | Merchant reconciliation gaps | Webhook retry queue growth",
+    "relevant_incidents": [],
+    "relevant_rcas": [],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-012",
+    "source": "STORY-012",
+    "incident_id": "INC-2026-00449",
+    "service": "Customer Portal",
+    "before": "2026-08-26T19:05:00Z",
+    "query": "Customer portal slow and timing out in the evening | Product and account pages loaded slowly or timed out for many customers during the evening peak. The portal was not fully down. | Elevated page load time | Gateway timeouts on product pages | Origin CPU above 90%",
+    "relevant_incidents": [],
+    "relevant_rcas": [],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-013",
+    "source": "STORY-013",
+    "incident_id": "INC-2026-00491",
+    "service": "Auth Service",
+    "before": "2026-09-15T08:05:00Z",
+    "query": "Users logged out and login attempts failing intermittently | From about 08:00 many users were signed out and some could not sign in again. The problem cleared after about an hour. | Forced re-login spike | Intermittent login failures | Session not found errors",
+    "relevant_incidents": [],
+    "relevant_rcas": [],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-014",
+    "source": "pay_tokenisation",
+    "incident_id": "INC-2024-00629",
+    "service": "Payment API",
+    "before": "2024-05-23T10:27:00Z",
+    "query": "Card tokenisation requests failing at checkout | A share of checkout attempts failed when the card was sent for tokenisation. Customers saw a generic payment error. First reports came from customers. | Tokenisation service errors | Checkout failures | HTTP 502 from tokenisation endpoint",
+    "relevant_incidents": [
+      "INC-2024-00507",
+      "INC-2024-00511"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00148"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-015",
+    "source": "pay_acquirer",
+    "incident_id": "INC-2024-00839",
+    "service": "Payment API",
+    "before": "2024-07-10T18:38:00Z",
+    "query": "Payment API reports timeouts to the card network | Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected. First reports came from customers. | Gateway timeout errors | Circuit breaker opened",
+    "relevant_incidents": [
+      "INC-2024-00253",
+      "INC-2024-00515"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00145"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-016",
+    "source": "pay_duplicate",
+    "incident_id": "INC-2024-01108",
+    "service": "Payment API",
+    "before": "2024-09-09T13:28:00Z",
+    "query": "Some card payments charged twice | Finance found duplicated captures for a small share of orders paid from the mobile app. | Duplicate charge reports | Idempotency key collisions | Merchant refund requests",
+    "relevant_incidents": [
+      "INC-2024-00203",
+      "INC-2024-00572",
+      "INC-2024-00594",
+      "INC-2024-00616"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00156"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-017",
+    "source": "pay_flag",
+    "incident_id": "INC-2025-00042",
+    "service": "Payment API",
+    "before": "2025-01-09T16:14:00Z",
+    "query": "Checkout errors for some merchants | Error rate on the Payment API rose for a fraction of checkout attempts; other requests completed normally. The problems started shortly after a planned change on the service. Monitoring raised the alert before customers called. | Checkout failures",
+    "relevant_incidents": [
+      "INC-2024-00769",
+      "INC-2024-00985",
+      "INC-2024-01171"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00312"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-018",
+    "source": "auth_mfa",
+    "incident_id": "INC-2024-00699",
+    "service": "Auth Service",
+    "before": "2024-06-08T13:39:00Z",
+    "query": "MFA verification failing for part of users | The second factor step failed for part of the users; support calls increased quickly. First reports came from customers. | MFA verification failures | Login abandonment increase | Support call spike",
+    "relevant_incidents": [
+      "INC-2024-00061",
+      "INC-2024-00415",
+      "INC-2024-00459"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00124"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-019",
+    "source": "auth_jwks",
+    "incident_id": "INC-2024-01049",
+    "service": "Auth Service",
+    "before": "2024-08-27T10:02:00Z",
+    "query": "Intermittent authentication errors across several applications | Several services calling the Auth Service received 401 responses for tokens that should have been valid. The problems started shortly after a planned change on the service. First reports came from customers. | Intermittent 401 responses | Token cache miss spike | Forced re-login spike",
+    "relevant_incidents": [
+      "INC-2024-00078",
+      "INC-2024-00201",
+      "INC-2024-00713",
+      "INC-2024-00765"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00200"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-020",
+    "source": "bill_pdf",
+    "incident_id": "INC-2024-01272",
+    "service": "Billing Service",
+    "before": "2024-10-17T22:12:00Z",
+    "query": "Invoice PDFs not generated for large accounts | Invoice PDF generation timed out for accounts with many invoice lines. | PDF generation timeouts | Invoice delivery delay",
+    "relevant_incidents": [
+      "INC-2024-00722",
+      "INC-2024-00983"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00265"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-021",
+    "source": "gw_waf",
+    "incident_id": "INC-2024-01263",
+    "service": "API Gateway",
+    "before": "2024-10-15T13:12:00Z",
+    "query": "Legitimate requests blocked with HTTP 403 | A class of legitimate requests was rejected with HTTP 403 by the gateway. The problems started shortly after a planned change on the service. First reports came from customers. | Unexpected 403 responses | Blocked legitimate traffic",
+    "relevant_incidents": [
+      "INC-2024-00187",
+      "INC-2024-00202",
+      "INC-2024-00375",
+      "INC-2024-00493"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00142"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-022",
+    "source": "gw_eviction",
+    "incident_id": "INC-2025-01260",
+    "service": "API Gateway",
+    "before": "2025-10-15T20:03:00Z",
+    "query": "Connection resets at the edge during peak | Gateway pods were restarted during a traffic surge and clients saw dropped connections. Monitoring raised the alert before customers called. | Pod eviction events | Connection reset spikes",
+    "relevant_incidents": [
+      "INC-2024-00167",
+      "INC-2024-00402",
+      "INC-2024-00874",
+      "INC-2024-01162",
+      "INC-2025-00791"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00218"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-023",
+    "source": "portal_personalisation",
+    "incident_id": "INC-2024-01495",
+    "service": "Customer Portal",
+    "before": "2024-12-07T18:29:00Z",
+    "query": "Wrong personal greeting shown on account pages | Some customers saw another customer's name in the page header. No other personal data was shown. The problems started shortly after a planned change on the service. | Personalised content mismatch reports | Privacy complaint",
+    "relevant_incidents": [
+      "INC-2024-00900",
+      "INC-2024-01018"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00272"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-024",
+    "source": "notif_sms",
+    "incident_id": "INC-2025-00918",
+    "service": "Notification Service",
+    "before": "2025-07-29T19:52:00Z",
+    "query": "SMS delivery failures for time-sensitive messages | The SMS provider rejected messages and time-sensitive notifications were delayed. Monitoring raised the alert before customers called. | SMS delivery failures | Delivery confirmation timeouts",
+    "relevant_incidents": [
+      "INC-2024-00079",
+      "INC-2024-00179",
+      "INC-2024-00367",
+      "INC-2024-01014",
+      "INC-2025-00061"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00043"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-025",
+    "source": "payroll_bank",
+    "incident_id": "INC-2024-00984",
+    "service": "Payroll Service",
+    "before": "2024-08-12T12:01:00Z",
+    "query": "Payroll bank export stuck | The scheduled bank transfer file was not delivered to the bank for one payroll run. First reports came from customers. | Bank export job failure | Delayed salary transfer",
+    "relevant_incidents": [
+      "INC-2024-00542",
+      "INC-2024-00805"
+    ],
+    "relevant_rcas": [
+      "RCA-2024-00228"
+    ],
+    "misleading_records": []
+  },
+  {
+    "question_id": "RQ-026",
+    "source": "rep_cache_storm",
+    "incident_id": "INC-2025-01390",
+    "service": "Reporting Service",
+    "before": "2025-11-14T12:22:00Z",
+    "query": "All dashboards slow at the same time | Every dashboard slowed down at the same moment and the warehouse CPU reached its limit. First reports came from customers. | Simultaneous cache miss spike",
+    "relevant_incidents": [
+      "INC-2025-00861",
+      "INC-2025-01263",
+      "INC-2025-01316"
+    ],
+    "relevant_rcas": [
+      "RCA-2025-00339"
+    ],
+    "misleading_records": []
+  }
+]

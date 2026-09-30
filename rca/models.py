@@ -55,8 +55,28 @@ class Incident(SourceRecord):
     symptoms: list[str]
     initial_mitigation: str | None = None
     reported_by: str | None = None
+    ci_id: str | None = None  # the CMDB item where the symptoms were seen
+    assignment_group: str | None = None  # the team that owned the ticket
+    reassignment_count: int = 0  # how many times the ticket moved between teams
+    reopen_count: int = 0
     rca_required: bool
     rca_reason: str | None = None
+
+
+class IncidentEvent(SourceRecord):
+    """One step in the life of an incident ticket: opened, assigned, on hold, resolved, closed.
+    The events give the Timeline of the incident."""
+
+    event_id: str = Field(pattern=r"^EVT-\d{4}-\d{5}-\d{2}$")
+    incident_id: str = Field(pattern=r"^INC-\d{4}-\d{5}$")
+    timestamp: datetime
+    action: Literal[
+        "opened", "assigned", "reassigned", "awaiting_caller", "awaiting_vendor", "resumed",
+        "workaround", "resolved", "reopened", "closed",
+    ]
+    state: Literal["New", "In Progress", "On Hold", "Resolved", "Closed"]
+    assignment_group: str
+    note: str | None = None
 
 
 class ConfigItem(SourceRecord):

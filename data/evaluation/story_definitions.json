@@ -1,102 +1,225 @@
 [
   {
     "story_id": "STORY-001",
-    "title": "Monday Morning Payroll Batch Overload",
+    "title": "Monday morning payroll batch overload",
+    "kind": "success",
+    "demo_purpose": "Recurrence and time pattern: five Monday morning incidents since March 2026, the same failure fixed once in 2025.",
     "service": "Payroll Service",
     "business_service": "Payroll & HR",
+    "target_incident": "INC-2026-00101",
+    "related_incidents": [
+      "INC-2025-00104",
+      "INC-2025-00119",
+      "INC-2026-00139",
+      "INC-2026-00167",
+      "INC-2026-00188",
+      "INC-2026-00196"
+    ],
     "has_time_pattern": true,
-    "time_pattern": "Every Monday between 06:00:00Z and 08:30:00Z",
+    "time_pattern": "Mondays between 06:00 and 08:30 UTC, during the weekly payroll batch",
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00042"
+    "historical_rca_ids": [
+      "RCA-2025-00042"
+    ]
   },
   {
     "story_id": "STORY-002",
-    "title": "Payment API Connection Pool Leak after v4.18.2",
+    "title": "Payment API connection leak after v4.18.2",
+    "kind": "success",
+    "demo_purpose": "The reference case: a deployment 34 minutes before detection, clear logs, a matching past RCA, and two innocent changes in the window.",
     "service": "Payment API",
     "business_service": "Online Payments",
+    "target_incident": "INC-2026-00482",
+    "related_incidents": [
+      "INC-2025-00401"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00114"
+    "historical_rca_ids": [
+      "RCA-2025-00114"
+    ]
   },
   {
     "story_id": "STORY-003",
-    "title": "Novel Edge Case on Customer Portal (No Useful History)",
+    "title": "Customer Portal session errors after a regional failover (no useful history)",
+    "kind": "edge",
+    "demo_purpose": "No past RCA and no similar incident. One innocent change in the window. The application should report weak support and ask for more evidence, not invent a cause.",
     "service": "Customer Portal",
     "business_service": "Customer Services",
+    "target_incident": "INC-2026-00103",
+    "related_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
-    "historical_rca_id": null
+    "historical_rca_ids": []
   },
   {
     "story_id": "STORY-004",
-    "title": "API Gateway TLS Certificate Expiration",
+    "title": "API Gateway wildcard certificate expired",
+    "kind": "success",
+    "demo_purpose": "A matching past RCA from 2024, an innocent patching change the night before, and a cause (a credential rotation) older than the search window.",
     "service": "API Gateway",
-    "business_service": "Core Banking",
+    "business_service": "Digital Channels",
+    "target_incident": "INC-2026-00104",
+    "related_incidents": [
+      "INC-2024-00891"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2024-00088"
+    "historical_rca_ids": [
+      "RCA-2024-00088"
+    ]
   },
   {
     "story_id": "STORY-005",
-    "title": "Deadlock on Settlement Event Bus",
+    "title": "Settlement consumer stuck on an incompatible message",
+    "kind": "edge",
+    "demo_purpose": "A misleading past RCA: same service, same symptoms (consumer lag, rebalances), different cause. The cause is a change on a dependency, found through the CMDB.",
     "service": "Settlement Service",
     "business_service": "Core Banking",
+    "target_incident": "INC-2026-00105",
+    "related_incidents": [
+      "INC-2025-00982"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00192"
+    "historical_rca_ids": [
+      "RCA-2025-00192"
+    ]
   },
   {
     "story_id": "STORY-006",
-    "title": "End-of-Month Billing Aggregation Timeout",
+    "title": "Month-end billing aggregation times out",
+    "kind": "success",
+    "demo_purpose": "Second time pattern (last business day of the month) and the 'request more evidence' loop: the cause is a maintenance change 6 days before, found only with a wider window.",
     "service": "Billing Service",
     "business_service": "Billing",
+    "target_incident": "INC-2026-00106",
+    "related_incidents": [
+      "INC-2025-00512",
+      "INC-2025-00548"
+    ],
     "has_time_pattern": true,
-    "time_pattern": "Last business day of every month between 22:00:00Z and 02:00:00Z",
+    "time_pattern": "Last business day of the month, 22:00-02:00 UTC, during the month-end aggregation",
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00230"
+    "historical_rca_ids": [
+      "RCA-2025-00230"
+    ]
   },
   {
     "story_id": "STORY-007",
-    "title": "Notification Queue Disk Saturation",
+    "title": "Notification broker disk full during a campaign",
+    "kind": "edge",
+    "demo_purpose": "The obvious trigger (a campaign starting) is not the cause. The first-error rule gives no points to the campaign change, because the disk warnings started a day earlier.",
     "service": "Notification Service",
     "business_service": "Notifications",
+    "target_incident": "INC-2026-00107",
+    "related_incidents": [
+      "INC-2025-01581"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00390"
+    "historical_rca_ids": [
+      "RCA-2025-00390"
+    ]
   },
   {
     "story_id": "STORY-008",
-    "title": "OOM Kill Loop on Auth Service Pods",
+    "title": "Auth Service pods killed after a resource profile change",
+    "kind": "success",
+    "demo_purpose": "A clear change two and a half hours before the incident; a traffic surge and a past RCA with a different cause compete as explanations.",
     "service": "Auth Service",
     "business_service": "User Authentication",
+    "target_incident": "INC-2026-00108",
+    "related_incidents": [
+      "INC-2025-01305"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00305"
+    "historical_rca_ids": [
+      "RCA-2025-00305"
+    ]
   },
   {
     "story_id": "STORY-009",
-    "title": "Cross-Service DNS Resolution Intermittent Failures",
+    "title": "Nightly reporting DNS timeouts after CoreDNS scale-down",
+    "kind": "success",
+    "demo_purpose": "The cause is a change on a shared platform (Kubernetes CoreDNS), found only because the CMDB links the Reporting Service to it. Three nights in a row give a daily pattern.",
     "service": "Reporting Service",
     "business_service": "Reporting",
-    "has_time_pattern": false,
-    "time_pattern": null,
+    "target_incident": "INC-2026-00109",
+    "related_incidents": [
+      "INC-2026-00012",
+      "INC-2026-00016"
+    ],
+    "has_time_pattern": true,
+    "time_pattern": "Every night around 05:00 UTC, when the nightly report batch starts",
     "has_historical_rca": false,
-    "historical_rca_id": null
+    "historical_rca_ids": []
   },
   {
     "story_id": "STORY-010",
-    "title": "Schema Serialization Mismatch after Microservice Update",
+    "title": "User Profile contract field reused after v3.2",
+    "kind": "success",
+    "demo_purpose": "The same kind of failure a year apart: a matching past RCA plus a deployment 35 minutes before detection.",
     "service": "User Profile Service",
     "business_service": "Customer Services",
+    "target_incident": "INC-2026-00110",
+    "related_incidents": [
+      "INC-2025-00615"
+    ],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
-    "historical_rca_id": "RCA-2025-00012"
+    "historical_rca_ids": [
+      "RCA-2025-00012"
+    ]
+  },
+  {
+    "story_id": "STORY-011",
+    "title": "Merchant webhooks blocked after a vendor IP change",
+    "kind": "edge",
+    "demo_purpose": "The deployment the day of the incident is innocent: the failures started 43 minutes before it. The real cause (a vendor IP change and our egress allowlist) is outside the sources, so the application should not reach HIGH and should list what it could not check.",
+    "service": "Payment API",
+    "business_service": "Online Payments",
+    "target_incident": "INC-2026-00468",
+    "related_incidents": [],
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_ids": []
+  },
+  {
+    "story_id": "STORY-012",
+    "title": "Customer Portal origin overload after a CDN rule change",
+    "kind": "edge",
+    "demo_purpose": "Two changes 15 minutes apart were rolled back together. The logs show which one came first: the CDN hit ratio falls before the portal release.",
+    "service": "Customer Portal",
+    "business_service": "Customer Services",
+    "target_incident": "INC-2026-00449",
+    "related_incidents": [],
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_ids": []
+  },
+  {
+    "story_id": "STORY-013",
+    "title": "Session store evictions after a token lifetime change (log gap)",
+    "kind": "edge",
+    "demo_purpose": "Logs are missing for most of the incident (log shipper upgrade). The first investigation should be weak and list the gap; a second one with a 7 day window finds the memory growth and the change.",
+    "service": "Auth Service",
+    "business_service": "User Authentication",
+    "target_incident": "INC-2026-00491",
+    "related_incidents": [],
+    "has_time_pattern": false,
+    "time_pattern": null,
+    "has_historical_rca": false,
+    "historical_rca_ids": []
   }
 ]
