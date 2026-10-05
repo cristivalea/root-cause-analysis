@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from rca.models import Change, CIRelationship, ConfigItem, Incident, LogEntry
+from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry
 
 
 SCHEMAS = {
@@ -54,6 +54,15 @@ SCHEMAS = {
             payload TEXT NOT NULL
         )
     """,
+    "incident_events": """
+        CREATE TABLE IF NOT EXISTS incident_events (
+            event_id TEXT PRIMARY KEY,
+            incident_id TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            action TEXT NOT NULL,
+            payload TEXT NOT NULL
+        )
+    """,
     "logs": """
         CREATE TABLE IF NOT EXISTS logs (
             log_id TEXT PRIMARY KEY,
@@ -67,8 +76,11 @@ SCHEMAS = {
 }
 
 
-def _read_records(sources_dir: Path, filename: str) -> list[dict[str, Any]]:
-    return json.loads((sources_dir / filename).read_text(encoding="utf-8"))
+def _read_records(sources_dir: Path, filename: str, optional: bool = False) -> list[dict[str, Any]]:
+    path = sources_dir / filename
+    if optional and not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def initialize_database(connection: sqlite3.Connection) -> None:
@@ -77,8 +89,21 @@ def initialize_database(connection: sqlite3.Connection) -> None:
     connection.commit()
 
 
+def clear_sources(db_path: Path) -> None:
+    """Empty the source tables, so a new load does not keep records that no longer exist.
+    The RCA records (rca_records) are not touched."""
+    if not db_path.exists():
+        return
+    with closing(sqlite3.connect(db_path)) as connection:
+        initialize_database(connection)
+        for table in SCHEMAS:
+            connection.execute(f"DELETE FROM {table}")
+        connection.commit()
+
+
 def load_sources(db_path: Path, sources_dir: Path) -> None:
     incidents = [Incident.model_validate(item) for item in _read_records(sources_dir, "incidents.json")]
+    events = [IncidentEvent.model_validate(item) for item in _read_records(sources_dir, "incident_events.json", optional=True)]
     cmdb_items = [ConfigItem.model_validate(item) for item in _read_records(sources_dir, "cmdb_items.json")]
     relationships = [CIRelationship.model_validate(item) for item in _read_records(sources_dir, "cmdb_relationships.json")]
     changes = [Change.model_validate(item) for item in _read_records(sources_dir, "changes.json")]
@@ -102,6 +127,17 @@ def load_sources(db_path: Path, sources_dir: Path) -> None:
                     json.dumps(item.model_dump(mode="json")),
                 )
                 for item in incidents
+            ],
+        )
+        connection.executemany(
+            """INSERT INTO incident_events VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(event_id) DO UPDATE SET
+               incident_id=excluded.incident_id, timestamp=excluded.timestamp,
+               action=excluded.action, payload=excluded.payload""",
+            [
+                (item.event_id, item.incident_id, item.timestamp.isoformat(), item.action,
+                 json.dumps(item.model_dump(mode="json")))
+                for item in events
             ],
         )
         connection.executemany(
@@ -214,6 +250,16 @@ def delete_incident(db_path: Path, incident_id: str) -> None:
         initialize_database(connection)
         connection.execute("DELETE FROM incidents WHERE incident_id = ?", (incident_id,))
         connection.commit()
+
+
+def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:
+    """The life of an incident ticket, oldest event first."""
+    payloads = _read_payloads(
+        db_path,
+        "SELECT payload FROM incident_events WHERE incident_id = ? ORDER BY julianday(timestamp), event_id",
+        [incident_id],
+    )
+    return [IncidentEvent.model_validate(item) for item in payloads]
 
 
 def get_config_items_for_service(db_path: Path, service: str) -> list[ConfigItem]:

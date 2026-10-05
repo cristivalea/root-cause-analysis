@@ -12,11 +12,23 @@ python -m pip install -r requirements.txt
 ollama pull nomic-embed-text
 ```
 
+## Build the mock data
+
+```bash
+python scripts/build_mock_data.py            # writes data/sources, data/knowledge_base/rcas, data/evaluation
+python scripts/build_mock_data.py --check    # only builds and validates
+python scripts/load_sources_sqlite.py --reset
+```
+
+`--reset` empties the source tables before loading, so records that no longer exist are removed. The saved RCAs are kept.
+
 ## Ingest the project data
 
 ```bash
-python scripts/ingest_chroma.py
+python scripts/ingest_chroma.py --reset
 ```
+
+`--reset` deletes both collections first; run it after rebuilding the mock data.
 
 ## Query the collections
 
