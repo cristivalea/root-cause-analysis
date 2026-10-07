@@ -1,0 +1,205 @@
+{
+  "timestamp": "2026-10-06T13:02:12Z",
+  "total_cases": 13,
+  "overall_calibration_rate_percent": 7.69,
+  "success_cases": {
+    "total": 7,
+    "correct": 0,
+    "rate_percent": 0.0
+  },
+  "edge_cases": {
+    "total": 6,
+    "correct": 1,
+    "rate_percent": 16.67
+  },
+  "details": [
+    {
+      "story_id": "STORY-009",
+      "incident_id": "INC-2026-00109",
+      "kind": "success",
+      "title": "Nightly reporting DNS timeouts after CoreDNS scale-down",
+      "duration_seconds": 40.88751292228699,
+      "actual_confidence": "NONE",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "is_calibrated": false,
+      "error": null
+    },
+    {
+      "story_id": "STORY-005",
+      "incident_id": "INC-2026-00105",
+      "kind": "edge",
+      "title": "Settlement consumer stuck on an incompatible message",
+      "duration_seconds": 44.86578559875488,
+      "actual_confidence": "MEDIUM",
+      "actual_points": 3,
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "is_calibrated": true,
+      "error": null
+    },
+    {
+      "story_id": "STORY-007",
+      "incident_id": "INC-2026-00107",
+      "kind": "edge",
+      "title": "Notification broker disk full during a campaign",
+      "duration_seconds": 48.999974489212036,
+      "actual_confidence": "MEDIUM",
+      "actual_points": 3,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": null
+    },
+    {
+      "story_id": "STORY-008",
+      "incident_id": "INC-2026-00108",
+      "kind": "success",
+      "title": "Auth Service pods killed after a resource profile change",
+      "duration_seconds": 44.88659429550171,
+      "actual_confidence": "MEDIUM",
+      "actual_points": 3,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": null
+    },
+    {
+      "story_id": "STORY-004",
+      "incident_id": "INC-2026-00104",
+      "kind": "success",
+      "title": "API Gateway wildcard certificate expired",
+      "duration_seconds": 49.36003541946411,
+      "actual_confidence": "MEDIUM",
+      "actual_points": 4,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": null
+    },
+    {
+      "story_id": "STORY-010",
+      "incident_id": "INC-2026-00110",
+      "kind": "success",
+      "title": "User Profile contract field reused after v3.2",
+      "duration_seconds": 2.3563010692596436,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kv04azptf0cscpfxvqd20p6x` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198037, Requested 3046. Please try again in 7m47.856s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "story_id": "STORY-006",
+      "incident_id": "INC-2026-00106",
+      "kind": "success",
+      "title": "Month-end billing aggregation times out",
+      "duration_seconds": 2.292651414871216,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kv04azptf0cscpfxvqd20p6x` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198032, Requested 3180. Please try again in 8m43.584s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "story_id": "STORY-002",
+      "incident_id": "INC-2026-00482",
+      "kind": "success",
+      "title": "Payment API connection leak after v4.18.2",
+      "duration_seconds": 2.352259635925293,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kv04azptf0cscpfxvqd20p6x` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198026, Requested 3173. Please try again in 8m37.968s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "story_id": "STORY-001",
+      "incident_id": "INC-2026-00101",
+      "kind": "success",
+      "title": "Monday morning payroll batch overload",
+      "duration_seconds": 2.3773224353790283,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH"
+      ],
+      "is_calibrated": false,
+      "error": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kv04azptf0cscpfxvqd20p6x` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198021, Requested 2944. Please try again in 6m56.88s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "story_id": "STORY-003",
+      "incident_id": "INC-2026-00103",
+      "kind": "edge",
+      "title": "Customer Portal session errors after a regional failover (no useful history)",
+      "duration_seconds": 2.2809786796569824,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "is_calibrated": false,
+      "error": "Error code: 429 - {'error': {'message': 'Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01kv04azptf0cscpfxvqd20p6x` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198015, Requested 3193. Please try again in 8m41.856s. Need more tokens? Upgrade to Dev Tier today at https://console.groq.com/settings/billing', 'type': 'tokens', 'code': 'rate_limit_exceeded'}}"
+    },
+    {
+      "story_id": "STORY-012",
+      "incident_id": "INC-2026-00449",
+      "kind": "edge",
+      "title": "Customer Portal origin overload after a CDN rule change",
+      "duration_seconds": 0.012682199478149414,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "is_calibrated": false,
+      "error": "Incident 'INC-2026-00449' was not found in D:\\ATOS_ACADEMIE_AI\\PROIECT_ATOS\\root-cause-analysis\\data\\rca_sources.sqlite3."
+    },
+    {
+      "story_id": "STORY-011",
+      "incident_id": "INC-2026-00468",
+      "kind": "edge",
+      "title": "Merchant webhooks blocked after a vendor IP change",
+      "duration_seconds": 0.00316619873046875,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "is_calibrated": false,
+      "error": "Incident 'INC-2026-00468' was not found in D:\\ATOS_ACADEMIE_AI\\PROIECT_ATOS\\root-cause-analysis\\data\\rca_sources.sqlite3."
+    },
+    {
+      "story_id": "STORY-013",
+      "incident_id": "INC-2026-00491",
+      "kind": "edge",
+      "title": "Session store evictions after a token lifetime change (log gap)",
+      "duration_seconds": 0.0032279491424560547,
+      "actual_confidence": "ERROR",
+      "actual_points": 0,
+      "acceptable_confidence": [
+        "LOW",
+        "MEDIUM"
+      ],
+      "is_calibrated": false,
+      "error": "Incident 'INC-2026-00491' was not found in D:\\ATOS_ACADEMIE_AI\\PROIECT_ATOS\\root-cause-analysis\\data\\rca_sources.sqlite3."
+    }
+  ]
+}
