@@ -18,27 +18,68 @@ REVIEW = "app_pages/review.py"
 HISTORY = "app_pages/history.py"
 
 
+# def build_pages(role: state.Role) -> list[st.Page]:
+#     """The pages this role can open, in the order they appear in the top bar."""
+#     pages = [
+#         # The default page answers on "/", so it is not given a path of its own.
+#         st.Page(HOME, title=t("nav.home"), icon=theme.ICONS["home"], default=True),
+#         st.Page(START_RCA, title=t("nav.start_rca"), icon=theme.ICONS["start_rca"], url_path="start-rca"),
+#         st.Page(INVESTIGATION, title=t("nav.investigation"), icon=theme.ICONS["investigation"], url_path="investigation"),
+#     ]
+#     # The review page is always routable, so a link to a review still works tomorrow, in a
+#     # new session, whatever role the browser opens in. It is only listed in the bar for the
+#     # role whose work it is; the page itself says so and offers to switch.
+#     pages.append(
+#         st.Page(
+#             REVIEW,
+#             title=t("nav.review"),
+#             icon=theme.ICONS["review"],
+#             url_path="technical-review",
+#             visibility="visible" if role == state.TECHNICAL_EXPERT else "hidden",
+#         )
+#     )
+#     pages.append(
+#         st.Page(HISTORY, title=t("nav.history"), icon=theme.ICONS["history"], url_path="rca-history")
+#     )
+#     return pages
+
 def build_pages(role: state.Role) -> list[st.Page]:
-    """The pages this role can open, in the order they appear in the top bar."""
-    pages = [
-        # The default page answers on "/", so it is not given a path of its own.
-        st.Page(HOME, title=t("nav.home"), icon=theme.ICONS["home"], default=True),
-        st.Page(START_RCA, title=t("nav.start_rca"), icon=theme.ICONS["start_rca"], url_path="start-rca"),
-        st.Page(INVESTIGATION, title=t("nav.investigation"), icon=theme.ICONS["investigation"], url_path="investigation"),
-    ]
-    # The review page is always routable, so a link to a review still works tomorrow, in a
-    # new session, whatever role the browser opens in. It is only listed in the bar for the
-    # role whose work it is; the page itself says so and offers to switch.
-    pages.append(
+    home = st.Page(
+        HOME,
+        title=t("nav.home"),
+        icon=theme.ICONS["home"],
+        default=True,
+    )
+
+    if role == state.PROBLEM_MANAGER:
+        return [
+            home,
+            st.Page(
+                START_RCA,
+                title=t("nav.start_rca"),
+                icon=theme.ICONS["start_rca"],
+                url_path="start-rca",
+            ),
+            st.Page(
+                INVESTIGATION,
+                title=t("nav.investigation"),
+                icon=theme.ICONS["investigation"],
+                url_path="investigation",
+            ),
+            st.Page(
+                HISTORY,
+                title=t("nav.history"),
+                icon=theme.ICONS["history"],
+                url_path="rca-history",
+            ),
+        ]
+
+    return [
+        home,
         st.Page(
             REVIEW,
             title=t("nav.review"),
             icon=theme.ICONS["review"],
             url_path="technical-review",
-            visibility="visible" if role == state.TECHNICAL_EXPERT else "hidden",
-        )
-    )
-    pages.append(
-        st.Page(HISTORY, title=t("nav.history"), icon=theme.ICONS["history"], url_path="rca-history")
-    )
-    return pages
+        ),
+    ]

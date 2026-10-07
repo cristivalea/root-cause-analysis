@@ -22,52 +22,95 @@ ROLES: tuple[Role, ...] = (PROBLEM_MANAGER, TECHNICAL_EXPERT)
 # The role is kept under our own key, not under the key of the selector widget. Streamlit
 # drops widget state when the widget is not part of a run, which happens while moving from
 # one page to another; a role that lived in the widget key was lost on every page switch.
+# ROLE_KEY = "role"
+# ROLE_WIDGET_KEY = "role_selector"
+# SELECTED_INCIDENT_KEY = "selected_incident_id"
+# ACTIVE_RCA_KEY = "active_rca_id"
+# RUN_REQUEST_KEY = "investigation_requested"
+# RUN_ERROR_KEY = "investigation_error"
+
+
+# def initialise() -> None:
+#     """Set the defaults once per session. Called by the entry point before anything else."""
+#     st.session_state.setdefault(ROLE_KEY, PROBLEM_MANAGER)
+
+
+# def current_role() -> Role:
+#     """The role in use. The selector can be cleared, which means back to the default."""
+#     return st.session_state.get(ROLE_KEY) or PROBLEM_MANAGER
+
+
+# def is_technical_expert() -> bool:
+#     return current_role() == TECHNICAL_EXPERT
+
+
+# def role_widget_key() -> str:
+#     """The key of the role selector, which carries the role in it.
+
+#     The browser keeps the value of a widget by its key. If the role changes anywhere other
+#     than in the selector itself, the selector has to be a new widget, or the browser sends
+#     the old role back on the next click and undoes the change.
+#     """
+#     return f"{ROLE_WIDGET_KEY}:{current_role()}"
+
+
+# def request_role(role: Role) -> None:
+#     """Change the role from inside a page. The selector follows on the next run."""
+#     st.session_state[ROLE_KEY] = role
+
+
+# def apply_role_selection(widget_key: str) -> None:
+#     """Keep the chosen role: the selector only reports it, the application stores it."""
+#     st.session_state[ROLE_KEY] = st.session_state.get(widget_key) or PROBLEM_MANAGER
+
+
+# def role_name(role: Role) -> str:
+#     """The name of a role as the user reads it."""
+#     return t(f"role.{role}")
+
 ROLE_KEY = "role"
-ROLE_WIDGET_KEY = "role_selector"
+TOKEN_KEY = "auth_token"
+USERNAME_KEY = "auth_username"
 SELECTED_INCIDENT_KEY = "selected_incident_id"
 ACTIVE_RCA_KEY = "active_rca_id"
 RUN_REQUEST_KEY = "investigation_requested"
 RUN_ERROR_KEY = "investigation_error"
 
 
-def initialise() -> None:
-    """Set the defaults once per session. Called by the entry point before anything else."""
-    st.session_state.setdefault(ROLE_KEY, PROBLEM_MANAGER)
+def sign_in(token: str, username: str, role: str) -> None:
+    """Singurul loc în care rolul este setat, doar după un login reușit."""
+    if role not in ROLES:
+        raise ValueError(f"Rol necunoscut: {role!r}")
+    st.session_state[TOKEN_KEY] = token
+    st.session_state[USERNAME_KEY] = username
+    st.session_state[ROLE_KEY] = role
 
 
-def current_role() -> Role:
-    """The role in use. The selector can be cleared, which means back to the default."""
-    return st.session_state.get(ROLE_KEY) or PROBLEM_MANAGER
+def sign_out() -> None:
+    st.session_state.clear()
+
+
+def is_authenticated() -> bool:
+    return bool(st.session_state.get(TOKEN_KEY)) and st.session_state.get(ROLE_KEY) in ROLES
+
+
+def current_role() -> Role | None:
+    """Rolul din login, sau None dacă nimeni nu este autentificat. Nu există rol implicit."""
+    role = st.session_state.get(ROLE_KEY)
+    return role if role in ROLES else None
+
+
+def current_username() -> str | None:
+    return st.session_state.get(USERNAME_KEY)
 
 
 def is_technical_expert() -> bool:
     return current_role() == TECHNICAL_EXPERT
 
 
-def role_widget_key() -> str:
-    """The key of the role selector, which carries the role in it.
-
-    The browser keeps the value of a widget by its key. If the role changes anywhere other
-    than in the selector itself, the selector has to be a new widget, or the browser sends
-    the old role back on the next click and undoes the change.
-    """
-    return f"{ROLE_WIDGET_KEY}:{current_role()}"
-
-
-def request_role(role: Role) -> None:
-    """Change the role from inside a page. The selector follows on the next run."""
-    st.session_state[ROLE_KEY] = role
-
-
-def apply_role_selection(widget_key: str) -> None:
-    """Keep the chosen role: the selector only reports it, the application stores it."""
-    st.session_state[ROLE_KEY] = st.session_state.get(widget_key) or PROBLEM_MANAGER
-
-
 def role_name(role: Role) -> str:
     """The name of a role as the user reads it."""
     return t(f"role.{role}")
-
 
 def selected_incident_id() -> str | None:
     return st.session_state.get(SELECTED_INCIDENT_KEY)

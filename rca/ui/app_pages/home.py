@@ -12,8 +12,26 @@ from rca.ui.strings import t
 STEPS = ("home.step_1", "home.step_2", "home.step_3", "home.step_4")
 
 
+# def hero() -> None:
+#     """The name of the tool, what it is for, and the action that starts everything."""
+#     _, middle, _ = st.columns([1, 3, 1])
+#     with middle:
+#         st.title(t("home.title"), text_alignment="center")
+#         st.markdown(t("home.subtitle"), text_alignment="center")
+#         st.space("small")
+#         with st.container(horizontal=True, horizontal_alignment="center"):
+#             if st.button(
+#                 t("home.cta"),
+#                 type="primary",
+#                 icon=theme.ICONS["start_rca"],
+#                 help=t("home.cta_help"),
+#             ):
+#                 st.switch_page(navigation.START_RCA)
+#         with st.container(horizontal=True, horizontal_alignment="center"):
+#             st.page_link(navigation.HISTORY, label=t("home.history_link"), icon=theme.ICONS["history"])
+
 def hero() -> None:
-    """The name of the tool, what it is for, and the action that starts everything."""
+    """Problem Manager: numele aplicației, scopul ei și acțiunea care pornește totul."""
     _, middle, _ = st.columns([1, 3, 1])
     with middle:
         st.title(t("home.title"), text_alignment="center")
@@ -30,7 +48,6 @@ def hero() -> None:
         with st.container(horizontal=True, horizontal_alignment="center"):
             st.page_link(navigation.HISTORY, label=t("home.history_link"), icon=theme.ICONS["history"])
 
-
 def how_it_works() -> None:
     """The four steps of an RCA, so nobody has to guess what the button leads to."""
     st.header(t("home.how_it_works"))
@@ -41,31 +58,65 @@ def how_it_works() -> None:
             st.caption(t(f"{step}.text"))
 
 
-def waiting_for_the_expert() -> None:
-    """Only for the Technical Expert: how much is waiting, and the way to it.
+# def waiting_for_the_expert() -> None:
+#     """Only for the Technical Expert: how much is waiting, and the way to it.
 
-    The number is read from the stored analyses, so the page never promises work that is
-    not there. If the data cannot be read, the block simply does not appear.
-    """
-    if not state.is_technical_expert():
-        return
-    try:
-        waiting = len(services.list_rcas(status="PENDING_REVIEW"))
-    except services.ServiceError:
-        return
+#     The number is read from the stored analyses, so the page never promises work that is
+#     not there. If the data cannot be read, the block simply does not appear.
+#     """
+#     # if not state.is_technical_expert():
+#     #     return
+#     # try:
+#     #     waiting = len(services.list_rcas(status="PENDING_REVIEW"))
+#     # except services.ServiceError:
+#     #     return
 
-    st.space("small")
-    with st.container(border=True):
-        if waiting == 0:
-            st.markdown(t("home.expert.waiting_none"))
+#     st.space("small")
+#     with st.container(border=True):
+#         if waiting == 0:
+#             st.markdown(t("home.expert.waiting_none"))
+#             return
+#         message = t("home.expert.waiting_one") if waiting == 1 else t("home.expert.waiting_many", count=waiting)
+#         st.markdown(f"**{message}**")
+#         if st.button(t("home.expert.open_review"), type="primary", icon=theme.ICONS["review"]):
+#             st.switch_page(navigation.REVIEW)
+
+def expert_home() -> None:
+    """Technical Expert: coada de validări și drumul către ea."""
+    _, middle, _ = st.columns([1, 3, 1])
+    with middle:
+        st.title(t("review.title"), text_alignment="center")
+        st.markdown(t("review.subtitle"), text_alignment="center")
+        st.space("small")
+
+        try:
+            waiting = len(services.list_rcas(status="PENDING_REVIEW"))
+        except services.ServiceError as error:
+            st.error(t("state.error_data"), icon=theme.ICONS["error"])
+            st.caption(t("state.error_detail", detail=error))
             return
-        message = t("home.expert.waiting_one") if waiting == 1 else t("home.expert.waiting_many", count=waiting)
-        st.markdown(f"**{message}**")
-        if st.button(t("home.expert.open_review"), type="primary", icon=theme.ICONS["review"]):
-            st.switch_page(navigation.REVIEW)
 
+        with st.container(border=True):
+            if waiting == 0:
+                st.markdown(t("home.expert.waiting_none"))
+                return
+            message = (
+                t("home.expert.waiting_one")
+                if waiting == 1
+                else t("home.expert.waiting_many", count=waiting)
+            )
+            st.markdown(f"**{message}**")
+            if st.button(t("home.expert.open_review"), type="primary", icon=theme.ICONS["review"]):
+                st.switch_page(navigation.REVIEW)
 
-hero()
-st.space("medium")
-how_it_works()
-waiting_for_the_expert()
+# hero()
+# st.space("medium")
+# how_it_works()
+# waiting_for_the_expert()
+
+if state.is_technical_expert():
+    expert_home()
+else:
+    hero()
+    st.space("medium")
+    how_it_works()

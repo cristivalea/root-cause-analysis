@@ -187,6 +187,26 @@ from rca.models import Incident, InvestigationStep, RCARecord, RCAStatus
 INCIDENT_CACHE_SECONDS = 300
 API_BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
 
+def _auth_headers() -> dict[str, str]:
+    token = st.session_state.get("auth_token")
+    if not token:
+        return {}
+    return {"Authorization": f"Bearer {token}"}
+
+
+def login(username: str, password: str) -> dict:
+    try:
+        response = _check_response(
+            requests.post(
+                f"{API_BASE_URL}/api/v1/auth/login", headers=_auth_headers(),
+                json={"username": username, "password": password},
+                timeout=10,
+            )
+        )
+        return response.json()
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+    
 
 class ServiceError(Exception):
     """The data could not be read or written via the API."""
@@ -213,10 +233,11 @@ def _check_response(response: requests.Response) -> requests.Response:
 # Incidents
 # --------------------------------------------------------------------------------------
 
-@st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
+# @st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
 def list_incidents() -> list[Incident]:
     try:
-        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/incidents", timeout=15))
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/incidents", headers=_auth_headers(),
+                                             timeout=15))
         return [Incident.model_validate(item) for item in resp.json()]
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -224,7 +245,7 @@ def list_incidents() -> list[Incident]:
 
 def get_incident(incident_id: str) -> Incident | None:
     try:
-        resp = requests.get(f"{API_BASE_URL}/api/v1/incidents/{incident_id}", timeout=10)
+        resp = requests.get(f"{API_BASE_URL}/api/v1/incidents/{incident_id}", headers=_auth_headers(), timeout=10)
         if resp.status_code == 404:
             return None
         _check_response(resp)
@@ -233,15 +254,15 @@ def get_incident(incident_id: str) -> Incident | None:
         raise ServiceError(str(exc)) from exc
 
 
-@st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
+# @st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
 def services() -> list[str]:
     return sorted({incident.service for incident in list_incidents()})
 
 
-@st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
+# @st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
 def teams_for_service(service: str) -> list[str]:
     try:
-        resp = requests.get(f"{API_BASE_URL}/api/v1/services/{service}/teams", timeout=5)
+        resp = requests.get(f"{API_BASE_URL}/api/v1/services/{service}/teams", headers=_auth_headers(), timeout=5)
         if resp.status_code == 200:
             return resp.json()
         return []
@@ -263,7 +284,7 @@ def list_rcas(status: RCAStatus | str | None = None) -> list[RCARecord]:
     status_str = status.value if hasattr(status, "value") else status
     params = {"status": status_str} if status_str else {}
     try:
-        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/rcas", params=params, timeout=10))
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/rcas", headers=_auth_headers(), params=params, timeout=10))
         return [RCARecord.model_validate(item) for item in resp.json()]
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -271,7 +292,7 @@ def list_rcas(status: RCAStatus | str | None = None) -> list[RCARecord]:
 
 def get_rca(rca_id: str) -> RCARecord | None:
     try:
-        resp = requests.get(f"{API_BASE_URL}/api/v1/rcas/{rca_id}", timeout=10)
+        resp = requests.get(f"{API_BASE_URL}/api/v1/rcas/{rca_id}", headers=_auth_headers(), timeout=10)
         if resp.status_code == 404:
             return None
         _check_response(resp)
@@ -286,7 +307,7 @@ def rcas_for_incident(incident_id: str) -> list[RCARecord]:
 
 def submit_for_review(rca_id: str) -> RCARecord:
     try:
-        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/submit-review", timeout=10))
+        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/submit-review", headers=_auth_headers(), timeout=10))
         return RCARecord.model_validate(resp.json())
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -308,7 +329,7 @@ def apply_review(
         "requested_checks": requested_checks,
     }
     try:
-        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/review", json=payload, timeout=10))
+        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/review", headers=_auth_headers(), json=payload, timeout=10))
         return RCARecord.model_validate(resp.json())
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -316,7 +337,7 @@ def apply_review(
 
 def list_case(case_id: str) -> list[RCARecord]:
     try:
-        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/cases/{case_id}", timeout=10))
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/cases/{case_id}", headers=_auth_headers(), timeout=10))
         return [RCARecord.model_validate(item) for item in resp.json()]
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -324,7 +345,7 @@ def list_case(case_id: str) -> list[RCARecord]:
 
 def list_cases() -> list[list[RCARecord]]:
     try:
-        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/cases", timeout=10))
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/cases", headers=_auth_headers(), timeout=10))
         return [[RCARecord.model_validate(rca) for rca in case] for case in resp.json()]
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -333,7 +354,7 @@ def list_cases() -> list[list[RCARecord]]:
 def link_to_case(previous_rca_id: str, new_rca_id: str) -> RCARecord:
     payload = {"previous_rca_id": previous_rca_id, "new_rca_id": new_rca_id}
     try:
-        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/cases/link", json=payload, timeout=10))
+        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/cases/link", headers=_auth_headers(), json=payload, timeout=10))
         return RCARecord.model_validate(resp.json())
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -351,7 +372,7 @@ def start_investigation(
     payload = {"incident_id": incident_id, "owner": owner}
     try:
         resp = _check_response(
-            requests.post(f"{API_BASE_URL}/api/v1/investigations/start", json=payload, timeout=180)
+            requests.post(f"{API_BASE_URL}/api/v1/investigations/start", headers=_auth_headers(), json=payload, timeout=180)
         )
         return RCARecord.model_validate(resp.json())
     except Exception as exc:

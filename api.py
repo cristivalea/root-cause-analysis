@@ -6,17 +6,87 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
+from streamlit import user
 
 from rca import storage, store
 from rca.config import DB_PATH
 from rca.models import Incident, RCARecord, RCAStatus
 from rca.pipeline import run_investigation
 
+from datetime import datetime, timedelta, timezone
+import os
+
+import jwt
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from rca import auth
+
 app = FastAPI(
     title="Root Cause Analysis Multi-Agent Engine API",
     description="Backend decuplat pentru analiză RCA și HITL Problem Management",
     version="1.0.0"
 )
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def _jwt_secret() -> str:
+    secret = os.getenv("JWT_SECRET")
+    if not secret:
+        raise RuntimeError("Lipsește JWT_SECRET din configurația backend-ului.")
+    return secret
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> dict[str, Any]:
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Autentificarea este necesară.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            _jwt_secret(),
+            algorithms=["HS256"],
+        )
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalid sau expirat.",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    username = payload.get("sub")
+    if not isinstance(username, str):
+        raise HTTPException(status_code=401, detail="Token invalid.")
+
+    user = auth.get_user(username)
+    if user is None or not user["active"]:
+        raise HTTPException(status_code=401, detail="Cont inexistent sau dezactivat.")
+
+    # Rolul este recitit din SQLite, nu este acceptat dintr-o valoare trimisă de browser.
+    return user
+
+
+def require_roles(*allowed_roles: str):
+    def dependency(
+        user: dict[str, Any] = Depends(get_current_user),
+    ) -> dict[str, Any]:
+        if user["role"] not in allowed_roles:
+            raise HTTPException(status_code=403, detail="Nu ai dreptul să folosești această funcție.")
+        return user
+
+    return dependency
 
 
 def _serialize(obj: Any) -> Any:
@@ -64,11 +134,39 @@ def health_check():
         "service": "RCA Core API"
     }
 
+@app.post("/api/v1/auth/login")
+def api_login(req: LoginRequest):
+    user = auth.get_user(req.username)
+
+    if (
+        user is None
+        or not user["active"]
+        or not auth.verify_password(req.password, user["password_hash"])
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Utilizator sau parolă incorectă.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=60)
+    token = jwt.encode(
+        {"sub": user["username"], "exp": expires_at},
+        _jwt_secret(),
+        algorithm="HS256",
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "username": user["username"],
+        "role": user["role"],
+    }
 
 # 1. Incidente & CMDB
 
 @app.get("/api/v1/incidents")
-def api_list_incidents():
+def api_list_incidents( user: dict = Depends(require_roles("problem_manager")),):
     try:
         incidents = storage.list_incidents(DB_PATH)
         sorted_incidents = sorted(incidents, key=lambda inc: inc.detected_at, reverse=True)
@@ -79,11 +177,17 @@ def api_list_incidents():
 
 
 @app.get("/api/v1/incidents/{incident_id}")
-def api_get_incident(incident_id: str):
+def api_get_incident(incident_id: str, user: dict[str, Any] = Depends(
+        require_roles("problem_manager", "technical_expert")
+    ),):
     try:
         inc = storage.get_incident(DB_PATH, incident_id)
-        if not inc:
-            raise HTTPException(status_code=404, detail=f"Incidentul {incident_id} nu a fost găsit.")
+        # if not inc:
+        #     raise HTTPException(status_code=404, detail=f"Incidentul {incident_id} nu a fost găsit.")
+        if user["role"] == "technical_expert":
+            pending = store.list_rcas(status="PENDING_REVIEW", db_path=DB_PATH)
+            if not any(record.incident_id == incident_id for record in pending):
+                raise HTTPException(status_code=404, detail="Incidentul nu este disponibil pentru review.")
         return _serialize(inc)
     except HTTPException:
         raise
@@ -104,7 +208,12 @@ def api_teams_for_service(service_name: str):
 # 2. Rapoarte RCA & Technical Review (HITL)
 
 @app.get("/api/v1/rcas")
-def api_list_rcas(status: Optional[str] = None):
+def api_list_rcas(
+    status: Optional[str] = None,
+    user: dict[str, Any] = Depends(
+        require_roles("problem_manager", "technical_expert")
+    ),
+):
     try:
         rca_status = None
         if status:
@@ -113,7 +222,11 @@ def api_list_rcas(status: Optional[str] = None):
             except Exception:
                 rca_status = status
 
-        records = store.list_rcas(status=rca_status, db_path=DB_PATH)
+        # records = store.list_rcas(status=rca_status, db_path=DB_PATH)
+        if user["role"] == "technical_expert":
+            records = store.list_rcas(status="PENDING_REVIEW", db_path=DB_PATH)
+        else:
+            records = store.list_rcas(status=rca_status, db_path=DB_PATH)
         return [_serialize(r) for r in records]
     except Exception as exc:
         traceback.print_exc()
@@ -121,11 +234,15 @@ def api_list_rcas(status: Optional[str] = None):
 
 
 @app.get("/api/v1/rcas/{rca_id}")
-def api_get_rca(rca_id: str):
+def api_get_rca(rca_id: str, user: dict[str, Any] = Depends(
+        require_roles("problem_manager", "technical_expert")
+    ),):
     try:
         rca = store.get_rca(rca_id, db_path=DB_PATH)
-        if not rca:
-            raise HTTPException(status_code=404, detail=f"RCA {rca_id} nu a fost găsit.")
+        # if not rca:
+        #     raise HTTPException(status_code=404, detail=f"RCA {rca_id} nu a fost găsit.")
+        if user["role"] == "technical_expert" and rca.status != "PENDING_REVIEW":
+            raise HTTPException(status_code=404, detail="RCA-ul nu este disponibil pentru review.")
         return _serialize(rca)
     except HTTPException:
         raise
@@ -144,12 +261,33 @@ def api_submit_for_review(rca_id: str):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+# @app.post("/api/v1/rcas/{rca_id}/review")
+# def api_apply_review(rca_id: str, req: ApplyReviewRequest):
+#     try:
+#         result = store.apply_review(
+#             rca_id=rca_id,
+#             reviewer=req.reviewer,
+#             decision=req.decision,
+#             comment=req.comment,
+#             hypothesis_id=req.hypothesis_id,
+#             db_path=DB_PATH,
+#             requested_checks=req.requested_checks,
+#         )
+#         return _serialize(result)
+#     except Exception as exc:
+#         traceback.print_exc()
+#         raise HTTPException(status_code=500, detail=str(exc))
+
 @app.post("/api/v1/rcas/{rca_id}/review")
-def api_apply_review(rca_id: str, req: ApplyReviewRequest):
+def api_apply_review(
+    rca_id: str,
+    req: ApplyReviewRequest,
+    user: dict[str, Any] = Depends(require_roles("technical_expert")),
+):
     try:
         result = store.apply_review(
             rca_id=rca_id,
-            reviewer=req.reviewer,
+            reviewer=user["username"],
             decision=req.decision,
             comment=req.comment,
             hypothesis_id=req.hypothesis_id,

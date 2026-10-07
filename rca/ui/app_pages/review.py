@@ -19,7 +19,7 @@ from rca.ui.components.incident_card import incident_summary
 from rca.ui.components.page_header import page_header
 from rca.ui.strings import t
 
-REVIEWER_KEY = "reviewer_name"
+# REVIEWER_KEY = "reviewer_name"
 OUTCOME_KEY = "review_outcome"
 DECIDABLE = ("PENDING_REVIEW",)
 
@@ -43,8 +43,10 @@ def back_to_queue() -> None:
     st.rerun()
 
 
+# def reviewer_name() -> str:
+#     return (st.session_state.get(REVIEWER_KEY) or "").strip() or state.role_name(state.TECHNICAL_EXPERT)
 def reviewer_name() -> str:
-    return (st.session_state.get(REVIEWER_KEY) or "").strip() or state.role_name(state.TECHNICAL_EXPERT)
+    return state.current_username() or state.role_name(state.TECHNICAL_EXPERT)
 
 
 def requested_checks(decision: str, comment: str) -> list[str] | None:
@@ -120,7 +122,7 @@ def approve_dialog(record) -> None:
     }
     chosen = st.radio(t("approve.choose"), list(choices), label_visibility="collapsed")
     comment = st.text_area(t("approve.comment"))
-    st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
+    # st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
     if st.button(t("approve.confirm"), type="primary", icon=":material/check:"):
         if decide(record.rca_id, "APPROVE", comment or t("approve.confirm"), choices[chosen]):
             st.rerun()
@@ -133,7 +135,7 @@ def request_dialog(record) -> None:
     for hypothesis in record.hypotheses:
         st.markdown(f"- **{hypothesis.confidence}** - {hypothesis.candidate_root_cause}")
     question = st.text_area(t("request.question"), placeholder=t("request.placeholder"))
-    st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
+    # st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
     if st.button(t("request.send"), type="primary", icon=":material/send:"):
         if not question.strip():
             st.error(t("review.comment_required"), icon=theme.ICONS["error"])
@@ -146,7 +148,7 @@ def request_dialog(record) -> None:
 def reject_dialog(record) -> None:
     st.warning(t("reject.warning"), icon=":material/warning:")
     comment = st.text_area(t("reject.comment"))
-    st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
+    # st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
     if st.button(t("reject.confirm"), icon=":material/block:"):
         if not comment.strip():
             st.error(t("review.comment_required"), icon=theme.ICONS["error"])
@@ -246,11 +248,15 @@ def review(rca_id: str) -> None:
 
 page_header(t("review.title"), t("review.subtitle"))
 
+# if not state.is_technical_expert():
+#     st.info(t("review.wrong_role"), icon=":material/badge:")
+#     if st.button(t("review.switch_role"), type="primary", icon=theme.ICONS["role"]):
+#         state.request_role(state.TECHNICAL_EXPERT)
+#         st.rerun()
+#     st.stop()
+
 if not state.is_technical_expert():
-    st.info(t("review.wrong_role"), icon=":material/badge:")
-    if st.button(t("review.switch_role"), type="primary", icon=theme.ICONS["role"]):
-        state.request_role(state.TECHNICAL_EXPERT)
-        st.rerun()
+    st.error(t("review.wrong_role"), icon=":material/badge:")
     st.stop()
 
 rca_id = chosen_rca()
