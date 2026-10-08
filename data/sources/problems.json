@@ -1,0 +1,821 @@
+[
+  {
+    "problem_id": "PRB-2024-00009",
+    "title": "Payment API reports timeouts to the card network",
+    "description": "Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2024-01-17T09:15:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-02-02T15:00:00Z",
+    "rca_id": "RCA-2024-00036",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00034",
+        "linked_at": "2024-01-17T09:15:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-00074",
+        "linked_at": "2024-01-17T09:15:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00024",
+    "title": "Sign-in blocked at the second factor step",
+    "description": "Users could not complete sign-in because one-time codes were not delivered or were rejected.",
+    "status": "Closed",
+    "priority": "P1",
+    "services": [
+      "Auth Service"
+    ],
+    "created_at": "2024-02-13T14:48:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-06-28T21:00:00Z",
+    "rca_id": "RCA-2024-00196",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00192",
+        "linked_at": "2024-02-13T14:48:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-00678",
+        "linked_at": "2024-06-03T16:37:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00044",
+    "title": "Connection resets at the edge during peak",
+    "description": "Clients reported connection resets from the public API for several minutes. Impact was limited to global.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "API Gateway"
+    ],
+    "created_at": "2024-03-22T22:25:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-04-15T02:00:00Z",
+    "rca_id": "RCA-2024-00115",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00244",
+        "linked_at": "2024-03-22T22:25:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-00359",
+        "linked_at": "2024-03-22T22:25:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00067",
+    "title": "Customers blocked when saving their profile",
+    "description": "Several partners reported that valid API calls started failing with 403. The problems started shortly after a planned change on the service. Monitoring raised the alert before customers called.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "API Gateway"
+    ],
+    "created_at": "2024-05-02T13:21:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-05-18T15:00:00Z",
+    "rca_id": "RCA-2024-00151",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00162",
+        "linked_at": "2024-05-02T13:21:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-00537",
+        "linked_at": "2024-05-02T13:21:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00085",
+    "title": "Customers not receiving SMS alerts",
+    "description": "The SMS provider rejected messages and time-sensitive notifications were delayed.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Notification Service"
+    ],
+    "created_at": "2024-06-04T15:58:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-06-25T21:00:00Z",
+    "rca_id": "RCA-2024-00193",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00498",
+        "linked_at": "2024-06-04T15:58:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-00681",
+        "linked_at": "2024-06-04T15:58:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00131",
+    "title": "Card tokenisation requests failing at checkout",
+    "description": "Saving a card during checkout failed for part of the customers. Payments without a stored card completed normally. Impact was limited to eu-central-1.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2024-08-27T17:50:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-09-13T20:00:00Z",
+    "rca_id": "RCA-2024-00280",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00935",
+        "linked_at": "2024-08-27T17:50:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-01049",
+        "linked_at": "2024-08-27T17:50:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00139",
+    "title": "Merchants see duplicated payment captures",
+    "description": "Finance found duplicated captures for a small share of orders paid from the mobile app. First reports came from customers.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2024-09-11T18:27:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-09-30T21:00:00Z",
+    "rca_id": "RCA-2024-00299",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00782",
+        "linked_at": "2024-09-11T18:27:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-01114",
+        "linked_at": "2024-09-11T18:27:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00143",
+    "title": "Gateway clients report handshake failures",
+    "description": "Clients could not open secure connections to the public API for about ninety minutes during the night.",
+    "status": "Closed",
+    "priority": "P1",
+    "services": [
+      "API Gateway"
+    ],
+    "created_at": "2024-09-18T04:40:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-10-02T10:00:00Z",
+    "rca_id": "RCA-2024-00088",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00891",
+        "linked_at": "2024-09-18T04:40:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00150",
+    "title": "Valid tokens rejected by downstream services",
+    "description": "Several services calling the Auth Service received 401 responses for tokens that should have been valid. The problems started shortly after a planned change on the service. First reports came from customers.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Auth Service"
+    ],
+    "created_at": "2024-10-02T18:23:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-10-22T20:00:00Z",
+    "rca_id": "RCA-2024-00323",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-01207",
+        "linked_at": "2024-10-02T18:23:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00158",
+    "title": "Invoice delivery delayed for large accounts",
+    "description": "Invoice PDF generation timed out for accounts with many invoice lines. Impact was limited to us-east-1.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Billing Service"
+    ],
+    "created_at": "2024-10-16T02:01:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-11-02T04:00:00Z",
+    "rca_id": "RCA-2024-00335",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-00848",
+        "linked_at": "2024-10-16T02:01:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2024-01267",
+        "linked_at": "2024-10-16T02:01:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00159",
+    "title": "Dashboards slow and warehouse CPU at 100%",
+    "description": "Every dashboard slowed down at the same moment and the warehouse CPU reached its limit. Monitoring raised the alert before customers called.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Reporting Service"
+    ],
+    "created_at": "2024-10-17T15:30:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-02-21T21:00:00Z",
+    "rca_id": "RCA-2025-00056",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-01272",
+        "linked_at": "2024-10-17T15:30:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2025-00153",
+        "linked_at": "2025-02-04T17:19:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2024-00174",
+    "title": "Salary transfer file upload failed",
+    "description": "Payroll Operations noticed that the bank had not received the salary transfer file. Monitoring raised the alert before customers called.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payroll Service"
+    ],
+    "created_at": "2024-11-15T16:46:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2024-12-08T16:00:00Z",
+    "rca_id": "RCA-2024-00374",
+    "incidents": [
+      {
+        "incident_id": "INC-2024-01398",
+        "linked_at": "2024-11-15T16:46:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00001",
+    "title": "Wrong personal greeting shown on account pages",
+    "description": "Some customers saw another customer's name in the page header. No other personal data was shown. The problems started shortly after a planned change on the service. Impact was limited to global.",
+    "status": "Closed",
+    "priority": "P1",
+    "services": [
+      "Customer Portal"
+    ],
+    "created_at": "2025-01-01T19:13:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-01-20T20:00:00Z",
+    "rca_id": "RCA-2025-00021",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00004",
+        "linked_at": "2025-01-01T19:13:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00010",
+    "title": "Payroll batch delays employee portal requests",
+    "description": "The weekly payroll calculation did not finish within its window and the employee self-service portal returned timeouts during the morning peak.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payroll Service"
+    ],
+    "created_at": "2025-01-20T07:55:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-02-14T11:00:00Z",
+    "rca_id": "RCA-2025-00042",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00104",
+        "linked_at": "2025-01-20T07:55:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2025-00119",
+        "linked_at": "2025-01-20T07:55:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00066",
+    "title": "Month-end invoice report processing slows",
+    "description": "The month-end invoice run took more than three hours and the finance reports were late.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Billing Service"
+    ],
+    "created_at": "2025-05-01T01:05:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-06-20T15:00:00Z",
+    "rca_id": "RCA-2025-00230",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00512",
+        "linked_at": "2025-05-01T01:05:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2025-00548",
+        "linked_at": "2025-05-31T00:50:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00077",
+    "title": "User profile fields fail to load intermittently",
+    "description": "Some profile fields were empty or wrong on the account page after a contract update.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "User Profile Service"
+    ],
+    "created_at": "2025-05-22T09:00:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-06-05T16:00:00Z",
+    "rca_id": "RCA-2025-00012",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00615",
+        "linked_at": "2025-05-22T09:00:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00104",
+    "title": "Settlement events stop processing temporarily",
+    "description": "Settlement event processing paused several times during the evening and a backlog built up.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Settlement Service"
+    ],
+    "created_at": "2025-07-11T23:30:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-07-25T09:30:00Z",
+    "rca_id": "RCA-2025-00192",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00982",
+        "linked_at": "2025-07-11T23:30:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00151",
+    "title": "Authentication pods restart during demand spike",
+    "description": "Auth Service pods restarted several times during a traffic peak and some logins failed.",
+    "status": "Closed",
+    "priority": "P1",
+    "services": [
+      "Auth Service"
+    ],
+    "created_at": "2025-10-04T13:05:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-10-24T10:00:00Z",
+    "rca_id": "RCA-2025-00305",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-01305",
+        "linked_at": "2025-10-04T13:05:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00177",
+    "title": "Card authorisation requests slow during retry bursts",
+    "description": "Checkout requests intermittently returned server errors and some authorisations took longer than five seconds.",
+    "status": "Closed",
+    "priority": "P2",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2025-11-20T15:41:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2025-12-05T14:00:00Z",
+    "rca_id": "RCA-2025-00114",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-00401",
+        "linked_at": "2025-11-20T15:41:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2025-00193",
+    "title": "Notification delivery backlog grows during campaign",
+    "description": "Notification delivery stopped for over an hour during the Christmas campaign and the queue kept growing.",
+    "status": "Closed",
+    "priority": "P3",
+    "services": [
+      "Notification Service"
+    ],
+    "created_at": "2025-12-20T19:30:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2026-01-09T12:00:00Z",
+    "rca_id": "RCA-2025-00390",
+    "incidents": [
+      {
+        "incident_id": "INC-2025-01581",
+        "linked_at": "2025-12-20T19:30:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00008",
+    "title": "Reporting service intermittently fails DNS lookups",
+    "description": "Nightly finance reports failed or finished late. Many report tasks retried because they could not resolve the warehouse host name.",
+    "status": "Open",
+    "priority": "P3",
+    "services": [
+      "Reporting Service"
+    ],
+    "created_at": "2026-01-15T06:40:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00012",
+        "linked_at": "2026-01-15T06:40:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00016",
+        "linked_at": "2026-01-15T06:40:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00109",
+        "linked_at": "2026-01-15T06:40:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00012",
+    "title": "Checkout errors for some merchants",
+    "description": "Error rate on the Payment API rose for a fraction of checkout attempts; other requests completed normally. The problems started shortly after a planned change on the service. Monitoring raised the alert before customers called.",
+    "status": "Closed",
+    "priority": "P1",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2026-01-23T12:03:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": "2026-02-17T13:00:00Z",
+    "rca_id": "RCA-2026-00052",
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00065",
+        "linked_at": "2026-01-23T12:03:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00100",
+        "linked_at": "2026-01-23T12:03:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00024",
+    "title": "Settlement event processing stopped",
+    "description": "Settlement events stopped being processed and the backlog grew for more than two hours. End-of-day settlement files were delayed.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Settlement Service"
+    ],
+    "created_at": "2026-02-13T00:40:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00105",
+        "linked_at": "2026-02-13T00:40:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00042",
+    "title": "Notification queue spikes during campaign launch",
+    "description": "Notifications stopped being delivered shortly after the APAC spring campaign started. Queue depth grew quickly and order confirmations were delayed.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Notification Service"
+    ],
+    "created_at": "2026-03-19T04:05:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00107",
+        "linked_at": "2026-03-19T04:05:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00354",
+        "linked_at": "2026-03-22T04:35:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00051",
+    "title": "Auth service restarts during burst traffic",
+    "description": "Logins failed for many customers for about 50 minutes. Auth Service pods restarted repeatedly while traffic was higher than usual because of the Easter campaign.",
+    "status": "Open",
+    "priority": "P1",
+    "services": [
+      "Auth Service"
+    ],
+    "created_at": "2026-04-04T13:02:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00108",
+        "linked_at": "2026-04-04T13:02:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00066",
+    "title": "API gateway certificate check error on edge nodes",
+    "description": "Mobile apps and partners could not connect to the public API. Clients reported certificate validation errors from the edge nodes.",
+    "status": "Open",
+    "priority": "P1",
+    "services": [
+      "API Gateway"
+    ],
+    "created_at": "2026-05-01T04:35:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00104",
+        "linked_at": "2026-05-01T04:35:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00077",
+    "title": "User profile serialisation errors after microservice update",
+    "description": "Customer details failed to load on the account page for part of the requests after the morning deployment. Some fields showed wrong values.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "User Profile Service"
+    ],
+    "created_at": "2026-05-22T09:20:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00110",
+        "linked_at": "2026-05-22T09:20:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00099",
+    "title": "Billing report times out at month close",
+    "description": "The month-end invoice aggregation did not finish and finance reports timed out during the closing run.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Billing Service"
+    ],
+    "created_at": "2026-07-01T02:10:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00106",
+        "linked_at": "2026-07-01T02:10:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00926",
+        "linked_at": "2026-08-01T01:55:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00106",
+    "title": "Payment API intermittent failures",
+    "description": "Customers experienced intermittent failures when attempting to complete card payments.",
+    "status": "Open",
+    "priority": "P1",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2026-07-14T15:17:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00482",
+        "linked_at": "2026-07-14T15:17:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00857",
+        "linked_at": "2026-07-15T10:31:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00113",
+    "title": "Payroll batch times out every Monday morning",
+    "description": "Users report HTTP 504s and delayed salary payouts during the Monday payroll batch window. The employee portal is slow and worker jobs are timing out.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Payroll Service"
+    ],
+    "created_at": "2026-07-27T08:15:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00139",
+        "linked_at": "2026-07-27T08:15:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00167",
+        "linked_at": "2026-07-27T08:15:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00188",
+        "linked_at": "2026-07-27T08:15:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00196",
+        "linked_at": "2026-07-27T08:15:00Z",
+        "linked_by": "Problem Manager"
+      },
+      {
+        "incident_id": "INC-2026-00101",
+        "linked_at": "2026-07-27T08:15:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00121",
+    "title": "Customer portal exceptions after regional failover",
+    "description": "Customers saw error pages and were logged out while using the portal. The errors started a few minutes after traffic was moved from eu-west-1 to eu-central-1 during a network event.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Customer Portal"
+    ],
+    "created_at": "2026-08-10T11:20:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00103",
+        "linked_at": "2026-08-10T11:20:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00130",
+    "title": "Customer portal slow and timing out in the evening",
+    "description": "Product and account pages loaded slowly or timed out for many customers during the evening peak. The portal was not fully down.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Customer Portal"
+    ],
+    "created_at": "2026-08-26T20:20:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00449",
+        "linked_at": "2026-08-26T20:20:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00137",
+    "title": "Merchants not receiving payment confirmation webhooks",
+    "description": "Several large merchants reported that payment confirmations stopped arriving in the morning. Payments themselves were processed normally.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Payment API"
+    ],
+    "created_at": "2026-09-08T13:55:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00468",
+        "linked_at": "2026-09-08T13:55:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  },
+  {
+    "problem_id": "PRB-2026-00140",
+    "title": "Users logged out and login attempts failing intermittently",
+    "description": "From about 08:00 many users were signed out and some could not sign in again. The problem cleared after about an hour.",
+    "status": "Open",
+    "priority": "P2",
+    "services": [
+      "Auth Service"
+    ],
+    "created_at": "2026-09-15T09:10:00Z",
+    "created_by": "Problem Manager",
+    "closed_at": null,
+    "rca_id": null,
+    "incidents": [
+      {
+        "incident_id": "INC-2026-00491",
+        "linked_at": "2026-09-15T09:10:00Z",
+        "linked_by": "Problem Manager"
+      }
+    ]
+  }
+]

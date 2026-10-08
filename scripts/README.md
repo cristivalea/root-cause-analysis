@@ -22,6 +22,12 @@ python scripts/load_sources_sqlite.py --reset
 
 `--reset` empties the source tables before loading, so records that no longer exist are removed. The saved RCAs are kept.
 
+The sources include the problems (`data/sources/problems.json`, tables `problems` and `problem_incidents`):
+one open problem per story and one closed problem per past RCA. `data/evaluation/grouping_truth.json` says
+which problem or failure family every incident really belongs to, for scoring the grouping suggestions.
+Each story has its own random generator, so changing one story never changes the other stories or the
+background data.
+
 ## Ingest the project data
 
 ```bash

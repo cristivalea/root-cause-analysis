@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry
+from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry, Problem, ProblemLink
 
 
 SCHEMAS = {
@@ -73,6 +73,24 @@ SCHEMAS = {
             payload TEXT NOT NULL
         )
     """,
+    # the incidents of a problem live only in problem_incidents, so there is one place to change them
+    "problems": """
+        CREATE TABLE IF NOT EXISTS problems (
+            problem_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            payload TEXT NOT NULL
+        )
+    """,
+    # incident_id is the key: an incident belongs to one problem at most
+    "problem_incidents": """
+        CREATE TABLE IF NOT EXISTS problem_incidents (
+            incident_id TEXT PRIMARY KEY,
+            problem_id TEXT NOT NULL,
+            linked_at TEXT NOT NULL,
+            linked_by TEXT NOT NULL
+        )
+    """,
 }
 
 
@@ -108,6 +126,7 @@ def load_sources(db_path: Path, sources_dir: Path) -> None:
     relationships = [CIRelationship.model_validate(item) for item in _read_records(sources_dir, "cmdb_relationships.json")]
     changes = [Change.model_validate(item) for item in _read_records(sources_dir, "changes.json")]
     logs = [LogEntry.model_validate(item) for item in _read_records(sources_dir, "logs.json")]
+    problems = [Problem.model_validate(item) for item in _read_records(sources_dir, "problems.json", optional=True)]
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(db_path) as connection:
@@ -180,6 +199,26 @@ def load_sources(db_path: Path, sources_dir: Path) -> None:
                 for item in logs
             ],
         )
+        connection.executemany(
+            """INSERT INTO problems VALUES (?, ?, ?, ?)
+               ON CONFLICT(problem_id) DO UPDATE SET
+               status=excluded.status, created_at=excluded.created_at, payload=excluded.payload""",
+            [
+                (item.problem_id, item.status, item.created_at.isoformat(),
+                 json.dumps(item.model_dump(mode="json", exclude={"incidents"})))
+                for item in problems
+            ],
+        )
+        connection.executemany(
+            """INSERT INTO problem_incidents VALUES (?, ?, ?, ?)
+               ON CONFLICT(incident_id) DO UPDATE SET
+               problem_id=excluded.problem_id, linked_at=excluded.linked_at, linked_by=excluded.linked_by""",
+            [
+                (link.incident_id, item.problem_id, link.linked_at.isoformat(), link.linked_by)
+                for item in problems
+                for link in item.incidents
+            ],
+        )
         connection.commit()
 
 
@@ -250,6 +289,23 @@ def delete_incident(db_path: Path, incident_id: str) -> None:
         initialize_database(connection)
         connection.execute("DELETE FROM incidents WHERE incident_id = ?", (incident_id,))
         connection.commit()
+
+
+def get_problem(db_path: Path, problem_id: str) -> Problem | None:
+    """A problem with its incidents, in the order they happened."""
+    with closing(_connect_read_only(db_path)) as connection:
+        row = connection.execute("SELECT payload FROM problems WHERE problem_id = ?", [problem_id]).fetchone()
+        if row is None:
+            return None
+        links = connection.execute(
+            """SELECT link.incident_id, link.linked_at, link.linked_by FROM problem_incidents AS link
+               JOIN incidents ON incidents.incident_id = link.incident_id
+               WHERE link.problem_id = ? ORDER BY julianday(incidents.detected_at)""",
+            [problem_id],
+        ).fetchall()
+    incidents = [ProblemLink(incident_id=incident_id, linked_at=linked_at, linked_by=linked_by)
+                 for incident_id, linked_at, linked_by in links]
+    return Problem.model_validate({**json.loads(row[0]), "incidents": incidents})
 
 
 def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:

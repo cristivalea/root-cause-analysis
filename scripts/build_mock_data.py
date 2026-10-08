@@ -8,9 +8,10 @@ The output is deterministic: the same code always gives the same files (fixed ra
 
 What it writes:
     data/sources/incidents.json, incident_events.json, changes.json, logs.json,
-    cmdb_items.json, cmdb_relationships.json
+    cmdb_items.json, cmdb_relationships.json, problems.json
     data/knowledge_base/rcas/*.md                 (the old files are replaced)
-    data/evaluation/answer_key.json, story_definitions.json, retrieval_questions.json
+    data/evaluation/answer_key.json, story_definitions.json, retrieval_questions.json,
+    grouping_truth.json
 
 After writing, reload SQLite (scripts/load_sources_sqlite.py --reset) and ChromaDB
 (scripts/ingest_chroma.py --reset).
@@ -24,6 +25,7 @@ import random
 import re
 import sys
 from collections import Counter, defaultdict
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -33,7 +35,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from mock_data import catalog  # noqa: E402
 from mock_data.stories import STORIES  # noqa: E402
-from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry  # noqa: E402
+from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry, Problem  # noqa: E402
 
 SEED = 20260930
 NOW = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
@@ -51,6 +53,8 @@ EVALUATION = ROOT / "data" / "evaluation"
 INCIDENTS_PER_YEAR = 1600
 CHANGES_PER_YEAR = 1600
 RCAS_PER_YEAR = 400
+PROBLEMS_PER_YEAR = 200
+PROBLEM_MANAGER = "Problem Manager"  # who opened the problems and attached their incidents
 
 EXTRA_PREFIXES = {"Kubernetes Platform": "K8S", "Network Services": "NET", "Event Streaming Platform": "KAFKA",
                   "Observability Platform": "OBS", "External Vendors": "VENDOR"}
@@ -64,6 +68,22 @@ CAUSE_WORDS = re.compile(r"root cause|caused by|exhaust|leak|deadlock|expired|mi
                          r"out of memory|disk full|poison|evict", re.I)
 
 rng = random.Random(SEED)
+
+
+@contextmanager
+def random_source(source: random.Random):
+    """Use another random generator inside the block. Every story has its own, so a change in
+    one story never changes the random values of the other stories or of the background data."""
+    global rng
+    saved, rng = rng, source
+    try:
+        yield
+    finally:
+        rng = saved
+
+
+def story_random(*parts: str) -> random.Random:
+    return random.Random(":".join([str(SEED), *parts]))
 
 
 # --------------------------------------------------------------------------------------
@@ -142,6 +162,15 @@ def related_services(service: str, items: list[dict], relationships: list[dict])
     by_id = {item["ci_id"]: item for item in items}
     own = {item["ci_id"] for item in items if item["service"] == service}
     return {service} | {by_id[rel["target_ci"]]["service"] for rel in relationships if rel["source_ci"] in own}
+
+
+def problem_bases(story: dict) -> list[dict]:
+    """The incidents of the open problem of a story, in time order: the target, the recurrences and the
+    history incidents that no past RCA of the story links (those belong to the closed problem of that RCA)."""
+    linked = {incident_id for rca in story["rcas"] for incident_id in rca["linked"]}
+    bases = [story["target"], *story.get("recurrences", []),
+             *(item for item in story["history"] if item["incident_id"] not in linked)]
+    return sorted(bases, key=lambda item: ts(item["detected_at"]))
 
 
 # --------------------------------------------------------------------------------------
@@ -311,27 +340,34 @@ class World:
         self.vendor: set[str] = set()
         self.family_of: dict[str, str] = {}
         self.protected: list[tuple[set[str], datetime, datetime]] = []  # no background data here
+        self.problems: list[dict] = []
 
     # ---------------------------------------------------------------- stories
     def add_stories(self) -> None:
         for story in STORIES:
-            service = story["service"]
-            related = related_services(service, self.items, self.relationships)
-            for role, bases in (("target", [story["target"]]), ("history", story["history"]),
-                                ("distractor", story.get("distractors", []))):
-                for base in bases:
-                    incident = make_incident(base, service)
-                    incident["_story"], incident["_role"] = story["story_id"], role
-                    self.incidents.append(incident)
-                    self.flows[incident["incident_id"]] = base.get("flow")
-                    before = timedelta(days=8 if role == "target" else 2)
-                    self.protected.append((related, ts(incident["detected_at"]) - before, ts(incident["resolved_at"]) + timedelta(days=1)))
-            for change in story["changes"]:
-                self.changes.append({**{k: v for k, v in change.items() if k != "role"}, "_story": story["story_id"], "_role": change["role"]})
-            for burst in story["logs"]:
-                self.logs += burst_lines(burst, service)
-            for rca in story["rcas"]:
-                self.rcas.append({**rca, "_story": story["story_id"]})
+            with random_source(story_random(story["story_id"])):
+                self.add_story(story)
+
+    def add_story(self, story: dict) -> None:
+        service = story["service"]
+        related = related_services(service, self.items, self.relationships)
+        # the change lookup starts 7 days before the first incident of the problem, so that window stays clean too
+        first = problem_bases(story)[0]["incident_id"]
+        for role, bases in (("target", [story["target"]]), ("history", story["history"]),
+                            ("recurrence", story.get("recurrences", [])), ("distractor", story.get("distractors", []))):
+            for base in bases:
+                incident = make_incident(base, service)
+                incident["_story"], incident["_role"] = story["story_id"], role
+                self.incidents.append(incident)
+                self.flows[incident["incident_id"]] = base.get("flow")
+                before = timedelta(days=8 if role == "target" or incident["incident_id"] == first else 2)
+                self.protected.append((related, ts(incident["detected_at"]) - before, ts(incident["resolved_at"]) + timedelta(days=1)))
+        for change in story["changes"]:
+            self.changes.append({**{k: v for k, v in change.items() if k != "role"}, "_story": story["story_id"], "_role": change["role"]})
+        for burst in story["logs"]:
+            self.logs += burst_lines(burst, service)
+        for rca in story["rcas"]:
+            self.rcas.append({**rca, "_story": story["story_id"]})
 
     def is_protected(self, service: str, start: datetime, end: datetime) -> bool:
         return any(service in services and start <= window_end and end >= window_start
@@ -440,7 +476,10 @@ class World:
                         incident["rca_reason"] = "Vendor issue, followed up through vendor management."
 
         for incident in self.incidents:
-            self.events += build_events(incident, self.flows.get(incident["incident_id"]), incident["incident_id"] in self.vendor)
+            # a story incident takes its random values from its own generator, like the rest of its story
+            source = story_random(incident["_story"], incident["incident_id"]) if "_story" in incident else rng
+            with random_source(source):
+                self.events += build_events(incident, self.flows.get(incident["incident_id"]), incident["incident_id"] in self.vendor)
 
     # ---------------------------------------------------------------- routine changes
     def add_routine_changes(self) -> None:
@@ -539,6 +578,46 @@ def render_rca(rca: dict) -> str:
 
 
 # --------------------------------------------------------------------------------------
+# Problems
+# --------------------------------------------------------------------------------------
+
+
+def build_problems(world: World) -> list[dict]:
+    """One closed problem for every past RCA, with the incidents the RCA links, and one open problem
+    for every story, with the incidents of problem_bases. Nothing is chosen by hand."""
+    incidents = {incident["incident_id"]: incident for incident in world.incidents}
+
+    def problem(members: list[dict], anchor: dict, status: str, story_id: str | None = None,
+                closed_at: str | None = None, rca_id: str | None = None) -> dict:
+        # opened when the incident that asked for the analysis was resolved; later incidents are attached when resolved
+        created = ts(anchor["resolved_at"])
+        return {
+            "problem_id": None, "title": anchor["title"], "description": anchor["description"], "status": status,
+            "priority": f"P{min(int(item['severity'][-1]) for item in members)}",
+            "services": sorted({item["service"] for item in members}),
+            "created_at": iso(created), "created_by": PROBLEM_MANAGER, "closed_at": closed_at, "rca_id": rca_id,
+            "incidents": [{"incident_id": item["incident_id"], "linked_at": iso(max(created, ts(item["resolved_at"]))),
+                           "linked_by": PROBLEM_MANAGER} for item in members],
+            "_story": story_id,
+        }
+
+    problems = []
+    for rca in world.rcas:
+        members = sorted((incidents[incident_id] for incident_id in rca["linked"]), key=lambda item: ts(item["detected_at"]))
+        anchor = next((item for item in members if item["rca_required"]), members[-1])
+        problems.append(problem(members, anchor, "Closed", closed_at=rca["completed"], rca_id=rca["rca_id"]))
+    for story in STORIES:
+        members = [incidents[base["incident_id"]] for base in problem_bases(story)]
+        problems.append(problem(members, incidents[story["target"]["incident_id"]], "Open", story_id=story["story_id"]))
+    number_ids(problems, "problem_id", "created_at", "PRB", PROBLEMS_PER_YEAR, set())
+    return sorted(problems, key=lambda item: item["problem_id"])
+
+
+def story_problem(world: World, story_id: str) -> dict:
+    return next(problem for problem in world.problems if problem["_story"] == story_id)
+
+
+# --------------------------------------------------------------------------------------
 # Evaluation files
 # --------------------------------------------------------------------------------------
 
@@ -573,12 +652,19 @@ def build_answer_key(world: World) -> dict:
                                  "citation": event["event_id"]})
         timeline.sort(key=lambda item: item["at"])
 
+        problem = story_problem(world, story["story_id"])
+        history = {item["incident_id"] for item in story["history"]}
         key[story["story_id"]] = {
             "story_id": story["story_id"],
             "title": story["title"],
             "kind": story["kind"],
             "service": story["service"],
-            "target_incident": target,
+            "target_incident": target,  # the incident the investigation started from before problems existed
+            "problem_id": problem["problem_id"],
+            "problem_incidents": [link["incident_id"] for link in problem["incidents"]],
+            "reference_incident": problem["incidents"][-1]["incident_id"],  # the most recent incident of the problem
+            "historical_problems": [item["problem_id"] for item in world.problems if item["status"] == "Closed"
+                                    and history & {link["incident_id"] for link in item["incidents"]}],
             "cluster_incidents": [item["incident_id"] for item in story["history"]],
             "distractor_incidents": [item["incident_id"] for item in story.get("distractors", [])],
             "time_pattern": story["time_pattern"],
@@ -606,11 +692,24 @@ def build_story_definitions() -> list[dict]:
             "demo_purpose": story["demo_purpose"], "service": story["service"],
             "business_service": catalog.SERVICES[story["service"]]["business"],
             "target_incident": story["target"]["incident_id"],
+            "problem_incidents": [item["incident_id"] for item in problem_bases(story)],
             "related_incidents": [item["incident_id"] for item in story["history"]],
+            "recurrence_incidents": [item["incident_id"] for item in story.get("recurrences", [])],
             "has_time_pattern": story["time_pattern"] is not None, "time_pattern": story["time_pattern"],
             "has_historical_rca": bool(story["rcas"]), "historical_rca_ids": [rca["rca_id"] for rca in story["rcas"]],
         }
         for story in STORIES
+    ]
+
+
+def build_grouping_truth(world: World) -> list[dict]:
+    """For every incident, the problem it really belongs to, to score the grouping suggestions.
+    family is the failure pattern of a background incident: the same family means the same cause."""
+    problem_of = {link["incident_id"]: problem["problem_id"] for problem in world.problems for link in problem["incidents"]}
+    return [
+        {"incident_id": item["incident_id"], "problem_id": problem_of.get(item["incident_id"]),
+         "story_id": item.get("_story"), "story_role": item.get("_role"), "family": item.get("_family")}
+        for item in sorted(world.incidents, key=lambda item: item["incident_id"])
     ]
 
 
@@ -731,6 +830,59 @@ def validate(world: World, answer_key: dict) -> list[str]:
             if citation not in known:
                 problems.append(f"{story_id} cites an unknown record {citation}")
 
+    # problems: every incident in one problem at most, each problem with the incidents its rule gives it
+    owners = defaultdict(list)
+    for problem in world.problems:
+        for link in problem["incidents"]:
+            owners[link["incident_id"]].append(problem["problem_id"])
+            if link["incident_id"] not in incidents:
+                problems.append(f"{problem['problem_id']} links an unknown incident {link['incident_id']}")
+            elif ts(link["linked_at"]) < ts(incidents[link["incident_id"]]["detected_at"]):
+                problems.append(f"{problem['problem_id']}: {link['incident_id']} attached before it happened")
+        if problem["closed_at"] and ts(problem["closed_at"]) <= ts(problem["created_at"]):
+            problems.append(f"{problem['problem_id']} is closed before it was opened")
+        if problem["status"] == "Open":
+            text = " ".join([problem["title"], problem["description"]])
+            if CAUSE_WORDS.search(text):
+                problems.append(f"{problem['problem_id']}: the problem text names a cause ({CAUSE_WORDS.search(text).group(0)})")
+    problems += [f"{incident_id} is in more than one problem: {ids}" for incident_id, ids in owners.items() if len(ids) > 1]
+    for rca in world.rcas:
+        closed = [problem for problem in world.problems if problem["rca_id"] == rca["rca_id"]]
+        if len(closed) != 1 or [link["incident_id"] for link in closed[0]["incidents"]] != sorted(
+                rca["linked"], key=lambda incident_id: ts(incidents[incident_id]["detected_at"])):
+            problems.append(f"{rca['rca_id']}: its closed problem does not hold exactly its linked incidents")
+
+    for story in STORIES:
+        members = [incidents[base["incident_id"]] for base in problem_bases(story)]
+        if [link["incident_id"] for link in story_problem(world, story["story_id"])["incidents"]] != [item["incident_id"] for item in members]:
+            problems.append(f"{story['story_id']}: the open problem does not hold the incidents of the story")
+        for incident in members:
+            text = " ".join([incident["title"], incident["description"], *incident["symptoms"]])
+            if CAUSE_WORDS.search(text):
+                problems.append(f"{incident['incident_id']}: the incident text names a cause ({CAUSE_WORDS.search(text).group(0)})")
+        target = incidents[story["target"]["incident_id"]]
+        for base in story.get("recurrences", []):
+            incident = incidents[base["incident_id"]]
+            if not ts(target["resolved_at"]) < ts(incident["detected_at"]) or ts(incident["resolved_at"]) > NOW:
+                problems.append(f"{incident['incident_id']}: a recurrence must come after the target and before now")
+        # the change lookup of the problem starts 7 days before its first incident: only the story's changes there
+        related = related_services(story["service"], world.items, world.relationships)
+        start, end = ts(members[0]["detected_at"]) - timedelta(days=7), ts(members[0]["resolved_at"])
+        allowed = {change["change_id"] for change in story["changes"]}
+        extra = [change["change_id"] for change in world.changes
+                 if change["service"] in related and start <= ts(change["implemented_at"]) <= end and change["change_id"] not in allowed]
+        if extra:
+            problems.append(f"{story['story_id']}: unplanned changes before the first incident of the problem: {extra}")
+        # the log lookup reads around every incident of the problem: no background lines there
+        for incident in members:
+            start, end = ts(incident["detected_at"]) - timedelta(hours=2), ts(incident["resolved_at"])
+            stray = [line["log_id"] for line in world.logs if line["_ref"] is None and line["service"] == story["service"]
+                     and start <= ts(line["timestamp"]) <= end]
+            if stray:
+                problems.append(f"{incident['incident_id']}: background log lines around the incident: {stray[:3]}")
+
+    for problem in world.problems:
+        Problem.model_validate(public(problem))
     for incident in world.incidents:
         Incident.model_validate(public(incident))
     for record in world.events:
@@ -764,6 +916,7 @@ def build() -> tuple[World, dict]:
     world.add_routine_changes()
     world.add_family_rcas()
     world.finish_changes_and_logs()
+    world.problems = build_problems(world)
     answer_key = build_answer_key(world)
     return world, answer_key
 
@@ -790,6 +943,7 @@ def main() -> None:
     summary = (f"{len(world.incidents)} incidents ({sum(item['rca_required'] for item in world.incidents)} need an RCA), "
                f"{len(world.events)} incident events, {len(world.changes)} changes, {len(world.logs)} log lines, "
                f"{len(world.items)} CMDB items, {len(world.relationships)} relationships, {len(world.rcas)} past RCAs, "
+               f"{len(world.problems)} problems ({sum(item['status'] == 'Open' for item in world.problems)} open), "
                f"{len(STORIES)} stories")
     if args.check:
         print(f"OK (nothing written): {summary}")
@@ -801,6 +955,7 @@ def main() -> None:
     write_json(SOURCES / "logs.json", [public(item) for item in world.logs])
     write_json(SOURCES / "cmdb_items.json", world.items)
     write_json(SOURCES / "cmdb_relationships.json", world.relationships)
+    write_json(SOURCES / "problems.json", [public(item) for item in world.problems])
 
     RCA_DIR.mkdir(parents=True, exist_ok=True)
     for old in RCA_DIR.glob("*.md"):
@@ -811,6 +966,7 @@ def main() -> None:
     write_json(EVALUATION / "answer_key.json", answer_key)
     write_json(EVALUATION / "story_definitions.json", build_story_definitions())
     write_json(EVALUATION / "retrieval_questions.json", build_retrieval_questions(world))
+    write_json(EVALUATION / "grouping_truth.json", build_grouping_truth(world))
     print(f"Written: {summary}")
 
 

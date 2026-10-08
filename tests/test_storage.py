@@ -53,3 +53,30 @@ def test_clearing_the_sources_keeps_nothing_old(tmp_path):
     storage.clear_sources(db_path)
 
     assert storage.list_incidents(db_path) == []
+
+
+def test_a_problem_is_read_with_its_incidents_in_time_order(tmp_path):
+    db_path = tmp_path / "sources.sqlite3"
+    storage.load_sources(db_path, ROOT / "data" / "sources")
+    with sqlite3.connect(db_path) as connection:
+        problem_id = connection.execute(
+            "SELECT problem_id FROM problem_incidents WHERE incident_id = ?", ("INC-2026-00482",)
+        ).fetchone()[0]
+
+    problem = storage.get_problem(db_path, problem_id)
+
+    assert problem.status == "Open"
+    assert [link.incident_id for link in problem.incidents] == ["INC-2026-00482", "INC-2026-00857"]
+    assert storage.get_problem(db_path, "PRB-2099-00001") is None
+
+
+def test_an_incident_cannot_be_in_two_problems(tmp_path):
+    db_path = tmp_path / "sources.sqlite3"
+    storage.load_sources(db_path, ROOT / "data" / "sources")
+
+    with sqlite3.connect(db_path) as connection:
+        try:
+            connection.execute("INSERT INTO problem_incidents VALUES ('INC-2026-00482', 'PRB-2099-00001', '2026-07-15', 'x')")
+            raise AssertionError("the database accepted a second problem for the same incident")
+        except sqlite3.IntegrityError:
+            pass

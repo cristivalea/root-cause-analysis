@@ -1,8 +1,13 @@
 """The problem stories: hand-written, complete scenarios for the demo and the evaluation.
 
 Each story is one real failure pattern with everything the investigation can find about it:
-the incident to analyse, the older incidents of the same problem, the changes (the cause and
-the innocent ones), the log lines, the past RCAs and the answer key.
+the incident to analyse (`target`), the older incidents (`history`), the later incidents of the
+same problem (`recurrences`), the changes (the cause and the innocent ones), the log lines, the
+past RCAs and the answer key.
+
+Each story is one open problem. Its incidents are the target, the recurrences and the history
+incidents that no past RCA links. A history incident linked by a past RCA belongs to the closed
+problem of that RCA (scripts/build_mock_data.py, build_problems).
 
 The answer key (the `answer` block) is never shown to the agents. Log citations in it are
 written as "@ref" and resolved by the generator to the id of the first line of that burst.
@@ -154,6 +159,34 @@ STORIES = [
             burst("s1_2025_timeout", "2025-01-20T06:24:00Z", "2025-01-20T07:40:00Z", 10, "ERROR", "ConnectionTimeout",
                   ["HikariPool-payroll - Connection is not available, request timed out after 30000ms."],
                   ["payroll-app-prod-01"]),
+            # the other Mondays of the same problems, so every incident has its own log lines
+            burst("s1_2025_jan_timeout", "2025-01-06T06:35:00Z", "2025-01-06T07:25:00Z", 6, "ERROR", "ConnectionTimeout",
+                  ["HikariPool-payroll - Connection is not available, request timed out after 30000ms."],
+                  ["payroll-app-prod-01"]),
+            burst("s1_mar_scale", "2026-03-16T06:05:00Z", "2026-03-16T06:18:00Z", 2, "WARN", "WorkerPoolScaleUp",
+                  ["Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)",
+                   "Autoscaler raised payroll worker threads from 48 to 72 (policy payroll-workers-hpa, max 96)"],
+                  ["payroll-worker-prod-01"]),
+            burst("s1_mar_timeout", "2026-03-16T06:40:00Z", "2026-03-16T07:12:00Z", 5, "ERROR", "ConnectionTimeout",
+                  ["HikariPool-payroll - Connection is not available, request timed out after 30000ms."],
+                  ["payroll-app-prod-01"]),
+            burst("s1_apr_scale", "2026-04-27T06:04:00Z", "2026-04-27T06:16:00Z", 3, "WARN", "WorkerPoolScaleUp",
+                  ["Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)",
+                   "Autoscaler raised payroll worker threads from 48 to 80 (policy payroll-workers-hpa, max 96)",
+                   "Autoscaler raised payroll worker threads from 80 to 96 (policy payroll-workers-hpa, max 96)"],
+                  ["payroll-worker-prod-01"]),
+            burst("s1_apr_timeout", "2026-04-27T06:28:00Z", "2026-04-27T07:35:00Z", 9, "ERROR", "ConnectionTimeout",
+                  ["HikariPool-payroll - Connection is not available, request timed out after 30000ms."],
+                  ["payroll-app-prod-01", "payroll-worker-prod-02"]),
+            burst("s1_may_scale", "2026-05-25T06:05:00Z", "2026-05-25T06:20:00Z", 3, "WARN", "WorkerPoolScaleUp",
+                  ["Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)",
+                   "Autoscaler raised payroll worker threads from 48 to 80 (policy payroll-workers-hpa, max 96)",
+                   "Autoscaler raised payroll worker threads from 80 to 96 (policy payroll-workers-hpa, max 96)"],
+                  ["payroll-worker-prod-01"]),
+            burst("s1_may_timeout", "2026-05-25T06:33:00Z", "2026-05-25T07:55:00Z", 10, "ERROR", "ConnectionTimeout",
+                  ["HikariPool-payroll - Connection is not available, request timed out after 30000ms.",
+                   "Payroll batch task waiting for a database connection for more than 120s"],
+                  ["payroll-worker-prod-01", "payroll-worker-prod-02"]),
         ],
         "rcas": [{
             "rca_id": "RCA-2025-00042", "service": "Payroll Service", "completed": "2025-02-14T11:00:00Z",
@@ -178,7 +211,7 @@ STORIES = [
         "answer": {
             "true_root_cause": "Worker autoscaling, enabled by CHG-2026-00262 in March 2026, lets the Monday payroll batch grow to 96 threads with no limit per connection pool. The threads use all PostgreSQL connections shared with the employee portal, so portal requests time out. The change replaced the 32-thread cap that was the corrective action of RCA-2025-00042.",
             "root_cause_category": "Capacity / Resource Exhaustion",
-            "expected_citations": ["@s1_timeout", "@s1_max", "RCA-2025-00042", "CI-PAYROLL-DB", "INC-2025-00119"],
+            "expected_citations": ["@s1_timeout", "@s1_max", "RCA-2025-00042", "CI-PAYROLL-DB", "INC-2025-00119", "CHG-2026-00262"],
             "red_herrings": [{"citation": "CHG-2026-00953", "why": "Tax table load on Friday; no link to connections or Monday mornings."},
                              {"citation": "RCA-2025-00042", "why": "Right cause class, but its fix (32 threads) is no longer in place; the answer must say why the problem came back."}],
             "expected_outcome": {"acceptable_confidence": ["HIGH"], "weakly_supported": False, "expert_decision": "APPROVE",
@@ -248,16 +281,33 @@ STORIES = [
                 "Incident Management", False, "Acquirer outage confirmed; no RCA needed on our side.", regions=["eu-central-1"],
                 ci="CI-CARD-ACQUIRER"),
         ],
+        # after the target: the restart freed the connections, but v4.18.2 stayed in production until the rollback
+        "recurrences": [
+            inc("INC-2026-00857", "Card payments failing again in the morning peak",
+                "Card payments started failing again during the morning peak, the day after the Payment API pods were restarted. "
+                "Checkout requests returned server errors and some took longer than five seconds.",
+                "SEV-2", "2026-07-15T09:48:00Z", "2026-07-15T10:31:00Z",
+                ["HTTP 500 responses from Payment API", "Increased database connection timeout errors", "Latency above 5 seconds"],
+                "Rolled back Payment API to v4.18.1 (CHG-2026-00876).",
+                "Incident Management", False, "Same symptoms as INC-2026-00482 the day before; linked to its open problem.",
+                regions=["eu-west-1", "eu-west-2"], ci="CI-PAYMENT-API",
+                flow=[(0, "opened", "Incident Management", "Card payment failure rate above 10% again."),
+                      (3, "assigned", "Payments Platform Engineering", None),
+                      (31, "workaround", "Payments Platform Engineering", None)]),
+        ],
         "changes": [
             chg("CHG-2026-00845", "Deploy Payment API v4.18.1", "Scheduled release: merchant reporting improvements.",
                 "normal", "Payment API", "CI-PAYMENT-API", "2026-07-08T09:30:00Z", "Payments Platform Engineering", "medium", version="4.18.1"),
             chg("CHG-2026-00871", "Deploy Payment API v4.18.2", "Deploy the payment retry-handler changes to production.",
                 "normal", "Payment API", "CI-PAYMENT-API", "2026-07-14T13:58:00Z", "Payments Platform Engineering", "medium",
-                version="4.18.2", role="cause"),
+                version="4.18.2", rollback=True, role="cause"),
             chg("CHG-2026-00872", "Rotate API gateway access logs", "Routine log configuration update on the shared gateway.",
                 "standard", "API Gateway", "CI-API-GATEWAY", "2026-07-14T13:21:00Z", "Core Platform", "low", rollback=True),
             chg("CHG-2026-00873", "Update payment dashboard thresholds", "Adjust monitoring thresholds for payment latency dashboards.",
                 "normal", "Payment API", "CI-PAYMENT-API", "2026-07-14T14:10:00Z", "Observability Engineering", "low", rollback=True),
+            chg("CHG-2026-00876", "Roll back Payment API to v4.18.1", "Emergency rollback of v4.18.2 after checkout failures on two days in a row.",
+                "emergency", "Payment API", "CI-PAYMENT-API", "2026-07-15T10:19:00Z", "Payments Platform Engineering", "high",
+                version="4.18.1", role="fix"),
         ],
         "logs": [
             # the lines that existed before the generator: kept with their ids (the tests cite them)
@@ -293,6 +343,21 @@ STORIES = [
             burst("s2_restart", "2026-07-14T14:58:30Z", "2026-07-14T15:06:00Z", 3, "INFO", None,
                   ["Pod restarted by operator; HikariPool-1 started with 50 connections",
                    "Traffic weight moved to secondary instances: 40%", "Checkout error rate back under 1%"], ["payment-api-prod-01"]),
+            # the next morning, the same problem again, until the rollback
+            burst("s2_next_pressure", "2026-07-15T09:31:00Z", "2026-07-15T09:44:00Z", 4, "WARN", "ConnectionPoolPressure",
+                  ["HikariPool-1 active connections reached {pct} percent of configured capacity."],
+                  ["payment-api-prod-01", "payment-api-prod-02", "payment-api-prod-03", "payment-api-prod-04"]),
+            burst("s2_next_leak", "2026-07-15T09:36:20Z", "2026-07-15T09:36:20Z", 1, "WARN", "ConnectionPoolPressure",
+                  ["HikariPool-1 - Apparent connection leak detected: connection held by PaymentRetryHandler.retryAuthorisation for 61000ms"],
+                  ["payment-api-prod-02"]),
+            burst("s2_next_timeout", "2026-07-15T09:40:00Z", "2026-07-15T10:18:00Z", 16, "ERROR", "ConnectionTimeout",
+                  ["HikariPool-1 - Connection is not available, request timed out after 30000ms.",
+                   "Could not open JPA EntityManager for transaction: HikariPool-1 - Connection is not available, request timed out after 30000ms."],
+                  ["payment-api-prod-01", "payment-api-prod-02", "payment-api-prod-03", "payment-api-prod-04"]),
+            burst("s2_rollback", "2026-07-15T10:20:00Z", "2026-07-15T10:28:00Z", 3, "INFO", None,
+                  ["Rollout of payment-api v4.18.1 started (rollback of v4.18.2)",
+                   "Rollout of payment-api v4.18.1 completed: 4/4 pods ready",
+                   "HikariPool-1 active connections at 22 percent; checkout error rate under 1%"], ["payment-api-prod-01"]),
             # the 2025 incident of the same problem
             burst("s2_2025_timeout", "2025-11-20T15:02:00Z", "2025-11-20T15:35:00Z", 12, "ERROR", "ConnectionTimeout",
                   ["HikariPool-1 - Connection is not available, request timed out after 30000ms."],
@@ -652,6 +717,19 @@ STORIES = [
                 ["Aggregation backlog", "Invoice query timeouts"], "Paused the dunning job and reran the aggregation.",
                 "Finance Operations", True, "Second month in a row.", ci="CI-BILLING-APP"),
         ],
+        # after the target: running the aggregation per region did not bring the index back, so the next close fails too
+        "recurrences": [
+            inc("INC-2026-00926", "Month-end billing run fails again",
+                "The July month-end invoice aggregation did not finish and the finance reports timed out again during the closing run.",
+                "SEV-2", "2026-07-31T22:48:00Z", "2026-08-01T01:55:00Z",
+                ["Invoice query timeouts", "Aggregation backlog", "Database CPU at 95%"],
+                "Ran the aggregation region by region, as at the June close.",
+                "Finance Operations", False, "Same symptoms as INC-2026-00106 at the June close; linked to its open problem.",
+                regions=["eu-west-1"], ci="CI-BILLING-APP",
+                flow=[(0, "opened", "Finance Operations", "July month-end aggregation still running after 48 minutes."),
+                      (6, "assigned", "Finance Engineering", None),
+                      (95, "workaround", "Finance Engineering", None)]),
+        ],
         "changes": [
             chg("CHG-2025-00409", "Create composite index on invoice_lines", "Corrective action of RCA-2025-00230: index (account_id, billing_period) on invoice_lines.",
                 "normal", "Billing Service", "CI-BILLING-DB", "2025-06-12T21:00:00Z", "Database Engineering", "medium", role="history"),
@@ -680,6 +758,20 @@ STORIES = [
             burst("s6_2025", "2025-04-30T22:10:00Z", "2025-05-01T00:55:00Z", 12, "ERROR", "StatementTimeout",
                   ["canceling statement due to statement timeout: SELECT account_id, SUM(amount) FROM invoice_lines WHERE billing_period = $1 GROUP BY account_id"],
                   ["billing-service-prod-01"]),
+            burst("s6_2025_may", "2025-05-30T22:05:00Z", "2025-05-31T00:45:00Z", 10, "ERROR", "StatementTimeout",
+                  ["canceling statement due to statement timeout: SELECT account_id, SUM(amount) FROM invoice_lines WHERE billing_period = $1 GROUP BY account_id"],
+                  ["billing-service-prod-01"]),
+            # the July close: the index is still missing
+            burst("s6_jul_start", "2026-07-31T22:00:00Z", "2026-07-31T22:00:00Z", 1, "INFO", None,
+                  ["Month-end aggregation job MEA-2026-07 started (1,301,540 invoice lines)"], ["billing-service-prod-01"]),
+            burst("s6_jul_plan", "2026-07-31T22:04:00Z", "2026-07-31T23:40:00Z", 6, "WARN", "QueryPlanFullScan",
+                  ["duration: {ms} ms plan: Seq Scan on invoice_lines (cost=0.00..1867334.40 rows=1301540) Filter: (billing_period = '2026-07')"],
+                  ["billing-service-prod-01"]),
+            burst("s6_jul_cpu", "2026-07-31T22:18:00Z", "2026-08-01T01:20:00Z", 5, "WARN", "DbCpuHigh",
+                  ["billing-postgresql CPU {pct}%"], ["billing-service-prod-02"]),
+            burst("s6_jul_timeout", "2026-07-31T22:30:00Z", "2026-08-01T01:40:00Z", 18, "ERROR", "StatementTimeout",
+                  ["canceling statement due to statement timeout: SELECT account_id, SUM(amount) FROM invoice_lines WHERE billing_period = $1 GROUP BY account_id"],
+                  ["billing-service-prod-01", "billing-service-prod-02"]),
         ],
         "rcas": [{
             "rca_id": "RCA-2025-00230", "service": "Billing Service", "completed": "2025-06-20T15:00:00Z",
@@ -751,6 +843,20 @@ STORIES = [
                 ["Queue depth growth", "Broker unavailable"], "Cleared disk space and restarted the broker.",
                 "Digital Marketing Operations", True, "Campaign revenue affected.", ci="CI-NOTIF-MQ"),
         ],
+        # after the target: freeing disk space did not bring log rotation back, so the disk filled up again in three days
+        "recurrences": [
+            inc("INC-2026-00354", "Notification publishers blocked again",
+                "Notification delivery stopped again during the night and the outbound queue kept growing.",
+                "SEV-3", "2026-03-22T03:40:00Z", "2026-03-22T04:35:00Z",
+                ["Queue depth growth", "Publishers blocked"],
+                "Freed disk space on the broker hosts again and restarted the message broker.",
+                "Platform Operations", False, "Same symptoms as INC-2026-00107 three days earlier; linked to its open problem.",
+                regions=["global"], ci="CI-NOTIF-MQ",
+                flow=[(0, "opened", "Platform Operations", "Broker resource alarm and blocked publishers."),
+                      (4, "assigned", "Messaging Platform", None),
+                      (12, "reassigned", "Platform Operations", "Same broker alarm as on 19 March."),
+                      (42, "workaround", "Platform Operations", None)]),
+        ],
         "changes": [
             chg("CHG-2026-00012", "Add logrotate for RabbitMQ to the broker host image", "Corrective action of RCA-2025-00390.",
                 "standard", "Notification Service", "CI-NOTIF-BROKER-HOST", "2026-01-12T10:00:00Z", "Platform Operations", "low", role="history"),
@@ -778,6 +884,19 @@ STORIES = [
                   label="Workers cannot publish"),
             burst("s7_queue", "2026-03-19T02:22:00Z", "2026-03-19T03:30:00Z", 8, "WARN", "QueueDepth",
                   ["Queue notifications.outbound depth {n}"], ["notif-worker-prod-01"], counter=(12000, 410000)),
+            # three days later: the disk fills up again, with no campaign starting this time
+            burst("s7_again_disk", "2026-03-20T20:00:00Z", "2026-03-22T03:15:00Z", 6, "WARN", "DiskUsageHigh",
+                  ["Disk usage on / is 71% (/var/log/rabbitmq 20GB)", "Disk usage on / is 79% (/var/log/rabbitmq 26GB)",
+                   "Disk usage on / is 86% (/var/log/rabbitmq 30GB)", "Disk usage on / is 91% (/var/log/rabbitmq 33GB)",
+                   "Disk usage on / is 94% (/var/log/rabbitmq 35GB)", "Disk usage on / is 96% (/var/log/rabbitmq 36GB)"],
+                  ["rabbitmq-prod-02"]),
+            burst("s7_again_alarm", "2026-03-22T03:33:00Z", "2026-03-22T03:34:00Z", 3, "ERROR", "DiskAlarm",
+                  ["disk resource limit alarm set on node rabbit@rabbitmq-prod-02. Free bytes: 49.1MB, limit: 50MB"],
+                  ["rabbitmq-prod-01", "rabbitmq-prod-02"]),
+            burst("s7_again_blocked", "2026-03-22T03:34:30Z", "2026-03-22T04:20:00Z", 12, "ERROR", "PublisherBlocked",
+                  ["connection.blocked: publisher notification-worker blocked by resource alarm"], ["notif-worker-prod-01", "notif-worker-prod-02"]),
+            burst("s7_again_queue", "2026-03-22T03:36:00Z", "2026-03-22T04:15:00Z", 5, "WARN", "QueueDepth",
+                  ["Queue notifications.outbound depth {n}"], ["notif-worker-prod-01"], counter=(8000, 190000)),
             burst("s7_2025", "2025-12-20T17:40:00Z", "2025-12-20T19:10:00Z", 10, "ERROR", "DiskAlarm",
                   ["disk resource limit alarm set on node rabbit@rabbitmq-prod-01. Free bytes: 49.8MB, limit: 50MB"], ["rabbitmq-prod-01"]),
         ],

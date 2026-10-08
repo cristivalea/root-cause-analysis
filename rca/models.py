@@ -127,6 +127,31 @@ class LogEntry(SourceRecord):
     error_type: str | None = None
 
 
+class ProblemLink(SourceRecord):
+    """An incident attached to a problem: who attached it and when."""
+
+    incident_id: str = Field(pattern=r"^INC-\d{4}-\d{5}$")
+    linked_at: datetime
+    linked_by: str
+
+
+class Problem(SourceRecord):
+    """A problem (ITIL): the unknown cause behind one or more incidents. The RCA starts from it.
+    An incident belongs to one problem at most. Like an incident, it never holds the answer."""
+
+    problem_id: str = Field(pattern=r"^PRB-\d{4}-\d{5}$")
+    title: str
+    description: str
+    status: Literal["Open", "Closed"]
+    priority: Literal["P1", "P2", "P3", "P4"]  # from the most severe incident: SEV-1 is P1
+    services: list[str] = Field(min_length=1)
+    created_at: datetime
+    created_by: str
+    closed_at: datetime | None = None
+    rca_id: str | None = None  # the past RCA that closed the problem
+    incidents: list[ProblemLink] = Field(min_length=1)
+
+
 # --------------------------------------------------------------------------------------
 # Tool results
 # --------------------------------------------------------------------------------------
