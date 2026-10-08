@@ -9,6 +9,7 @@ exposed: only its results, and the evidence they point to.
 """
 
 import re
+from datetime import datetime
 
 import streamlit as st
 
@@ -60,6 +61,36 @@ def _listing(label: str, values: list) -> None:
             st.markdown(f"- {value}")
 
 
+def _window(window: dict) -> str:
+    start, end = datetime.fromisoformat(window["start"]), datetime.fromisoformat(window["end"])
+    text = f"{formatting.date_time(start)} - {formatting.date_time(end)}"
+    return f"{window['incident_id']}: {text}" if window.get("incident_id") else text
+
+
+# What the evidence step searched, source by source, in the order it searched them.
+FOUND = (("logs", "step.found_logs"), ("changes", "step.found_changes"), ("cmdb", "step.found_cmdb"),
+         ("problem_incidents", "step.found_problem_incidents"))
+
+
+def _searches(details: dict) -> None:
+    """Every search of the evidence step: where it looked, when, and every record it found.
+    A search that found nothing is shown too: it rules something out."""
+    if details.get("services"):
+        st.caption(t("step.services_searched"))
+        st.markdown(", ".join(details["services"]))
+    _listing(t("step.log_windows"), [_window(item) for item in details.get("log_windows", [])])
+    if details.get("change_window"):
+        st.caption(t("step.change_window"))
+        st.markdown(_window(details["change_window"]))
+    found = details.get("found") or {}
+    for key, label in FOUND:
+        if key not in found:
+            continue
+        ids = found[key]
+        st.caption(t(label, count=len(ids)))
+        st.markdown(", ".join(f"`{item}`" for item in ids) if ids else t("step.found_none"))
+
+
 def _details(step: InvestigationStep, plan=None) -> None:
     """What this step did, told in the words of the step rather than of the code."""
     details = step.details or {}
@@ -83,9 +114,12 @@ def _details(step: InvestigationStep, plan=None) -> None:
         if details.get("evidence") is not None:
             st.caption(t("step.evidence_collected"))
             st.markdown(str(details["evidence"]))
+        _searches(details)
     elif step.name == "historical_rca_agent":
         _listing(t("step.kept"), list(details.get("kept", [])))
         _listing(t("step.dropped"), list(details.get("dropped", [])))
+        if len(details.get("attempts") or []) > 1:
+            st.caption(t("step.attempts", count=len(details["attempts"])))
     elif step.name == "guardrail":
         if details.get("attempt"):
             st.caption(t("step.attempt", number=details["attempt"]))
@@ -121,8 +155,8 @@ def _result_line(step: InvestigationStep, plan=None, limit: int = 70) -> str:
             return t("step.related_one") if count == 1 else t("step.related_many", count=count)
 
     if step.name == "investigation_planner" and plan is not None:
-        window = (f"{formatting.date(plan.window_start)}, "
-                  f"{plan.window_start.strftime('%H:%M')} - {plan.window_end.strftime('%H:%M')} UTC")
+        # the window can cover several days: from 7 days before the first incident of the problem
+        window = f"{formatting.date_time(plan.window_start)} - {formatting.date_time(plan.window_end)}"
         return t("step.plan_line", service=plan.service, window=window)
 
     if step.name == "tools" and details.get("evidence") is not None:

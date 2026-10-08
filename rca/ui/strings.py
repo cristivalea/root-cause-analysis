@@ -206,10 +206,11 @@ EN: dict[str, str] = {
     "step.similar_incidents.title": "Find related incidents",
     "step.similar_incidents.text": "Searches past incidents with the same symptoms.",
     "step.investigation_planner.title": "Plan the investigation",
-    "step.investigation_planner.text": "Decides which service, which time window and which "
-                                       "sources to check.",
+    "step.investigation_planner.text": "Writes the searches for past incidents and analyses. The services "
+                                       "and time windows come from the problem and its incidents.",
     "step.tools.title": "Collect evidence",
-    "step.tools.text": "Checks service dependencies, recent changes and logs.",
+    "step.tools.text": "Checks the logs around every incident, the changes since a week before the first one, "
+                       "and the service dependencies.",
     "step.historical_rca_agent.title": "Compare with past analyses",
     "step.historical_rca_agent.text": "Keeps only the past incidents and analyses that are "
                                       "really comparable.",
@@ -243,6 +244,15 @@ EN: dict[str, str] = {
     "step.attempt": "Attempt {number}",
     "step.problems": "What had to be corrected",
     "step.no_detail": "No further detail was recorded for this step.",
+    "step.services_searched": "Services searched",
+    "step.log_windows": "Logs read around each incident",
+    "step.change_window": "Changes searched",
+    "step.found_logs": "Log patterns found ({count})",
+    "step.found_changes": "Changes found ({count})",
+    "step.found_cmdb": "Components depended on, from the CMDB ({count})",
+    "step.found_problem_incidents": "Other incidents of the problem ({count})",
+    "step.found_none": "Nothing found: this rules it out for the searched window.",
+    "step.attempts": "The answer was asked {count} times before it was valid.",
     # ---- The analysis itself ----
     "draft.title": "Analysis",
     "draft.candidate_causes": "Candidate root causes",
