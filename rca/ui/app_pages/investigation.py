@@ -125,22 +125,19 @@ def run_investigation(incident_id: str, right) -> None:
 
     try:
         with st.spinner("AI Multi-Agent Pipeline is analyzing incident logs, changes and CMDB..."):
+            # the next revision of a case is linked by the backend, with the request of the expert as input
             record = services.start_investigation(
                 incident_id,
                 owner=state.role_name(state.PROBLEM_MANAGER),
                 guidance=state.investigation_guidance(),
+                previous_rca_id=st.session_state.get(NEXT_CYCLE_KEY),
             )
     except services.ServiceError as error:
         state.set_investigation_error(str(error))
         st.rerun()
 
     state.set_investigation_error(None)
-    previous = st.session_state.pop(NEXT_CYCLE_KEY, None)
-    if previous:
-        try:
-            services.link_to_case(previous, record.rca_id)
-        except services.ServiceError:
-            pass
+    st.session_state.pop(NEXT_CYCLE_KEY, None)
     show(record.rca_id)
     st.session_state.pop(SENT_KEY, None)
     st.rerun()
@@ -195,7 +192,11 @@ def next_cycle_panel(record) -> None:
                          date=formatting.date_time(review.decided_at)))
         if st.button(t("cycle.start_next"), type="primary", icon=theme.ICONS["investigation"],
                      help=t("cycle.start_next_help")):
-            st.session_state[NEXT_CYCLE_KEY] = record.rca_id
+            # more details: the next revision of the same case. Rejected: a new case for the same problem.
+            if record.status == "MORE_DETAILS_REQUESTED":
+                st.session_state[NEXT_CYCLE_KEY] = record.rca_id
+            else:
+                st.session_state.pop(NEXT_CYCLE_KEY, None)
             state.select_incident(record.incident_id)
             show(None)
             state.request_investigation()
@@ -204,6 +205,11 @@ def next_cycle_panel(record) -> None:
 
 def analysis_panel(record) -> None:
     """The result: what it is, what can be done with it, then the analysis itself."""
+    if record.status == "ESCALATED_MANUAL":
+        st.warning(t("investigation.escalated_manual"), icon=":material/warning:")
+        st.caption(t("investigation.escalated_manual_hint"))
+        rca_draft.rca_draft(record, with_metadata=True, context=t("cycle.number", number=record.cycle))
+        return
     if record.status == "ESCALATED":
         st.warning(t("investigation.escalated"), icon=":material/warning:")
         st.caption(t("investigation.escalated_hint"))

@@ -12,7 +12,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from rca.config import DB_PATH
-from rca.models import RCARecord, RCAStatus
+from rca.models import InvestigationGuidance, RCARecord, RCAStatus, ReviewDecision
+
+# A case gets at most this many revisions. When the expert asks for more details on the last one,
+# the case is escalated to people (ESCALATED_MANUAL) instead of starting another revision.
+MAX_REVISIONS = 3
 
 SCHEMA = """
     CREATE TABLE IF NOT EXISTS rca_records (
@@ -92,20 +96,21 @@ def apply_review(
     hypothesis_id: str | None = None,
     db_path: Path = DB_PATH,
     requested_checks: list[str] | None = None,
+    guidance: InvestigationGuidance | None = None,
 ) -> RCARecord:
     """Apply the Technical Expert's decision to a stored RCA and return the updated record.
 
     APPROVE needs the id of the approved hypothesis and makes the RCA FINAL with its
     candidate root cause. REJECT marks the record REJECTED. REQUEST_MORE_DETAILS records
-    what the expert wants verified and marks the record MORE_DETAILS_REQUESTED; the next
-    investigation of the case answers it (see `start_next_cycle`).
+    what the expert wants verified, and the wider searches asked for (guidance), and marks the
+    record MORE_DETAILS_REQUESTED; the next revision of the case answers it
+    (pipeline.run_investigation with previous_rca_id). On the last allowed revision
+    (MAX_REVISIONS) the same request escalates the case instead: ESCALATED_MANUAL.
 
     Each decision is stored as a ReviewDecision, so who decided, when and why stays with
     the record. "REANALYZE" is still accepted as the older name of REQUEST_MORE_DETAILS.
     """
     from datetime import datetime, timezone
-
-    from rca.models import ReviewDecision
 
     record = get_rca(rca_id, db_path=db_path)
     if record is None:
@@ -133,15 +138,29 @@ def apply_review(
     elif decision in ("REQUEST_MORE_DETAILS", "REANALYZE"):
         record.review = ReviewDecision(
             reviewer=reviewer, decision="REQUEST_MORE_DETAILS", hypothesis_id=None,
-            comment=comment, decided_at=now, requested_checks=requested_checks or [],
+            comment=comment, decided_at=now, requested_checks=requested_checks or [], guidance=guidance,
         )
-        record.status = "MORE_DETAILS_REQUESTED"
         record.not_checked = record.not_checked + [f"Technical Expert asked for more detail: {comment}"]
+        if record.cycle >= MAX_REVISIONS:
+            record.status = "ESCALATED_MANUAL"
+            record.completed_at = now
+            record.not_checked = record.not_checked + [
+                f"Revision {record.cycle} of {MAX_REVISIONS} was the last one: the case is escalated for manual resolution."
+            ]
+        else:
+            record.status = "MORE_DETAILS_REQUESTED"
     else:
         raise ValueError(f"Unknown decision '{decision}'.")
 
     save_rca(record, db_path=db_path)
     return record
+
+
+def expert_request(review: ReviewDecision) -> str:
+    """The request of the expert as the next revision reads it: the comment and the checks asked for."""
+    checks = [check.strip() for check in review.requested_checks if check.strip()]
+    lines = [review.comment.strip(), *(f"- {check}" for check in checks if check != review.comment.strip())]
+    return "\n".join(line for line in lines if line)
 
 
 def submit_for_review(rca_id: str, db_path: Path = DB_PATH) -> RCARecord:

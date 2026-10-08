@@ -14,6 +14,10 @@ The Problem Manager may add guidance (models.InvestigationGuidance): notes for t
 services to search, a wider change window or longer log windows. The code checks it (the services
 must exist in the CMDB, the windows have limits) and records it with the source "Problem Manager".
 
+In a later revision of a case, the request of the Technical Expert is part of the context, and
+the wider searches the expert asked for are added to the guidance of the previous revision
+(merge_guidance).
+
 Every value records where it comes from, so the expert can see what the investigation started with.
 """
 
@@ -31,15 +35,35 @@ LOGS_AFTER_DETECTION = timedelta(hours=1)
 CHANGES_BEFORE_FIRST_INCIDENT = timedelta(days=7)
 
 
+def merge_guidance(earlier: InvestigationGuidance | None, added: InvestigationGuidance | None) -> InvestigationGuidance | None:
+    """The guidance of the previous revision with what the expert added: more services, and a window
+    widened only when the expert asks for a wider one. The notes of the Problem Manager stay."""
+    if earlier is None or added is None:
+        return added or earlier
+
+    def wider(first: int | None, second: int | None) -> int | None:
+        return max(value for value in (first, second) if value is not None) if first or second else None
+
+    return InvestigationGuidance(
+        notes=earlier.notes or added.notes,
+        extra_services=list(dict.fromkeys([*earlier.extra_services, *added.extra_services])),
+        change_window_days=wider(earlier.change_window_days, added.change_window_days),
+        log_hours_before=wider(earlier.log_hours_before, added.log_hours_before),
+    )
+
+
 def build_context(
     db_path: Path,
     incident_id: str | None = None,
     problem_id: str | None = None,
     guidance: InvestigationGuidance | None = None,
+    expert_request: str | None = None,
+    guidance_by: str = "Problem Manager",
 ) -> tuple[InvestigationContext, list[Incident]]:
     """The context and the incidents it covers. Start from a problem, or from an incident: an incident
     attached to a problem brings the whole problem. Raises ValueError for an unknown id or a service
-    of the guidance that the CMDB does not know."""
+    of the guidance that the CMDB does not know. guidance_by names who gave the guidance."""
+    given = guidance
     guidance = guidance or InvestigationGuidance()
     if problem_id is None and incident_id:
         problem_id = storage.get_problem_id_for_incident(db_path, incident_id)
@@ -74,7 +98,7 @@ def build_context(
     first, last = incidents[0], incidents[-1]
     logs_before = timedelta(hours=guidance.log_hours_before) if guidance.log_hours_before else LOGS_BEFORE_DETECTION
     changes_before = timedelta(days=guidance.change_window_days) if guidance.change_window_days else CHANGES_BEFORE_FIRST_INCIDENT
-    pm = "Problem Manager"
+    pm = guidance_by
 
     context = InvestigationContext(
         problem_id=problem_id,
@@ -92,6 +116,8 @@ def build_context(
             end=max(item.resolved_at or item.detected_at for item in incidents),
         ),
         notes=(guidance.notes or "").strip() or None,
+        expert_request=(expert_request or "").strip() or None,
+        guidance=given,
         sources={
             "incidents": origin,
             "reference_incident": "rule: the most recent incident",
@@ -101,7 +127,8 @@ def build_context(
                            + " before to 1 hour after the detection of every incident",
             "change_window": (f"{pm}: {guidance.change_window_days} days" if guidance.change_window_days else "rule: 7 days")
                              + " before the first incident to the resolution of the last one",
-            **({"notes": pm} if (guidance.notes or "").strip() else {}),
+            **({"notes": "Problem Manager"} if (guidance.notes or "").strip() else {}),
+            **({"expert_request": "Technical Expert, review of the previous revision"} if (expert_request or "").strip() else {}),
         },
     )
     return context, incidents

@@ -9,7 +9,7 @@ data loaded into a temporary SQLite database. The live test runs everything for 
 GROQ_MODEL=openai/gpt-oss-20b python -m pytest -m live tests/test_pipeline.py -s
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -333,6 +333,68 @@ def test_the_guidance_of_the_problem_manager_reaches_the_context_and_the_planner
     assert "Network Services" in record.context.services
     assert "Check the retry handler." in fakes.planner.requests[0]
     assert "Network Services" in record.trace[2].details["services"]
+
+
+# The revisions of a case ----------------------------------------------------------------
+
+
+def send_back(record, db_path, comment="Check the database changes of the last month.", guidance=None):
+    store.submit_for_review(record.rca_id, db_path=db_path)
+    return store.apply_review(record.rca_id, "expert", "REQUEST_MORE_DETAILS", comment, db_path=db_path,
+                              requested_checks=["database changes", "pool settings"], guidance=guidance)
+
+
+def test_the_request_of_the_expert_starts_the_next_revision_of_the_same_case(db_path, fakes):
+    first = pipeline.run_investigation(INCIDENT_ID, db_path=db_path)
+    send_back(first, db_path, guidance=InvestigationGuidance(change_window_days=30))
+
+    second = pipeline.run_investigation(previous_rca_id=first.rca_id, db_path=db_path)
+
+    assert (second.case_id, second.cycle, second.parent_rca_id) == (first.rca_id, 2, first.rca_id)
+    assert store.get_rca(first.rca_id, db_path=db_path).case_id == first.rca_id
+    assert second.problem_id == first.problem_id
+    # what the expert asked is part of the context, and both agents read it
+    assert second.context.expert_request.startswith("Check the database changes of the last month.")
+    assert "- pool settings" in second.context.expert_request
+    assert "Check the database changes" in fakes.planner.requests[-1]
+    assert "Check the database changes" in fakes.reasoning.requests[-1]
+    # the wider window the expert asked for is applied by code
+    first_detected = datetime.fromisoformat("2026-07-14T14:32:00+00:00")
+    assert second.context.change_window.start == first_detected - timedelta(days=30)
+    assert "Technical Expert" in second.context.sources["change_window"]
+
+
+def test_the_guidance_of_the_problem_manager_stays_in_the_next_revision(db_path, fakes):
+    first = pipeline.run_investigation(INCIDENT_ID, db_path=db_path,
+                                       guidance=InvestigationGuidance(extra_services=["Network Services"]))
+    send_back(first, db_path)
+
+    second = pipeline.run_investigation(previous_rca_id=first.rca_id, db_path=db_path)
+
+    assert "Network Services" in second.context.services
+
+
+def test_only_an_rca_sent_back_for_more_details_gets_a_next_revision(db_path, fakes):
+    draft_record = pipeline.run_investigation(INCIDENT_ID, db_path=db_path)
+
+    with pytest.raises(ValueError, match="only an RCA sent back for more details"):
+        pipeline.run_investigation(previous_rca_id=draft_record.rca_id, db_path=db_path)
+
+
+def test_after_the_third_revision_a_new_request_escalates_the_case_to_people(db_path, fakes):
+    record = pipeline.run_investigation(INCIDENT_ID, db_path=db_path)
+    for _ in range(store.MAX_REVISIONS - 1):
+        send_back(record, db_path)
+        record = pipeline.run_investigation(previous_rca_id=record.rca_id, db_path=db_path)
+    assert record.cycle == store.MAX_REVISIONS
+
+    last = send_back(record, db_path)
+
+    assert last.status == "ESCALATED_MANUAL"
+    assert "escalated for manual resolution" in last.not_checked[-1]
+    with pytest.raises(ValueError):
+        pipeline.run_investigation(previous_rca_id=last.rca_id, db_path=db_path)
+    assert [item.cycle for item in store.list_case(last.case, db_path=db_path)] == [1, 2, 3]
 
 
 # Several runs in the same thread, as in LangGraph Studio ---------------------------------

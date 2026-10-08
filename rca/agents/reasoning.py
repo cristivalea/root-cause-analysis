@@ -54,13 +54,18 @@ Rules for every hypothesis:
   A fact that is simply unrelated to the hypothesis goes in neither list.
 - Do not write any confidence level. The application calculates it from the evidence.
 
+In a later revision of a case the input also has the request of the Technical Expert, who read
+the previous draft. Answer it: say in observed_patterns or in the reasons what the evidence shows
+about it, and when the ledger cannot answer it, write that in not_checked. Never ignore it.
+
 incident_id is the id given in the input. Write in English."""
 
 
-def build_user_input(incident_id: str, evidence: list[Evidence]) -> str:
+def build_user_input(incident_id: str, evidence: list[Evidence], expert_request: str | None = None) -> str:
     return json.dumps(
         {
             "incident_id": incident_id,
+            **({"technical_expert_request": expert_request} if expert_request else {}),
             "evidence_ledger": [item.model_dump(mode="json") for item in evidence],
         },
         indent=2,
@@ -68,12 +73,18 @@ def build_user_input(incident_id: str, evidence: list[Evidence]) -> str:
     )
 
 
-def propose_draft(incident_id: str, evidence: list[Evidence], feedback: str | None = None) -> DraftRCA:
+def propose_draft(
+    incident_id: str,
+    evidence: list[Evidence],
+    feedback: str | None = None,
+    expert_request: str | None = None,
+) -> DraftRCA:
     """Ask the model for the draft RCA, based only on the evidence ledger.
 
     feedback is the reason the previous answer was refused, added by the guardrail on a retry.
+    expert_request is what the Technical Expert asked in the review of the previous revision.
     Raises LLMOutputError when the answer is not valid JSON or does not match DraftRCA.
     """
-    draft = ask_json(INSTRUCTIONS, with_feedback(build_user_input(incident_id, evidence), feedback), DraftRCA)
+    draft = ask_json(INSTRUCTIONS, with_feedback(build_user_input(incident_id, evidence, expert_request), feedback), DraftRCA)
     # The incident id is known by the code, so the model cannot attach the draft to another incident.
     return draft.model_copy(update={"incident_id": incident_id})

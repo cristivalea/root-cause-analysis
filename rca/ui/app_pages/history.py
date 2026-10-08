@@ -21,7 +21,7 @@ SEARCH_KEY = "history_search"
 STATUS_KEY = "history_status"
 SERVICE_KEY = "history_service"
 
-STATUSES = ("FINAL", "PENDING_REVIEW", "MORE_DETAILS_REQUESTED", "DRAFT", "REJECTED", "ESCALATED")
+STATUSES = ("FINAL", "PENDING_REVIEW", "MORE_DETAILS_REQUESTED", "DRAFT", "REJECTED", "ESCALATED", "ESCALATED_MANUAL")
 
 
 def incident_titles() -> dict[str, str]:

@@ -39,7 +39,7 @@ from rca import rag, storage, store
 from rca.agents import historical, planner, reasoning
 from rca.confidence import assess_draft, is_weakly_supported
 from rca.config import DB_PATH
-from rca.context import build_context
+from rca.context import build_context, merge_guidance
 from rca.evidence import EvidenceLedger, add_changes, add_dependencies, add_log_groups
 from rca.guardrails import MAX_ATTEMPTS, check_draft, format_feedback, run_with_retries
 from rca.llm import LLMOutputError
@@ -76,6 +76,7 @@ class InvestigationInput(TypedDict, total=False):
 
     problem_id: str
     incident_id: str
+    previous_rca_id: str  # the revision the expert sent back: this run is the next revision of its case
     guidance: dict  # models.InvestigationGuidance, optional
     owner: str
     db_path: str
@@ -85,6 +86,7 @@ class InvestigationState(InvestigationInput, total=False):
     """Everything the investigation found so far. Each node returns only the fields it changes."""
 
     started_at: datetime
+    previous: RCARecord | None  # the revision this one answers, in a later revision of a case
     context: InvestigationContext
     incidents: list[Incident]  # the incidents of the problem, in the order they happened
     incident: Incident  # the reference incident: the most recent one
@@ -247,14 +249,28 @@ def start(state: InvestigationState) -> dict:
     LangGraph Studio keeps the state of a thread between runs. Without the reset, a second run in
     the same thread would continue the attempt count, the steps and the status of the first one.
     """
-    context, incidents = build_context(
-        _db_path(state),
-        incident_id=(state.get("incident_id") or "").strip() or None,
-        problem_id=(state.get("problem_id") or "").strip() or None,
-        guidance=InvestigationGuidance.model_validate(state.get("guidance") or {}),
-    )
+    db_path = _db_path(state)
+    incident_id = (state.get("incident_id") or "").strip() or None
+    problem_id = (state.get("problem_id") or "").strip() or None
+    guidance = InvestigationGuidance.model_validate(state["guidance"]) if state.get("guidance") else None
+    previous, request, guidance_by = None, None, "Problem Manager"
+
+    previous_id = (state.get("previous_rca_id") or "").strip()
+    if previous_id:
+        previous = _previous_revision(previous_id, db_path)
+        # the same problem as before, the guidance of the previous revision, and what the expert added
+        problem_id, incident_id = previous.problem_id, previous.incident_id
+        earlier = guidance or (previous.context.guidance if previous.context else None)
+        guidance = merge_guidance(earlier, previous.review.guidance)
+        request = store.expert_request(previous.review)
+        if previous.review.guidance:
+            guidance_by = "Problem Manager and Technical Expert"
+
+    context, incidents = build_context(db_path, incident_id=incident_id, problem_id=problem_id, guidance=guidance,
+                                       expert_request=request, guidance_by=guidance_by)
     reference = incidents[-1]
     return {
+        "previous": previous,
         "problem_id": context.problem_id,
         "incident_id": reference.incident_id,
         "owner": state.get("owner") or DEFAULT_OWNER,
@@ -278,6 +294,19 @@ def start(state: InvestigationState) -> dict:
         "not_checked": None,
         "trace": None,
     }
+
+
+def _previous_revision(rca_id: str, db_path: Path) -> RCARecord:
+    """The revision the expert sent back. Only a request for more details continues a case, and only
+    while the case has revisions left (store.MAX_REVISIONS)."""
+    previous = store.get_rca(rca_id, db_path=db_path)
+    if previous is None:
+        raise ValueError(f"RCA '{rca_id}' was not found.")
+    if previous.status != "MORE_DETAILS_REQUESTED" or previous.review is None:
+        raise ValueError(f"RCA '{rca_id}' is {previous.status}: only an RCA sent back for more details gets a next revision.")
+    if previous.cycle >= store.MAX_REVISIONS:
+        raise ValueError(f"RCA '{rca_id}' is revision {previous.cycle}, the last of {store.MAX_REVISIONS}.")
+    return previous
 
 
 def similar_incidents(state: InvestigationState) -> dict:
@@ -496,7 +525,8 @@ def rca_reasoning_agent(state: InvestigationState) -> dict:
     started = _now()
     attempt = state.get("attempts", 0) + 1
     try:
-        draft = reasoning.propose_draft(state["incident_id"], state["evidence"], state.get("feedback"))
+        draft = reasoning.propose_draft(state["incident_id"], state["evidence"], state.get("feedback"),
+                                        state["context"].expert_request)
     except LLMOutputError as exc:
         return {
             "attempts": attempt,
@@ -604,6 +634,13 @@ def save_rca(state: InvestigationState) -> dict:
         suggested_workaround=draft.suggested_workaround if draft else None,
         change_likely_required=draft.change_likely_required if draft else False,
     )
+    previous = state.get("previous")
+    if previous is not None:
+        # the next revision of the same case, linked here and not by the interface after the run
+        record.case_id, record.cycle, record.parent_rca_id = previous.case, previous.cycle + 1, previous.rca_id
+        if previous.case_id is None:
+            previous.case_id = previous.case
+            store.save_rca(previous, db_path=db_path)
     store.save_rca(record, db_path=db_path)
     return {"record": record}
 
@@ -643,12 +680,15 @@ def run_investigation(
     on_step: Callable[[InvestigationStep], None] | None = None,
     problem_id: str | None = None,
     guidance: InvestigationGuidance | None = None,
+    previous_rca_id: str | None = None,
 ) -> RCARecord:
     """Run the whole investigation for a problem and return the saved RCA record.
 
     Give problem_id, or incident_id: the investigation then covers the whole problem of that incident
     (or the incident alone, when it belongs to no problem). guidance is what the Problem Manager adds
-    (notes, more services, wider windows), checked when the context is built. on_step is called with every step as soon
+    (notes, more services, wider windows), checked when the context is built. previous_rca_id is an RCA
+    the expert sent back for more details: the run is then the next revision of its case, with the
+    request of the expert as input. on_step is called with every step as soon
     as it finishes, so the command line and the interface can show the investigation while it runs.
     """
     inputs: InvestigationInput = {"owner": owner, "db_path": str(db_path)}
@@ -658,6 +698,8 @@ def run_investigation(
         inputs["incident_id"] = incident_id
     if guidance is not None:
         inputs["guidance"] = guidance.model_dump()
+    if previous_rca_id:
+        inputs["previous_rca_id"] = previous_rca_id
     state: dict = {}
     with tracer().start_as_current_span("rca.investigation") as span:
         span.set_attribute("rca.problem_id", problem_id or "")

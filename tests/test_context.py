@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from rca import storage
-from rca.context import build_context
+from rca.context import build_context, merge_guidance
 from rca.models import InvestigationGuidance
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -111,3 +111,23 @@ def test_the_windows_of_the_guidance_have_limits():
         InvestigationGuidance(change_window_days=3)  # narrower than the rule
     with pytest.raises(ValueError):
         InvestigationGuidance(log_hours_before=500)
+
+
+def test_the_expert_widens_the_guidance_of_the_previous_revision_and_never_narrows_it():
+    earlier = InvestigationGuidance(notes="Check the pool.", extra_services=["Network Services"], change_window_days=30)
+    added = InvestigationGuidance(extra_services=["Kubernetes Platform"], change_window_days=14, log_hours_before=24)
+
+    merged = merge_guidance(earlier, added)
+
+    assert merged.notes == "Check the pool."
+    assert merged.extra_services == ["Network Services", "Kubernetes Platform"]
+    assert merged.change_window_days == 30  # the expert asked for less than before: the wider one stays
+    assert merged.log_hours_before == 24
+    assert merge_guidance(None, added) == added and merge_guidance(earlier, None) == earlier
+
+
+def test_the_request_of_the_expert_is_part_of_the_context(db_path):
+    context, _ = build_context(db_path, incident_id="INC-2026-00491", expert_request="Search the last 7 days of logs.")
+
+    assert context.expert_request == "Search the last 7 days of logs."
+    assert context.sources["expert_request"].startswith("Technical Expert")

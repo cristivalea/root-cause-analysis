@@ -201,12 +201,16 @@ ConfidenceLevel = Literal["HIGH", "MEDIUM", "LOW"]
 # The states an RCA goes through.
 # DRAFT: investigation finished, but the Problem Manager has not sent it to the expert yet.
 # MORE_DETAILS_REQUESTED: the Technical Expert asked for a further investigation of this case.
+# ESCALATED: the agents could not produce a valid plan or draft (a technical failure).
+# ESCALATED_MANUAL: the expert still asked for more after the last allowed revision of the case;
+# the case is now solved by people, outside the application.
 RCAStatus = Literal[
     "INVESTIGATING",
     "DRAFT",
     "PENDING_REVIEW",
     "MORE_DETAILS_REQUESTED",
     "ESCALATED",
+    "ESCALATED_MANUAL",
     "REJECTED",
     "FINAL",
 ]
@@ -251,6 +255,8 @@ class InvestigationContext(BaseModel):
     log_windows: list[TimeWindow] = Field(min_length=1)  # one around every incident
     change_window: TimeWindow
     notes: str | None = None  # from the Problem Manager
+    expert_request: str | None = None  # what the Technical Expert asked for in the review of the previous revision
+    guidance: InvestigationGuidance | None = None  # the guidance used, kept for the next revision of the case
     sources: dict[str, str] = {}
 
 
@@ -327,6 +333,7 @@ class ReviewDecision(BaseModel):
     comment: str
     decided_at: datetime
     requested_checks: list[str] = []  # what the expert wants the next investigation to verify
+    guidance: InvestigationGuidance | None = None  # wider searches the expert asks for, applied by code
 
 
 class RCARecord(BaseModel):

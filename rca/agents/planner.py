@@ -20,7 +20,8 @@ ALL_SOURCES: list[SourceName] = ["logs", "changes", "cmdb", "historical_rcas", "
 INSTRUCTIONS = f"""You are the Investigation Planner in a Root Cause Analysis application for IT incidents.
 You receive a problem: one or more incidents that share the same unknown cause, the past
 incidents that look similar and, sometimes, notes from the Problem Manager. Use the notes to
-decide what the queries look for; they are hints, not facts. The services, the time windows and the sources to check are already
+decide what the queries look for; they are hints, not facts. In a later revision of a case you
+also receive the request of the Technical Expert: write queries that look for what the expert asked. The services, the time windows and the sources to check are already
 fixed by the application; you do not choose them. You do not investigate and you do not guess the cause.
 
 Write:
@@ -59,6 +60,7 @@ def build_user_input(context: InvestigationContext, incidents: list[Incident], s
             "incidents_of_the_problem": [_incident_for_prompt(item) for item in incidents],
             "services": context.services,
             "problem_manager_notes": context.notes,
+            "technical_expert_request": context.expert_request,
             "similar_past_incidents": [_similar_incident_for_prompt(item) for item in similar_incidents],
         },
         indent=2,

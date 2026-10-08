@@ -106,6 +106,7 @@ class StartInvestigationRequest(BaseModel):
     incident_id: str
     owner: str
     guidance: InvestigationGuidance | None = None  # optional notes and wider search from the Problem Manager
+    previous_rca_id: str | None = None  # an RCA sent back for more details: run its next revision
 
 
 class ApplyReviewRequest(BaseModel):
@@ -114,6 +115,7 @@ class ApplyReviewRequest(BaseModel):
     comment: str
     hypothesis_id: Optional[str] = None
     requested_checks: Optional[List[str]] = None
+    guidance: InvestigationGuidance | None = None  # wider searches the expert asks for, with REQUEST_MORE_DETAILS
 
 
 class LinkCaseRequest(BaseModel):
@@ -302,6 +304,7 @@ def api_apply_review(
             hypothesis_id=req.hypothesis_id,
             db_path=DB_PATH,
             requested_checks=req.requested_checks,
+            guidance=req.guidance,
         )
         return _serialize(result)
     except Exception as exc:
@@ -352,6 +355,7 @@ def api_start_investigation(req: StartInvestigationRequest):
             db_path=DB_PATH,
             on_step=None,
             guidance=req.guidance,
+            previous_rca_id=req.previous_rca_id,
         )
         return _serialize(result)
     except ValueError as exc:  # an unknown incident or a service the CMDB does not know

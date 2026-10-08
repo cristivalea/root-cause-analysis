@@ -48,6 +48,7 @@ RCA_STATUS: dict[str, Style] = {
     "PENDING_REVIEW": Style("orange", ":material/pending:"),
     "MORE_DETAILS_REQUESTED": Style("violet", ":material/help:"),
     "ESCALATED": Style("red", ":material/priority_high:"),
+    "ESCALATED_MANUAL": Style("red", ":material/support_agent:"),
     "REJECTED": Style("red", ":material/cancel:"),
     "FINAL": Style("green", ":material/verified:"),
 }

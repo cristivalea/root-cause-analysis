@@ -83,6 +83,7 @@ EN: dict[str, str] = {
     "rca_status.PENDING_REVIEW": "Awaiting technical review",
     "rca_status.MORE_DETAILS_REQUESTED": "More details requested",
     "rca_status.ESCALATED": "Escalated",
+    "rca_status.ESCALATED_MANUAL": "Escalated for manual resolution",
     "rca_status.REJECTED": "Rejected",
     "rca_status.FINAL": "Validated",
     "rca_status.label": "RCA status",
@@ -194,6 +195,9 @@ EN: dict[str, str] = {
     "investigation.try_again": "Try again",
     "investigation.technical_detail": "Technical detail",
     "investigation.escalated": "The investigation could not produce an analysis.",
+    "investigation.escalated_manual": "Escalated for manual resolution",
+    "investigation.escalated_manual_hint": "The Technical Expert still asked for more after the last allowed "
+                                           "revision of this case. The case continues outside the application.",
     "investigation.escalated_hint": "The investigation stopped before it could propose a cause, and the case was escalated. You can run it again.",
     "step.state.done": "Completed",
     "step.state.running": "Running",
@@ -324,6 +328,10 @@ EN: dict[str, str] = {
     "request.placeholder": "For example: check whether the connection pool limit was reached "
                            "on the database side.",
     "request.send": "Send request",
+    "request.search_title": "Search wider in the next revision (optional)",
+    "request.revision": "This is revision {number} of {maximum}. Your request starts the next revision of the case.",
+    "request.last_revision": "This is the last revision ({maximum} of {maximum}). Asking for more details now "
+                             "escalates the case for manual resolution instead of starting another revision.",
     "request.done_title": "More details requested",
     "request.done_text": "Your request was recorded. The next investigation of this case will "
                          "answer it; the analysis you read is kept as it is.",

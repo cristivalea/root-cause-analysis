@@ -21,6 +21,7 @@ from rca.ui.strings import t
 
 # REVIEWER_KEY = "reviewer_name"
 OUTCOME_KEY = "review_outcome"
+MAX_REVISIONS = 3  # the same limit as rca.store.MAX_REVISIONS: the interface talks to the API only
 DECIDABLE = ("PENDING_REVIEW",)
 
 
@@ -57,12 +58,14 @@ def requested_checks(decision: str, comment: str) -> list[str] | None:
     return lines if len(lines) > 1 else None
 
 
-def decide(rca_id: str, decision: str, comment: str, hypothesis_id: str | None = None) -> bool:
+def decide(rca_id: str, decision: str, comment: str, hypothesis_id: str | None = None,
+           guidance: dict | None = None) -> bool:
     """Record a decision. The screen shows what happened next, so it only reports success."""
     try:
         services.apply_review(
             rca_id, reviewer_name(), decision, comment, hypothesis_id,
             requested_checks=requested_checks(decision, comment),
+            guidance=guidance,
         )
     except services.ServiceError as error:
         st.error(t("review.decision_failed"), icon=theme.ICONS["error"])
@@ -135,13 +138,37 @@ def request_dialog(record) -> None:
     for hypothesis in record.hypotheses:
         st.markdown(f"- **{hypothesis.confidence}** - {hypothesis.candidate_root_cause}")
     question = st.text_area(t("request.question"), placeholder=t("request.placeholder"))
+    guidance = search_form()
     # st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
+    if record.cycle >= MAX_REVISIONS:
+        st.warning(t("request.last_revision", maximum=MAX_REVISIONS), icon=":material/warning:")
+    else:
+        st.caption(t("request.revision", number=record.cycle, maximum=MAX_REVISIONS))
     if st.button(t("request.send"), type="primary", icon=":material/send:"):
         if not question.strip():
             st.error(t("review.comment_required"), icon=theme.ICONS["error"])
             return
-        if decide(record.rca_id, "REQUEST_MORE_DETAILS", question.strip()):
+        if decide(record.rca_id, "REQUEST_MORE_DETAILS", question.strip(), guidance=guidance):
             st.rerun()
+
+
+def search_form() -> dict | None:
+    """Wider searches the expert may ask for. Applied by code in the next revision; only what was
+    changed is sent."""
+    with st.expander(t("request.search_title"), icon=":material/tune:"):
+        try:
+            options = services.cmdb_services()
+        except services.ServiceError:
+            options = []
+        extra = st.multiselect(t("guidance.services"), options, help=t("guidance.services_help"), key="request_services")
+        days = st.number_input(t("guidance.change_days"), min_value=7, max_value=90, value=7, step=1, key="request_days")
+        hours = st.number_input(t("guidance.log_hours"), min_value=2, max_value=168, value=2, step=1, key="request_hours")
+    guidance = {
+        "extra_services": extra,
+        "change_window_days": int(days) if days != 7 else None,
+        "log_hours_before": int(hours) if hours != 2 else None,
+    }
+    return guidance if any(guidance.values()) else None
 
 
 @st.dialog(t("reject.title"))
@@ -194,6 +221,9 @@ def outcome(record) -> None:
         elif record.status == "REJECTED":
             st.markdown(f"**{t('reject.done_title')}**")
             st.caption(t("reject.done_text"))
+        elif record.status == "ESCALATED_MANUAL":
+            st.markdown(f"**{t('investigation.escalated_manual')}**")
+            st.caption(t("investigation.escalated_manual_hint"))
 
         st.caption(t("review.decided_by", name=review.reviewer, date=formatting.date_time(review.decided_at)))
         if review.comment:

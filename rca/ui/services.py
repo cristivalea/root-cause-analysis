@@ -329,6 +329,7 @@ def apply_review(
     comment: str,
     hypothesis_id: str | None = None,
     requested_checks: list[str] | None = None,
+    guidance: dict | None = None,
 ) -> RCARecord:
     payload = {
         "reviewer": reviewer,
@@ -336,6 +337,7 @@ def apply_review(
         "comment": comment,
         "hypothesis_id": hypothesis_id,
         "requested_checks": requested_checks,
+        "guidance": guidance,
     }
     try:
         resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/review", headers=_auth_headers(), json=payload, timeout=10))
@@ -378,8 +380,9 @@ def start_investigation(
     owner: str,
     on_step: Callable[[InvestigationStep], None] | None = None,
     guidance: dict | None = None,
+    previous_rca_id: str | None = None,
 ) -> RCARecord:
-    payload = {"incident_id": incident_id, "owner": owner, "guidance": guidance}
+    payload = {"incident_id": incident_id, "owner": owner, "guidance": guidance, "previous_rca_id": previous_rca_id}
     try:
         resp = _check_response(
             requests.post(f"{API_BASE_URL}/api/v1/investigations/start", headers=_auth_headers(), json=payload, timeout=180)
