@@ -14,6 +14,7 @@ import streamlit as st
 from rca.ui import filtering, navigation, services, state, theme
 from rca.ui.components import filters as filter_controls
 from rca.ui.components import incident_table as table
+from rca.ui.components.guidance_form import guidance_form
 from rca.ui.components.incident_card import incident_summary
 from rca.ui.components.incident_details import incident_details_dialog
 from rca.ui.components.page_header import page_header
@@ -61,30 +62,6 @@ def pager(total: int, page: int, total_pages: int, first: int, last: int) -> Non
                 if st.button(t("list.next"), icon=":material/chevron_right:", disabled=page >= total_pages):
                     st.session_state[PAGE_KEY] = page + 1
                     st.rerun()
-
-
-def guidance_form() -> dict | None:
-    """What the Problem Manager may add to the investigation. Everything is optional and checked by
-    the backend; only what was filled in is sent."""
-    with st.expander(t("guidance.title"), icon=":material/tune:"):
-        st.caption(t("guidance.hint"))
-        notes = st.text_area(t("guidance.notes"), help=t("guidance.notes_help"), key="guidance_notes")
-        try:
-            options = services.cmdb_services()
-        except services.ServiceError:
-            options = []
-        extra = st.multiselect(t("guidance.services"), options, help=t("guidance.services_help"), key="guidance_services")
-        days = st.number_input(t("guidance.change_days"), min_value=7, max_value=90, value=7, step=1,
-                               help=t("guidance.change_days_help"), key="guidance_days")
-        hours = st.number_input(t("guidance.log_hours"), min_value=2, max_value=168, value=2, step=1,
-                                help=t("guidance.log_hours_help"), key="guidance_hours")
-    guidance = {
-        "notes": notes.strip() or None,
-        "extra_services": extra,
-        "change_window_days": int(days) if days != 7 else None,
-        "log_hours_before": int(hours) if hours != 2 else None,
-    }
-    return guidance if any(guidance.values()) else None
 
 
 def selection_area(incident) -> None:

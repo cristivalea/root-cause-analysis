@@ -182,7 +182,7 @@ from collections.abc import Callable
 import requests
 import streamlit as st
 
-from rca.models import Incident, InvestigationStep, RCARecord, RCAStatus
+from rca.models import Incident, InvestigationStep, Problem, ProblemEvent, RCARecord, RCAStatus
 
 INCIDENT_CACHE_SECONDS = 300
 API_BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
@@ -390,3 +390,98 @@ def start_investigation(
         return RCARecord.model_validate(resp.json())
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
+
+# --------------------------------------------------------------------------------------
+# Problems and grouping suggestions (Problem Manager)
+# --------------------------------------------------------------------------------------
+
+
+def user_message(error: Exception) -> str:
+    """The message of a refused operation as the Problem Manager reads it, without the HTTP prefix."""
+    text = str(error)
+    return text.split("): ", 1)[1] if text.startswith("API Error (") and "): " in text else text
+
+
+def _get(path: str, timeout: int = 15):
+    try:
+        return _check_response(requests.get(f"{API_BASE_URL}{path}", headers=_auth_headers(), timeout=timeout)).json()
+    except ServiceError:
+        raise
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
+def _post(path: str, payload: dict, timeout: int = 15):
+    try:
+        return _check_response(requests.post(f"{API_BASE_URL}{path}", headers=_auth_headers(), json=payload,
+                                             timeout=timeout)).json()
+    except ServiceError:
+        raise
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
+def _problem_result(data: dict) -> tuple[Problem, list[str]]:
+    return Problem.model_validate(data["problem"]), list(data.get("warnings", []))
+
+
+def list_problems(status: str | None = None) -> list[Problem]:
+    query = f"?status_filter={status}" if status else ""
+    return [Problem.model_validate(item) for item in _get(f"/api/v1/problems{query}")]
+
+
+def get_problem(problem_id: str) -> dict | None:
+    """The problem, its history and its RCAs, or None when it does not exist."""
+    try:
+        data = _get(f"/api/v1/problems/{problem_id}")
+    except ServiceError as error:
+        if "(404)" in str(error):
+            return None
+        raise
+    return {
+        "problem": Problem.model_validate(data["problem"]),
+        "events": [ProblemEvent.model_validate(item) for item in data["events"]],
+        "rcas": [RCARecord.model_validate(item) for item in data["rcas"]],
+    }
+
+
+def create_problem(incident_ids: list[str], title: str | None = None, move_reason: str | None = None) -> tuple[Problem, list[str]]:
+    return _problem_result(_post("/api/v1/problems", {"incident_ids": incident_ids, "title": title, "move_reason": move_reason}))
+
+
+def attach_incident(problem_id: str, incident_id: str, move_reason: str | None = None) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/incidents",
+                                 {"incident_id": incident_id, "move_reason": move_reason}))
+
+
+def detach_incident(problem_id: str, incident_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/incidents/{incident_id}/remove", {"reason": reason}))
+
+
+def close_problem(problem_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/close", {"reason": reason}))
+
+
+def reopen_problem(problem_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/reopen", {"reason": reason}))
+
+
+def unassigned_incidents() -> list[Incident]:
+    return [Incident.model_validate(item) for item in _get("/api/v1/incidents/unassigned")]
+
+
+def suggestions() -> dict[str, dict | None]:
+    """The grouping suggestion of every incident in no problem (kind, problem_id, incident_ids, reasons)."""
+    return _get("/api/v1/incidents/unassigned/suggestions", timeout=60)
+
+
+def proposed_problems() -> list[list[str]]:
+    return _get("/api/v1/problems/proposed", timeout=60)
+
+
+def reject_suggestion(incident_id: str, targets: list[str]) -> None:
+    _post(f"/api/v1/incidents/{incident_id}/reject-suggestion", {"targets": targets})
+
+
+def dismiss_incident(incident_id: str, reason: str) -> None:
+    _post(f"/api/v1/incidents/{incident_id}/dismiss", {"reason": reason})

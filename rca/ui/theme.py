@@ -88,6 +88,8 @@ ICONS = {
     "investigation": ":material/graphic_eq:",
     "review": ":material/fact_check:",
     "history": ":material/history:",
+    "problems": ":material/category:",
+    "incidents": ":material/report:",
     "back": ":material/arrow_back:",
     "role": ":material/badge:",
     "scaffold": ":material/construction:",

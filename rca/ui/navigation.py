@@ -16,6 +16,8 @@ START_RCA = "app_pages/start_rca.py"
 INVESTIGATION = "app_pages/investigation.py"
 REVIEW = "app_pages/review.py"
 HISTORY = "app_pages/history.py"
+PROBLEMS = "app_pages/problems.py"
+INCIDENTS = "app_pages/incidents.py"
 
 
 # def build_pages(role: state.Role) -> list[st.Page]:
@@ -54,6 +56,8 @@ def build_pages(role: state.Role) -> list[st.Page]:
     if role == state.PROBLEM_MANAGER:
         return [
             home,
+            st.Page(PROBLEMS, title=t("nav.problems"), icon=theme.ICONS["problems"], url_path="problems"),
+            st.Page(INCIDENTS, title=t("nav.incidents"), icon=theme.ICONS["incidents"], url_path="incidents"),
             st.Page(
                 START_RCA,
                 title=t("nav.start_rca"),
