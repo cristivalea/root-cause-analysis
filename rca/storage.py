@@ -91,6 +91,27 @@ SCHEMAS = {
             linked_by TEXT NOT NULL
         )
     """,
+    # every change the Problem Manager makes to a problem, never updated or deleted (rca/problems.py)
+    "problem_events": """
+        CREATE TABLE IF NOT EXISTS problem_events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            problem_id TEXT NOT NULL,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            action TEXT NOT NULL,
+            incident_id TEXT,
+            reason TEXT
+        )
+    """,
+    # incidents the Problem Manager marked as needing no problem: they are no longer suggested
+    "dismissed_incidents": """
+        CREATE TABLE IF NOT EXISTS dismissed_incidents (
+            incident_id TEXT PRIMARY KEY,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            reason TEXT NOT NULL
+        )
+    """,
 }
 
 

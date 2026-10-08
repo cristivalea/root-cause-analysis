@@ -148,8 +148,21 @@ class Problem(SourceRecord):
     created_at: datetime
     created_by: str
     closed_at: datetime | None = None
+    close_reason: str | None = None  # why the Problem Manager closed it, when no RCA did
     rca_id: str | None = None  # the past RCA that closed the problem
     incidents: list[ProblemLink] = Field(min_length=1)
+
+
+class ProblemEvent(BaseModel):
+    """One change to a problem, kept forever: who did what, when and why (rca/problems.py)."""
+
+    problem_id: str
+    at: datetime
+    by: str
+    action: Literal["created", "incident_added", "incident_removed", "incident_moved_in", "incident_moved_out",
+                    "closed", "reopened"]
+    incident_id: str | None = None
+    reason: str | None = None
 
 
 # --------------------------------------------------------------------------------------

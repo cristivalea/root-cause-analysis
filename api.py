@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from streamlit import user
 
-from rca import storage, store
+from rca import problems, storage, store
 from rca.config import DB_PATH
 from rca.models import Incident, InvestigationGuidance, RCARecord, RCAStatus
 from rca.pipeline import run_investigation
@@ -118,6 +118,26 @@ class ApplyReviewRequest(BaseModel):
     guidance: InvestigationGuidance | None = None  # wider searches the expert asks for, with REQUEST_MORE_DETAILS
 
 
+class CreateProblemRequest(BaseModel):
+    incident_ids: List[str]
+    title: Optional[str] = None
+    description: Optional[str] = None
+    move_reason: Optional[str] = None  # needed when an incident is moved from another problem
+
+
+class AttachIncidentRequest(BaseModel):
+    incident_id: str
+    move_reason: Optional[str] = None
+
+
+class ReasonRequest(BaseModel):
+    reason: str
+
+
+def _problem_result(result: problems.Result) -> dict:
+    return {"problem": _serialize(result.problem), "warnings": result.warnings}
+
+
 class LinkCaseRequest(BaseModel):
     previous_rca_id: str
     new_rca_id: str
@@ -181,6 +201,21 @@ def api_list_incidents( user: dict = Depends(require_roles("problem_manager")),)
         raise HTTPException(status_code=500, detail=str(exc))
 
 
+@app.get("/api/v1/incidents/unassigned")
+def api_unassigned_incidents(user: dict = Depends(require_roles("problem_manager"))):
+    """The incidents in no problem that were not marked as needing none."""
+    return [_serialize(item) for item in problems.unassigned_incidents(DB_PATH)]
+
+
+@app.post("/api/v1/incidents/{incident_id}/dismiss")
+def api_dismiss_incident(incident_id: str, req: ReasonRequest, user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        problems.dismiss_incident(incident_id, user["username"], req.reason, db_path=DB_PATH)
+        return {"incident_id": incident_id, "dismissed": True}
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.get("/api/v1/incidents/{incident_id}")
 def api_get_incident(incident_id: str, user: dict[str, Any] = Depends(
         require_roles("problem_manager", "technical_expert")
@@ -214,6 +249,68 @@ def api_teams_for_service(service_name: str):
         return sorted({item.owner_team for item in items})
     except Exception:
         return []
+
+
+# 1b. Probleme (Problem Management): every change is made by the Problem Manager, with the rules of rca/problems.py
+
+@app.get("/api/v1/problems")
+def api_list_problems(status_filter: Optional[str] = None, user: dict = Depends(require_roles("problem_manager"))):
+    return [_serialize(item) for item in problems.list_problems(status_filter, db_path=DB_PATH)]
+
+
+@app.get("/api/v1/problems/{problem_id}")
+def api_get_problem(problem_id: str, user: dict = Depends(require_roles("problem_manager"))):
+    problem = storage.get_problem(DB_PATH, problem_id)
+    if problem is None:
+        raise HTTPException(status_code=404, detail=f"Problem '{problem_id}' was not found.")
+    return {
+        "problem": _serialize(problem),
+        "events": [_serialize(item) for item in problems.problem_events(problem_id, DB_PATH)],
+        "rcas": [_serialize(item) for item in problems.rcas_of(problem_id, DB_PATH)],
+    }
+
+
+@app.post("/api/v1/problems")
+def api_create_problem(req: CreateProblemRequest, user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        return _problem_result(problems.create_problem(req.incident_ids, user["username"], req.title, req.description,
+                                                       req.move_reason, db_path=DB_PATH))
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/v1/problems/{problem_id}/incidents")
+def api_attach_incident(problem_id: str, req: AttachIncidentRequest, user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        return _problem_result(problems.attach_incident(problem_id, req.incident_id, user["username"], req.move_reason,
+                                                        db_path=DB_PATH))
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/v1/problems/{problem_id}/incidents/{incident_id}/remove")
+def api_detach_incident(problem_id: str, incident_id: str, req: ReasonRequest,
+                        user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        return _problem_result(problems.detach_incident(problem_id, incident_id, user["username"], req.reason, db_path=DB_PATH))
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/v1/problems/{problem_id}/close")
+def api_close_problem(problem_id: str, req: ReasonRequest, user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        return _problem_result(problems.close_problem(problem_id, user["username"], req.reason, db_path=DB_PATH))
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/api/v1/problems/{problem_id}/reopen")
+def api_reopen_problem(problem_id: str, req: ReasonRequest, user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        return _problem_result(problems.reopen_problem(problem_id, user["username"], req.reason, db_path=DB_PATH))
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 # 2. Rapoarte RCA & Technical Review (HITL)
