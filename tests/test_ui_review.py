@@ -106,12 +106,12 @@ def test_the_diagram_is_drawn_from_the_analysis_and_nothing_else():
     assert record.incident_id in drawing
     assert drawing.count("possible cause") == len(record.hypotheses)
 
-    # A cause shows the first few pieces of evidence behind it, not an unreadable fan of them.
+    # Every piece of evidence a cause cites is drawn (grouped by type, see tests/test_cause_diagram.py).
     known = {item.evidence_id: item for item in record.evidence}
     drawn = [
         known[evidence_id]
         for hypothesis in record.hypotheses
-        for evidence_id in hypothesis.supporting_evidence[:cause_diagram.MAX_EVIDENCE_PER_CAUSE]
+        for evidence_id in hypothesis.supporting_evidence
         if evidence_id in known
     ]
     assert drawn, "the analysis cites no evidence that the diagram could draw"

@@ -62,13 +62,22 @@ class EvidenceLedger:
         return len(self._items)
 
 
-def relative_to_detection(moment: datetime, detected_at: datetime) -> str:
-    """For example "34 minutes before detection"."""
+def relative_to_detection(moment: datetime, detected_at: datetime, of: str = "detection") -> str:
+    """For example "34 minutes before detection", "5 hours after detection", "4 days before detection".
+    `of` names what the time is compared with, for example "the detection of INC-2026-00482"."""
     minutes = round((detected_at - moment).total_seconds() / 60)
-    return f"{minutes} minutes before detection" if minutes >= 0 else f"{-minutes} minutes after detection"
+    side = "before" if minutes >= 0 else "after"
+    minutes = abs(minutes)
+    if minutes < 120:
+        amount = f"{minutes} minutes"
+    elif minutes < 48 * 60:
+        amount = f"{round(minutes / 60)} hours"
+    else:
+        amount = f"{round(minutes / (24 * 60))} days"
+    return f"{amount} {side} {of}"
 
 
-def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime) -> None:
+def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection") -> None:
     """One evidence per log group, cited by its first line."""
     for group in groups:
         first = group.examples[0]
@@ -76,33 +85,34 @@ def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: 
             "LOG",
             ", ".join(group.hosts),
             f"{group.count} {group.level} log line(s) of type {group.error_type} between "
-            f"{group.first_seen:%H:%M} and {group.last_seen:%H:%M} UTC, the first "
-            f"{relative_to_detection(group.first_seen, detected_at)}. Example: \"{first.message}\"",
+            f"{group.first_seen:%Y-%m-%d %H:%M} and {group.last_seen:%H:%M} UTC, the first "
+            f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{first.message}\"",
             first.log_id,
             group.first_seen,
         )
 
 
-def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime) -> None:
+def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime, of: str = "detection") -> None:
     """One evidence per change."""
     for change in changes:
         ledger.add(
             "CHANGE",
             change.change_id,
             f"{change.title} on {change.ci_id}: {change.description} Implemented at "
-            f"{change.implemented_at:%H:%M} UTC, {relative_to_detection(change.implemented_at, detected_at)}.",
+            f"{change.implemented_at:%Y-%m-%d %H:%M} UTC, {relative_to_detection(change.implemented_at, detected_at, of)}.",
             change.change_id,
             change.implemented_at,
         )
 
 
 def add_dependencies(ledger: EvidenceLedger, dependencies: ServiceDependencies) -> None:
-    """One evidence per direct dependency, cited by the component depended on."""
+    """One evidence per component depended on, cited by its CMDB id, naming every component of the
+    service that depends on it. One evidence per relationship would lose all but the first when two
+    components depend on the same one, because the ledger keeps one evidence per citation."""
+    by_target: dict[str, list] = {}
     for dependency in dependencies.dependencies:
-        ledger.add(
-            "CMDB",
-            "CMDB",
-            f"{dependency.component.name} ({dependency.component.ci_id}) {dependency.relationship_type} "
-            f"{dependency.depends_on.name} ({dependency.depends_on.ci_id}, {dependency.depends_on.type}).",
-            dependency.depends_on.ci_id,
-        )
+        by_target.setdefault(dependency.depends_on.ci_id, []).append(dependency)
+    for group in by_target.values():
+        target = group[0].depends_on
+        sources = " and ".join(f"{item.component.name} ({item.component.ci_id}) {item.relationship_type}" for item in group)
+        ledger.add("CMDB", "CMDB", f"{sources} {target.name} ({target.ci_id}, {target.type}).", target.ci_id)

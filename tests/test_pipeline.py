@@ -1,4 +1,7 @@
-"""Tests for rca.pipeline: the whole investigation, from the incident to the saved draft.
+"""Tests for rca.pipeline: the whole investigation, from the problem to the saved draft.
+
+The case is the Payment API problem: INC-2026-00482 (14 July) and its recurrence INC-2026-00857
+(15 July, the reference incident). Starting from INC-2026-00482 investigates the whole problem.
 
 Offline, the three agents and the ChromaDB search are replaced with fixed answers; the tools,
 the ledger, the guardrail, the confidence rules and the store are the real code, on the mock
@@ -21,7 +24,8 @@ from rca.models import DraftRCA, Hypothesis
 
 ROOT = Path(__file__).resolve().parents[1]
 INCIDENT_ID = "INC-2026-00482"
-ALL_SOURCES = ["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
+REFERENCE_ID = "INC-2026-00857"  # the most recent incident of the problem
+REFERENCE_DETECTED = "2026-07-15T09:48:00+00:00"
 PAYMENT_RCA_DATE = 1763647200  # 2025-11-20
 
 
@@ -58,15 +62,8 @@ RCA_SECTIONS = {
 }
 
 
-def plan_answer(service="Payment API", sources=ALL_SOURCES) -> PlannerAnswer:
-    return PlannerAnswer(
-        service=service,
-        window_start=datetime.fromisoformat("2026-07-14T10:00:00+00:00"),
-        window_end=datetime.fromisoformat("2026-07-14T15:17:00+00:00"),
-        sources=sources,
-        search_queries=["payment requests fail with database connection timeouts"],
-        rationale="The deploy before the incident and the database errors are inside this window.",
-    )
+def plan_answer(queries=("payment requests fail with database connection timeouts",)) -> PlannerAnswer:
+    return PlannerAnswer(search_queries=list(queries), rationale="Both incidents show database connection timeouts.")
 
 
 HISTORY_REVIEW = HistoricalRCAReview(decisions=[
@@ -100,13 +97,19 @@ def draft(*hypotheses: Hypothesis) -> DraftRCA:
     )
 
 
-# The Payment API ledger: EV-001..002 logs, EV-003..004 changes, EV-005..006 CMDB,
-# EV-007 RCA-2025-00114, EV-008 INC-2025-00401.
+# The ledger of the problem: EV-001..002 logs around INC-2026-00482, EV-003..004 logs around INC-2026-00857,
+# EV-005..008 changes (EV-006 the deploy CHG-2026-00871), EV-009..010 CMDB, EV-011 INC-2026-00482 (same
+# problem), EV-012 RCA-2025-00114, EV-013 INC-2025-00401.
+LEDGER = [
+    "LOG-PAY-20260714-14", "LOG-PAY-20260714-15", "LOG-PAY-20260715-06", "LOG-PAY-20260715-01",
+    "CHG-2026-00845", "CHG-2026-00871", "CHG-2026-00873", "CHG-2026-00876",
+    "CI-PAYMENT-DB", "CI-PAYMENT-QUEUE", "INC-2026-00482", "RCA-2025-00114", "INC-2025-00401",
+]
 GOOD_DRAFT = draft(
-    hypothesis("HYP-001", ["EV-001", "EV-002", "EV-003", "EV-005", "EV-007", "EV-008"]),
-    hypothesis("HYP-002", ["EV-001", "EV-005"], contradicting=["EV-007"]),
+    hypothesis("HYP-001", ["EV-001", "EV-002", "EV-006", "EV-009", "EV-012", "EV-013"]),
+    hypothesis("HYP-002", ["EV-001", "EV-009"], contradicting=["EV-012"]),
 )
-TOOLS_ONLY_DRAFT = draft(hypothesis("HYP-001", ["EV-001", "EV-003"]), hypothesis("HYP-002", ["EV-002"]))
+TOOLS_ONLY_DRAFT = draft(hypothesis("HYP-001", ["EV-001", "EV-006"]), hypothesis("HYP-002", ["EV-003"]))
 INVENTED_DRAFT = draft(hypothesis("HYP-001", ["EV-099"]), hypothesis("HYP-002", ["EV-001"]))
 
 
@@ -148,7 +151,7 @@ def fakes(monkeypatch):
         Fakes.search_calls.append(collection_name)
         if Fakes.search_error:
             raise Fakes.search_error
-        assert before_timestamp == int(datetime.fromisoformat("2026-07-14T14:32:00+00:00").timestamp())
+        assert before_timestamp == int(datetime.fromisoformat(REFERENCE_DETECTED).timestamp())
         return INCIDENT_RESULTS if collection_name == "historical_incidents" else RCA_RESULTS
 
     monkeypatch.setattr(pipeline.rag, "query_collection", fake_query_collection)
@@ -171,13 +174,13 @@ def run(db_path):
 def test_the_payment_api_draft_is_built_and_saved(db_path, fakes):
     record, steps = run(db_path)
 
-    assert record.status == "PENDING_REVIEW"
+    assert record.status == "DRAFT"  # the Problem Manager sends it to the expert, never the graph
     assert record.rca_id == f"RCA-{datetime.now().year}-00001"
     assert record.owner == "Test Manager"
-    assert [item.citation for item in record.evidence] == [
-        "LOG-PAY-20260714-14", "LOG-PAY-20260714-15", "CHG-2026-00871", "CHG-2026-00873",
-        "CI-PAYMENT-DB", "CI-PAYMENT-QUEUE", "RCA-2025-00114", "INC-2025-00401",
-    ]
+    assert record.incident_id == REFERENCE_ID
+    assert record.problem_id == storage.get_problem_id_for_incident(db_path, INCIDENT_ID)
+    assert record.context.incident_ids == [INCIDENT_ID, REFERENCE_ID]
+    assert [item.citation for item in record.evidence] == LEDGER
     assert [(item.hypothesis_id, item.confidence, item.confidence_points) for item in record.hypotheses] == [
         ("HYP-001", "HIGH", 8), ("HYP-002", "LOW", 3),
     ]
@@ -197,10 +200,11 @@ def test_the_steps_are_reported_in_order_as_they_finish(db_path, fakes):
     assert steps == record.trace
 
 
-def test_the_plan_decides_the_tools_and_the_historical_search(db_path, fakes):
+def test_the_plan_takes_its_window_from_the_context_and_the_queries_from_the_planner(db_path, fakes):
     record, steps = run(db_path)
 
-    assert record.plan.window_start == datetime.fromisoformat("2026-07-14T10:00:00+00:00")
+    assert record.plan.window_start == record.context.change_window.start
+    assert record.plan.search_queries == ["payment requests fail with database connection timeouts"]
     assert fakes.search_calls == ["historical_incidents", "historical_rcas"]  # one RCA search per query
     history_request = fakes.historical.requests[0]
     # Cited by the RCA id, not by the section, and sent once.
@@ -228,30 +232,42 @@ def test_the_distractors_do_not_become_evidence(db_path, fakes):
     assert [item["id"] for item in history_step.details["dropped"]] == ["RCA-2025-00042", "INC-2026-00106"]
 
 
-def test_the_reasoning_agent_receives_the_ledger_with_times_relative_to_detection(db_path, fakes):
+def test_the_reasoning_agent_receives_the_ledger_with_times_relative_to_the_incidents(db_path, fakes):
     run(db_path)
 
     request = fakes.reasoning.requests[0]
-    assert "34 minutes before detection" in request  # the deploy CHG-2026-00871 at 13:58
+    # the deploy CHG-2026-00871 at 13:58, 34 minutes before the first incident at 14:32
+    assert "34 minutes before the first incident of the problem (INC-2026-00482)" in request
+    assert "before the detection of INC-2026-00857" in request  # a log line of the recurrence
     assert "Judged relevant because: Same service and same symptoms." in request
 
 
-# The plan limits the investigation ------------------------------------------------------
+# The context fixes what is searched -----------------------------------------------------
 
 
-def test_the_sources_not_chosen_are_not_run_and_are_listed(db_path, fakes):
-    fakes.planner = Fake(plan_answer(sources=["logs", "changes"]))
-    fakes.reasoning = Fake(TOOLS_ONLY_DRAFT)
+def test_every_source_is_checked_around_every_incident_of_the_problem(db_path, fakes):
+    record, _ = run(db_path)
+
+    tools_step = record.trace[2]
+    assert [window["incident_id"] for window in tools_step.details["log_windows"]] == [INCIDENT_ID, REFERENCE_ID]
+    assert set(tools_step.details["found"]) == {"logs", "changes", "cmdb", "problem_incidents"}
+    assert tools_step.details["found"]["problem_incidents"] == [INCIDENT_ID]
+    # the change on the API Gateway is not on the Payment API or a service it depends on
+    assert "CHG-2026-00872" not in tools_step.details["found"]["changes"]
+    assert record.plan.sources == ["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
+    assert not any("were not checked" in item for item in record.not_checked)
+
+
+def test_the_incidents_of_the_problem_are_not_searched_as_similar_incidents(db_path, fakes, monkeypatch):
+    member = results((INCIDENT_ID, "Payment API intermittent failures", {"service": "Payment API"}, 0.05))
+    original = pipeline.rag.query_collection
+    monkeypatch.setattr(pipeline.rag, "query_collection",
+                        lambda name, *args, **kwargs: member + original(name, *args, **kwargs) if name == "historical_incidents"
+                        else original(name, *args, **kwargs))
 
     record, _ = run(db_path)
 
-    assert record.status == "PENDING_REVIEW"
-    assert {item.type for item in record.evidence} == {"LOG", "CHANGE"}
-    assert fakes.search_calls == ["historical_incidents"]  # only the search before the plan
-    assert fakes.historical.requests == []
-    assert [item.split(":")[0] for item in record.not_checked[:3]] == [
-        "CMDB dependencies were not checked", "Past RCAs were not checked", "Past incidents were not checked",
-    ]
+    assert INCIDENT_ID not in record.trace[0].details["found"]
 
 
 def test_the_investigation_continues_when_the_search_is_down(db_path, fakes):
@@ -260,7 +276,7 @@ def test_the_investigation_continues_when_the_search_is_down(db_path, fakes):
 
     record, _ = run(db_path)
 
-    assert record.status == "PENDING_REVIEW"
+    assert record.status == "DRAFT"
     assert fakes.historical.requests == []
     assert "Similar past incidents could not be searched" in record.not_checked[0]
     assert "Past RCAs could not be searched" in record.not_checked[1]
@@ -274,7 +290,7 @@ def test_a_refused_draft_is_asked_again_with_the_problems(db_path, fakes):
 
     record, _ = run(db_path)
 
-    assert record.status == "PENDING_REVIEW"
+    assert record.status == "DRAFT"
     assert [step.name for step in record.trace[4:]] == [
         "rca_reasoning_agent", "guardrail", "rca_reasoning_agent", "guardrail",
         "rca_reasoning_agent", "guardrail", "confidence",
@@ -297,13 +313,13 @@ def test_three_refused_drafts_escalate_and_the_case_is_saved(db_path, fakes):
 
 
 def test_a_plan_refused_three_times_escalates_before_any_tool(db_path, fakes):
-    fakes.planner = Fake(plan_answer(service="Load Balancer"))
+    fakes.planner = Fake(plan_answer(queries=[" "]))
 
     record, _ = run(db_path)
 
     assert record.status == "ESCALATED"
     assert len(fakes.planner.requests) == 3
-    assert "Load Balancer" in fakes.planner.requests[1]
+    assert "search_queries" in fakes.planner.requests[1]
     assert record.evidence == [] and record.plan is None
     assert fakes.reasoning.requests == []
 
@@ -323,9 +339,9 @@ def test_a_second_run_in_the_same_thread_starts_from_zero(db_path, fakes):
 
     second = run_in_thread(graph, db_path)
 
-    assert first.status == "PENDING_REVIEW"
+    assert first.status == "DRAFT"
     # The attempts are counted again from 1, so the third attempt is still allowed and accepted.
-    assert second.status == "PENDING_REVIEW"
+    assert second.status == "DRAFT"
     reasoning_steps = [step.summary for step in second.trace if step.name == "rca_reasoning_agent"]
     assert [summary.split(":")[0] for summary in reasoning_steps] == ["Attempt 1", "Attempt 2", "Attempt 3"]
     # Only the steps and notes of the second run are saved with it.
@@ -337,14 +353,14 @@ def test_a_second_run_in_the_same_thread_starts_from_zero(db_path, fakes):
 
 def test_a_run_after_an_escalated_run_in_the_same_thread_is_not_escalated(db_path, fakes):
     graph = pipeline.build_graph(checkpointer=InMemorySaver())
-    fakes.planner = Fake(plan_answer(service="Load Balancer"))
+    fakes.planner = Fake(plan_answer(queries=[" "]))
     first = run_in_thread(graph, db_path)
     fakes.planner = Fake(plan_answer())
 
     second = run_in_thread(graph, db_path)
 
     assert first.status == "ESCALATED"
-    assert second.status == "PENDING_REVIEW"
+    assert second.status == "DRAFT"
     assert second.investigation_summary == GOOD_DRAFT.investigation_summary
     assert second.plan is not None and len(second.hypotheses) == 2
 
@@ -352,6 +368,15 @@ def test_a_run_after_an_escalated_run_in_the_same_thread_is_not_escalated(db_pat
 def test_an_unknown_incident_stops_with_an_error(db_path, fakes):
     with pytest.raises(ValueError, match="INC-2099-00001"):
         pipeline.run_investigation("INC-2099-00001", db_path=db_path)
+
+
+def test_starting_from_the_problem_gives_the_same_investigation(db_path, fakes):
+    problem_id = storage.get_problem_id_for_incident(db_path, INCIDENT_ID)
+
+    record = pipeline.run_investigation(problem_id=problem_id, db_path=db_path)
+
+    assert record.problem_id == problem_id and record.incident_id == REFERENCE_ID
+    assert [item.citation for item in record.evidence] == LEDGER
 
 
 def test_the_graph_has_the_retry_loop_and_both_escalation_paths():
@@ -375,7 +400,7 @@ def test_live_payment_api_end_to_end(db_path):
     for item in record.hypotheses:
         print(f"{item.hypothesis_id} {item.confidence} ({item.confidence_points}): {item.candidate_root_cause}")
 
-    assert record.status == "PENDING_REVIEW"
+    assert record.status == "DRAFT"
     citations = {item.citation for item in record.evidence}
     assert {"CHG-2026-00871", "LOG-PAY-20260714-14", "CI-PAYMENT-DB", "RCA-2025-00114"} <= citations
     assert "RCA-2025-00042" not in citations

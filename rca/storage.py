@@ -308,6 +308,13 @@ def get_problem(db_path: Path, problem_id: str) -> Problem | None:
     return Problem.model_validate({**json.loads(row[0]), "incidents": incidents})
 
 
+def get_problem_id_for_incident(db_path: Path, incident_id: str) -> str | None:
+    """The problem the incident is attached to, or None."""
+    with closing(_connect_read_only(db_path)) as connection:
+        row = connection.execute("SELECT problem_id FROM problem_incidents WHERE incident_id = ?", [incident_id]).fetchone()
+    return row[0] if row else None
+
+
 def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:
     """The life of an incident ticket, oldest event first."""
     payloads = _read_payloads(

@@ -1,4 +1,4 @@
-"""The end-to-end investigation: one LangGraph graph, from the incident to the saved draft RCA.
+"""The end-to-end investigation: one LangGraph graph, from the problem to the saved draft RCA.
 
 The graph only routes. Every judgement is made by one of the three agents and every check by
 ordinary code in the other modules; each node calls them and writes what it found into the
@@ -11,9 +11,16 @@ state. The path:
                                   ▲                         ├─► save_rca    (escalated)
                                   └─────────────────────────┘   refused: ask again with the problems
 
-The graph ends with the draft saved as PENDING_REVIEW, or as ESCALATED. The decision of the
+The graph ends with the draft saved as DRAFT (the Problem Manager then sends it to the expert),
+or as ESCALATED. The decision of the
 Technical Expert is a separate action on the saved record (steps 13-14). Pausing the graph and
 resuming it after that decision is outside the MVP.
+
+`start` builds the investigation context with code (rca/context.py): the incidents of the
+problem, their services, a log window around every incident and one change window from 7 days
+before the first incident. The Planner only writes the search queries, and every source is
+always checked. An investigation started from an incident covers the whole problem of that
+incident; the most recent incident of the problem is the reference.
 
 `graph` is what LangGraph Studio opens (langgraph.json). `run_investigation` runs the same
 graph from Python, for the command line (scripts/run_rca.py) and the interface.
@@ -21,10 +28,8 @@ graph from Python, for the command line (scripts/run_rca.py) and the interface.
 
 from collections.abc import Callable
 from datetime import datetime, timezone
-from inspect import trace
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypedDict
-
 
 import chromadb
 from langgraph.graph import END, START, StateGraph
@@ -34,6 +39,7 @@ from rca import rag, storage, store
 from rca.agents import historical, planner, reasoning
 from rca.confidence import assess_draft, is_weakly_supported
 from rca.config import DB_PATH
+from rca.context import build_context
 from rca.evidence import EvidenceLedger, add_changes, add_dependencies, add_log_groups
 from rca.guardrails import MAX_ATTEMPTS, check_draft, format_feedback, run_with_retries
 from rca.llm import LLMOutputError
@@ -42,6 +48,7 @@ from rca.models import (
     DraftRCA,
     Evidence,
     Incident,
+    InvestigationContext,
     InvestigationPlan,
     InvestigationStep,
     RCARecord,
@@ -49,7 +56,6 @@ from rca.models import (
 )
 from rca.tools import find_changes, find_dependencies, find_logs
 from rca.observability import tracer
-from opentelemetry import trace
 
 DEFAULT_OWNER = "Problem Manager"
 MAX_SIMILAR_INCIDENTS = 5
@@ -64,8 +70,10 @@ def _add_or_clear(current: list, update: list | None) -> list:
 
 
 class InvestigationInput(TypedDict, total=False):
-    """What starts an investigation. Only incident_id is required."""
+    """What starts an investigation: problem_id, or incident_id (the investigation then covers the
+    whole problem of that incident)."""
 
+    problem_id: str
     incident_id: str
     owner: str
     db_path: str
@@ -75,7 +83,9 @@ class InvestigationState(InvestigationInput, total=False):
     """Everything the investigation found so far. Each node returns only the fields it changes."""
 
     started_at: datetime
-    incident: Incident
+    context: InvestigationContext
+    incidents: list[Incident]  # the incidents of the problem, in the order they happened
+    incident: Incident  # the reference incident: the most recent one
     similar_incidents: list[Incident]
     plan: InvestigationPlan
     evidence: list[Evidence]
@@ -113,6 +123,10 @@ def _db_path(state: InvestigationState) -> Path:
 
 def _not_chosen(what: str) -> str:
     return f"{what} were not checked: the investigation plan did not choose this source."
+
+
+def _window(start: datetime, end: datetime, incident_id: str | None = None) -> dict[str, str | None]:
+    return {"start": start.isoformat(), "end": end.isoformat(), "incident_id": incident_id}
 
 
 def _incident_text(incident: Incident) -> str:
@@ -225,20 +239,25 @@ def _add_history(ledger: EvidenceLedger, candidate: dict[str, Any], reason: str,
 
 
 def start(state: InvestigationState) -> dict:
-    """Load the incident and start the run from a clean state. An unknown incident stops the run.
+    """Build the context from the problem and start the run from a clean state. An unknown problem
+    or incident stops the run.
 
     LangGraph Studio keeps the state of a thread between runs. Without the reset, a second run in
     the same thread would continue the attempt count, the steps and the status of the first one.
     """
-    db_path = _db_path(state)
-    incident_id = (state.get("incident_id") or "").strip()
-    incident = storage.get_incident(db_path, incident_id)
-    if incident is None:
-        raise ValueError(f"Incident '{incident_id}' was not found in {db_path}.")
+    context, incidents = build_context(
+        _db_path(state),
+        incident_id=(state.get("incident_id") or "").strip() or None,
+        problem_id=(state.get("problem_id") or "").strip() or None,
+    )
+    reference = incidents[-1]
     return {
-        "incident_id": incident.incident_id,
+        "problem_id": context.problem_id,
+        "incident_id": reference.incident_id,
         "owner": state.get("owner") or DEFAULT_OWNER,
-        "incident": incident,
+        "context": context,
+        "incidents": incidents,
+        "incident": reference,
         "started_at": _now(),
         "status": "INVESTIGATING",
         "similar_incidents": [],
@@ -259,28 +278,31 @@ def start(state: InvestigationState) -> dict:
 
 
 def similar_incidents(state: InvestigationState) -> dict:
-    """RAG: the past incidents that look like this one, only older than its detection."""
+    """RAG: the past incidents that look like the reference incident, only older than its detection.
+    The incidents of the problem are not searched for: they are already part of the investigation."""
     started = _now()
     incident = state["incident"]
+    members = set(state["context"].incident_ids)
     try:
-        results = _search("historical_incidents", _incident_text(incident), incident.detected_at, MAX_SIMILAR_INCIDENTS)
+        results = _search("historical_incidents", _incident_text(incident), incident.detected_at,
+                          MAX_SIMILAR_INCIDENTS + len(members))
     except Exception as exc:  # Ollama or ChromaDB is not available: the investigation continues without them
         note = f"Similar past incidents could not be searched ({type(exc).__name__}: {exc})."
         return {"similar_incidents": [], "not_checked": [note], "trace": [_step("similar_incidents", started, note)]}
 
-    found = [storage.get_incident(_db_path(state), result["id"]) for result in results]
-    similar = [item for item in found if item is not None]
+    found = [storage.get_incident(_db_path(state), result["id"]) for result in results if result["id"] not in members]
+    similar = [item for item in found if item is not None][:MAX_SIMILAR_INCIDENTS]
     ids = [item.incident_id for item in similar]
     summary = f"Found {len(ids)} past incident(s) that look similar: {', '.join(ids)}." if ids else "No similar past incident found."
     return {"similar_incidents": similar, "trace": [_step("similar_incidents", started, summary, found=ids)]}
 
 
 def investigation_planner(state: InvestigationState) -> dict:
-    """Agent 1: the plan. A refused plan is asked again with the problems, at most 3 times."""
+    """Agent 1: the search queries. A refused plan is asked again with the problems, at most 3 times."""
     started = _now()
-    incident, similar = state["incident"], state["similar_incidents"]
+    context, incidents, similar = state["context"], state["incidents"], state["similar_incidents"]
     result = run_with_retries(
-        ask=lambda feedback: planner.plan_investigation(incident, similar, feedback),
+        ask=lambda feedback: planner.plan_investigation(context, incidents, similar, feedback),
         check=lambda plan: [],  # the plan is checked inside plan_investigation
     )
     attempts = [{"attempt": attempt.number, "problems": attempt.problems} for attempt in result.attempts]
@@ -312,70 +334,93 @@ def after_planner(state: InvestigationState) -> Literal["tools", "save_rca"]:
 
 
 def tools(state: InvestigationState) -> dict:
-    """The deterministic tools, only for the sources the plan chose. Every fact goes into the ledger."""
+    """The deterministic tools on every source, with the services and the windows of the context.
+    Every fact goes into the ledger; the step records what was searched and what was found."""
     started = _now()
     db_path = _db_path(state)
-    incident, plan = state["incident"], state["plan"]
+    context, plan, incidents = state["context"], state["plan"], state["incidents"]
+    by_id = {item.incident_id: item for item in incidents}
+    several = len(incidents) > 1
     ledger = EvidenceLedger()
     not_checked: list[str] = []
-    found: list[str] = []
+    found: dict[str, list[str]] = {}
 
-    # The CMDB runs first: its dependencies say which other services the change lookup covers.
-    dependencies = None
-    if "cmdb" in plan.sources:
-        # dependencies = find_dependencies(plan.service, db_path=db_path)
+    dependencies = []
+    for service in context.services:
         with tracer().start_as_current_span("tool.find_dependencies") as span:
-            span.set_attribute("tool.service", plan.service)
-            dependencies = find_dependencies(plan.service, db_path=db_path)
-            span.set_attribute("tool.result_count", len(dependencies.components))
-        plan = plan.model_copy(update={"related_services": dependencies.related_services})
-        if not dependencies.components:
-            not_checked.append(f"The CMDB has no components for {plan.service}, so its dependencies are unknown.")
-    else:
-        not_checked.append(_not_chosen("CMDB dependencies") + " Changes on dependent services were not searched.")
+            span.set_attribute("tool.service", service)
+            result = find_dependencies(service, db_path=db_path)
+            span.set_attribute("tool.result_count", len(result.components))
+        if not result.components:
+            not_checked.append(f"The CMDB has no components for {service}, so its dependencies are unknown.")
+        dependencies.append(result)
 
-    # if "logs" in plan.sources:
-    #     groups = find_logs(plan.service, plan.window_start, plan.window_end, db_path=db_path)
-    #     add_log_groups(ledger, groups, incident.detected_at)
-    if "logs" in plan.sources:
-        with tracer().start_as_current_span("tool.find_logs") as span:
-            span.set_attribute("tool.service", plan.service)
-            span.set_attribute("tool.window_start", plan.window_start.isoformat())
-            span.set_attribute("tool.window_end", plan.window_end.isoformat())
-            groups = find_logs(plan.service, plan.window_start, plan.window_end, db_path=db_path)
-            span.set_attribute("tool.result_count", len(groups))
-        add_log_groups(ledger, groups, incident.detected_at)
-        found.append(f"Logs: {len(groups)} ERROR/WARN pattern(s).")
-    else:
-        not_checked.append(_not_chosen("Logs"))
+    found["logs"] = []
+    for window in context.log_windows:
+        incident = by_id[window.incident_id]
+        for service in context.services:
+            with tracer().start_as_current_span("tool.find_logs") as span:
+                span.set_attribute("tool.service", service)
+                span.set_attribute("tool.window_start", window.start.isoformat())
+                span.set_attribute("tool.window_end", window.end.isoformat())
+                groups = find_logs(service, window.start, window.end, db_path=db_path)
+                span.set_attribute("tool.result_count", len(groups))
+            add_log_groups(ledger, groups, incident.detected_at,
+                           f"the detection of {incident.incident_id}" if several else "detection")
+            found["logs"] += [group.examples[0].log_id for group in groups]
 
-    if "changes" in plan.sources:
-        services = [plan.service, *plan.related_services]
-        # changes = find_changes(services, plan.window_start, plan.window_end, db_path=db_path)
-        with tracer().start_as_current_span("tool.find_changes") as span:
-            span.set_attribute("tool.services", services)
-            span.set_attribute("tool.window_start", plan.window_start.isoformat())
-            span.set_attribute("tool.window_end", plan.window_end.isoformat())
-            changes = find_changes(services, plan.window_start, plan.window_end, db_path=db_path)
-            span.set_attribute("tool.result_count", len(changes))
-        add_changes(ledger, changes, incident.detected_at)
-        found.append(f"Changes: {len(changes)} in the window ({', '.join(item.change_id for item in changes) or 'none'}).")
-    else:
-        not_checked.append(_not_chosen("Changes"))
+    first, window = incidents[0], context.change_window
+    services = [*context.services, *context.related_services]
+    with tracer().start_as_current_span("tool.find_changes") as span:
+        span.set_attribute("tool.services", services)
+        span.set_attribute("tool.window_start", window.start.isoformat())
+        span.set_attribute("tool.window_end", window.end.isoformat())
+        changes = find_changes(services, window.start, window.end, db_path=db_path)
+        span.set_attribute("tool.result_count", len(changes))
+    add_changes(ledger, changes, first.detected_at,
+                f"the first incident of the problem ({first.incident_id})" if several else "detection")
+    found["changes"] = [item.change_id for item in changes]
 
-    if dependencies is not None:
-        add_dependencies(ledger, dependencies)
-        found.append(f"CMDB: {len(dependencies.dependencies)} direct dependenc(ies).")
+    for result in dependencies:
+        add_dependencies(ledger, result)
+    found["cmdb"] = list(dict.fromkeys(item.depends_on.ci_id for result in dependencies for item in result.dependencies))
 
-    summary = " ".join(found) or "No tool was run."
+    # The other incidents of the problem are facts too: the same failure, seen again.
+    found["problem_incidents"] = []
+    for item in incidents:
+        if item.incident_id == context.reference_incident_id:
+            continue
+        ledger.add(
+            "HISTORICAL_INCIDENT",
+            item.incident_id,
+            f"Incident {item.incident_id} of the same problem {context.problem_id}, {item.service}, detected "
+            f"{item.detected_at:%Y-%m-%d %H:%M} UTC: {item.title}. {item.description} Symptoms: {'; '.join(item.symptoms)}.",
+            item.incident_id,
+            item.detected_at,
+        )
+        found["problem_incidents"].append(item.incident_id)
+
+    summary = (
+        f"Logs: {len(found['logs'])} ERROR/WARN pattern(s) around {len(context.log_windows)} incident(s). "
+        f"Changes: {len(found['changes'])} from {window.start:%Y-%m-%d} to {window.end:%Y-%m-%d} "
+        f"({', '.join(found['changes']) or 'none'}). CMDB: {len(found['cmdb'])} component(s) depended on."
+    )
+    if found["problem_incidents"]:
+        summary += f" Other incidents of the problem: {', '.join(found['problem_incidents'])}."
     span = trace.get_current_span()
     span.set_attribute("rca.evidence_ids", [item.evidence_id for item in ledger.items()])
     span.set_attribute("rca.sources_run", list(plan.sources))
     return {
-        "plan": plan,
         "evidence": ledger.items(),
         "not_checked": not_checked,
-        "trace": [_step("tools", started, summary, evidence=len(ledger))],
+        "trace": [_step(
+            "tools", started, summary,
+            evidence=len(ledger),
+            services=services,
+            log_windows=[_window(item.start, item.end, item.incident_id) for item in context.log_windows],
+            change_window=_window(window.start, window.end),
+            found=found,
+        )],
     }
 
 
@@ -503,7 +548,8 @@ def after_guardrail(state: InvestigationState) -> Literal["confidence", "rca_rea
 def confidence(state: InvestigationState) -> dict:
     """The rules: HIGH / MEDIUM / LOW for each hypothesis, and the weakly supported mark."""
     started = _now()
-    hypotheses = assess_draft(state["draft"], state["evidence"], state["incident"].detected_at)
+    # without log evidence, the first error is the detection of the first incident of the problem
+    hypotheses = assess_draft(state["draft"], state["evidence"], state["incidents"][0].detected_at)
     weak = is_weakly_supported(hypotheses)
     summary = " ".join(f"{item.hypothesis_id}: {item.confidence} ({item.confidence_points} points)." for item in hypotheses)
     if weak:
@@ -541,6 +587,8 @@ def save_rca(state: InvestigationState) -> dict:
         created_at=state["started_at"],
         duration_seconds=round((now - state["started_at"]).total_seconds(), 1),
         linked_incidents=state.get("linked_incidents", []),
+        problem_id=state.get("problem_id"),
+        context=state.get("context"),
         plan=state.get("plan"),
         evidence=state.get("evidence", []),
         trace=state["trace"],
@@ -586,38 +634,34 @@ graph = build_graph()
 
 
 def run_investigation(
-    incident_id: str,
+    incident_id: str | None = None,
     owner: str = DEFAULT_OWNER,
     db_path: Path = DB_PATH,
     on_step: Callable[[InvestigationStep], None] | None = None,
+    problem_id: str | None = None,
 ) -> RCARecord:
-    """Run the whole investigation for one incident and return the saved RCA record.
+    """Run the whole investigation for a problem and return the saved RCA record.
 
-    on_step is called with every step as soon as it finishes, so the command line and the
-    interface can show the investigation while it runs.
+    Give problem_id, or incident_id: the investigation then covers the whole problem of that incident
+    (or the incident alone, when it belongs to no problem). on_step is called with every step as soon
+    as it finishes, so the command line and the interface can show the investigation while it runs.
     """
-    # inputs: InvestigationInput = {"incident_id": incident_id, "owner": owner, "db_path": str(db_path)}
-    # state: dict = {}
-    # for mode, chunk in graph.stream(inputs, stream_mode=["updates", "values"]):
-    #     if mode == "values":
-    #         state = chunk
-    #     elif on_step is not None:
-    #         for update in chunk.values():
-    #             for step in (update or {}).get("trace") or []:  # `start` sends None to empty the list
-    #                 on_step(step)
-    # return state["record"]
-
-    inputs: InvestigationInput = {"incident_id": incident_id, "owner": owner, "db_path": str(db_path)}
+    inputs: InvestigationInput = {"owner": owner, "db_path": str(db_path)}
+    if problem_id:
+        inputs["problem_id"] = problem_id
+    if incident_id:
+        inputs["incident_id"] = incident_id
     state: dict = {}
     with tracer().start_as_current_span("rca.investigation") as span:
-        span.set_attribute("rca.incident_id", incident_id)
+        span.set_attribute("rca.problem_id", problem_id or "")
+        span.set_attribute("rca.incident_id", incident_id or "")
         span.set_attribute("rca.owner", owner)
         for mode, chunk in graph.stream(inputs, stream_mode=["updates", "values"]):
             if mode == "values":
                 state = chunk
             elif on_step is not None:
                 for update in chunk.values():
-                    for step in (update or {}).get("trace") or []:
+                    for step in (update or {}).get("trace") or []:  # `start` sends None to empty the list
                         on_step(step)
         record = state["record"]
         span.set_attribute("rca.id", record.rca_id)

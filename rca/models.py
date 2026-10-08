@@ -223,6 +223,26 @@ class Evidence(BaseModel):
     timestamp: datetime | None = None
 
 
+class TimeWindow(BaseModel):
+    start: datetime
+    end: datetime
+    incident_id: str | None = None  # the incident the window is built around, when there is one
+
+
+class InvestigationContext(BaseModel):
+    """What the investigation starts from, built by code from the problem and its incidents, never
+    guessed by a model (rca/context.py). `sources` says where every value comes from."""
+
+    problem_id: str | None = None  # None: the incident belongs to no problem yet
+    incident_ids: list[str] = Field(min_length=1)  # in the order they happened
+    reference_incident_id: str  # the most recent incident of the problem
+    services: list[str] = Field(min_length=1)
+    related_services: list[str] = []
+    log_windows: list[TimeWindow] = Field(min_length=1)  # one around every incident
+    change_window: TimeWindow
+    sources: dict[str, str] = {}
+
+
 class InvestigationPlan(BaseModel):
     """Answer of the Investigation Planner: what to look for, where and when."""
 
@@ -316,6 +336,8 @@ class RCARecord(BaseModel):
     duration_seconds: float | None = None
 
     linked_incidents: list[str] = []
+    problem_id: str | None = None
+    context: InvestigationContext | None = None
     plan: InvestigationPlan | None = None
     evidence: list[Evidence] = []
     trace: list[InvestigationStep] = []

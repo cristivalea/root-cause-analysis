@@ -5,6 +5,10 @@ record: the incident, a candidate cause the investigation proposed, a piece of e
 collected. If the analysis has no candidate causes, there is no diagram — an empty shape
 would only suggest work that was never done.
 
+Every piece of evidence a cause cites is drawn. To keep the picture readable, the evidence of
+one cause is grouped by type: one box for the log lines, one for the changes, and so on, each
+listing all its citations.
+
 It is a reading aid, not the analysis: the same content is written out underneath, which is
 also what a screen reader gets.
 """
@@ -18,7 +22,6 @@ from rca.ui import theme
 from rca.ui.strings import t, t_or_value
 
 WRAP = 30
-MAX_EVIDENCE_PER_CAUSE = 4
 
 # Fill, line and text colours for the two themes. Kept here rather than in config.toml
 # because Graphviz draws its own boxes and cannot read the Streamlit theme.
@@ -59,9 +62,19 @@ def _palette() -> dict:
     return PALETTE.get(mode, PALETTE["light"])
 
 
-def _evidence_label(item: Evidence) -> str:
-    kind = t_or_value(f"evidence.{item.type}", item.type)
-    return f"{kind}\\n{item.citation}"
+def _by_type(evidence_ids: list[str], known: dict[str, Evidence]) -> list[list[Evidence]]:
+    """The cited evidence grouped by type, in the order the types first appear."""
+    groups: dict[str, list[Evidence]] = {}
+    for evidence_id in evidence_ids:
+        item = known.get(evidence_id)
+        if item is not None:
+            groups.setdefault(item.type, []).append(item)
+    return list(groups.values())
+
+
+def _group_label(items: list[Evidence]) -> str:
+    kind = t_or_value(f"evidence.{items[0].type}", items[0].type)
+    return f"{kind} ({len(items)})\\n" + "\\n".join(item.citation for item in items)
 
 
 def dot(record: RCARecord, incident_title: str | None = None) -> str:
@@ -96,24 +109,18 @@ def dot(record: RCARecord, incident_title: str | None = None) -> str:
         lines.append(f'  incident -> {node} [label="{t("diagram.possible_cause")}"];')
 
         fill, line, text = colours["evidence"]
-        for position, evidence_id in enumerate(hypothesis.supporting_evidence[:MAX_EVIDENCE_PER_CAUSE]):
-            item = known.get(evidence_id)
-            if item is None:
-                continue
+        for position, group in enumerate(_by_type(hypothesis.supporting_evidence, known)):
             evidence_node = f"{node}_ev{position}"
             lines.append(
-                f'  {evidence_node} [label="{_evidence_label(item)}", fillcolor="{fill}", '
+                f'  {evidence_node} [label="{_group_label(group)}", fillcolor="{fill}", '
                 f'color="{line}", fontcolor="{text}", fontsize=9];'
             )
             lines.append(f'  {node} -> {evidence_node} [label="{t("diagram.based_on")}"];')
 
-        for position, evidence_id in enumerate(hypothesis.contradicting_evidence[:MAX_EVIDENCE_PER_CAUSE]):
-            item = known.get(evidence_id)
-            if item is None:
-                continue
+        for position, group in enumerate(_by_type(hypothesis.contradicting_evidence, known)):
             evidence_node = f"{node}_against{position}"
             lines.append(
-                f'  {evidence_node} [label="{_evidence_label(item)}", fillcolor="{fill}", '
+                f'  {evidence_node} [label="{_group_label(group)}", fillcolor="{fill}", '
                 f'color="{line}", fontcolor="{text}", fontsize=9, style="rounded,filled,dashed"];'
             )
             lines.append(f'  {node} -> {evidence_node} [label="{t("diagram.against")}", style=dashed];')

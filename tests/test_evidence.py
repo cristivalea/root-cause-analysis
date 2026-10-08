@@ -2,7 +2,8 @@
 
 from datetime import datetime
 
-from rca.evidence import EvidenceLedger
+from rca.evidence import EvidenceLedger, add_dependencies
+from rca.models import ConfigItem, Dependency, ServiceDependencies
 
 
 def test_evidence_gets_consecutive_ids():
@@ -44,3 +45,25 @@ def test_the_list_cannot_be_changed_from_outside():
     ledger.items().clear()
 
     assert len(ledger) == 1
+
+
+def ci(ci_id, name, type_="application"):
+    return ConfigItem(ci_id=ci_id, name=name, type=type_, service="Payroll Service", environment="production",
+                      owner_team="HR Systems Engineering", criticality="high")
+
+
+def test_two_components_depending_on_the_same_one_are_both_kept():
+    app, worker, db = ci("CI-PAYROLL-APP", "payroll-app"), ci("CI-PAYROLL-WORKER", "payroll-worker"), ci("CI-PAYROLL-DB", "payroll-postgresql", "database")
+    sftp = ci("CI-PAYROLL-SFTP", "payroll-sftp", "storage")
+    dependencies = ServiceDependencies(service="Payroll Service", components=[app, worker], dependencies=[
+        Dependency(component=app, depends_on=db, relationship_type="connects_to"),
+        Dependency(component=worker, depends_on=db, relationship_type="connects_to"),
+        Dependency(component=worker, depends_on=sftp, relationship_type="depends_on"),
+    ])
+    ledger = EvidenceLedger()
+
+    add_dependencies(ledger, dependencies)
+
+    assert [item.citation for item in ledger.items()] == ["CI-PAYROLL-DB", "CI-PAYROLL-SFTP"]
+    database = ledger.items()[0].description
+    assert "CI-PAYROLL-APP" in database and "CI-PAYROLL-WORKER" in database
