@@ -29,3 +29,8 @@ streamlit>=1.25.0
 #Login
 pwdlib[argon2]
 PyJWT
+
+#Ariza Phoenix
+arize-phoenix-otel
+openinference-instrumentation-groq
+openinference-instrumentation-langchain   

@@ -10,6 +10,10 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - OLLAMA_HOST=http://host.docker.internal:11434
       - JWT_SECRET=${JWT_SECRET}
+      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:6006
+      - PHOENIX_PROJECT_NAME=rca
+    depends_on:
+      - phoenix
     volumes:
       - ./data:/app/data
     command: uvicorn api:app --host 0.0.0.0 --port 8000 --reload
@@ -30,4 +34,16 @@ services:
     command: streamlit run rca/ui/main.py --server.port 8501 --server.address 0.0.0.0
     depends_on:
       - backend-api
+    restart: unless-stopped
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: rca-phoenix
+    ports:
+      - "6006:6006"
+      - "4317:4317"
+    volumes:
+      - ./data/phoenix:/mnt/data
+    environment:
+      - PHOENIX_WORKING_DIR=/mnt/data
     restart: unless-stopped

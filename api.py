@@ -21,7 +21,9 @@ from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from rca import auth
+from rca import observability
 
+observability.setup()
 app = FastAPI(
     title="Root Cause Analysis Multi-Agent Engine API",
     description="Backend decuplat pentru analiză RCA și HITL Problem Management",

@@ -21,11 +21,14 @@ graph from Python, for the command line (scripts/run_rca.py) and the interface.
 
 from collections.abc import Callable
 from datetime import datetime, timezone
+from inspect import trace
 from pathlib import Path
 from typing import Annotated, Any, Literal, TypedDict
 
+
 import chromadb
 from langgraph.graph import END, START, StateGraph
+from opentelemetry import trace
 
 from rca import rag, storage, store
 from rca.agents import historical, planner, reasoning
@@ -45,6 +48,8 @@ from rca.models import (
     RCAStatus,
 )
 from rca.tools import find_changes, find_dependencies, find_logs
+from rca.observability import tracer
+from opentelemetry import trace
 
 DEFAULT_OWNER = "Problem Manager"
 MAX_SIMILAR_INCIDENTS = 5
@@ -318,15 +323,27 @@ def tools(state: InvestigationState) -> dict:
     # The CMDB runs first: its dependencies say which other services the change lookup covers.
     dependencies = None
     if "cmdb" in plan.sources:
-        dependencies = find_dependencies(plan.service, db_path=db_path)
+        # dependencies = find_dependencies(plan.service, db_path=db_path)
+        with tracer().start_as_current_span("tool.find_dependencies") as span:
+            span.set_attribute("tool.service", plan.service)
+            dependencies = find_dependencies(plan.service, db_path=db_path)
+            span.set_attribute("tool.result_count", len(dependencies.components))
         plan = plan.model_copy(update={"related_services": dependencies.related_services})
         if not dependencies.components:
             not_checked.append(f"The CMDB has no components for {plan.service}, so its dependencies are unknown.")
     else:
         not_checked.append(_not_chosen("CMDB dependencies") + " Changes on dependent services were not searched.")
 
+    # if "logs" in plan.sources:
+    #     groups = find_logs(plan.service, plan.window_start, plan.window_end, db_path=db_path)
+    #     add_log_groups(ledger, groups, incident.detected_at)
     if "logs" in plan.sources:
-        groups = find_logs(plan.service, plan.window_start, plan.window_end, db_path=db_path)
+        with tracer().start_as_current_span("tool.find_logs") as span:
+            span.set_attribute("tool.service", plan.service)
+            span.set_attribute("tool.window_start", plan.window_start.isoformat())
+            span.set_attribute("tool.window_end", plan.window_end.isoformat())
+            groups = find_logs(plan.service, plan.window_start, plan.window_end, db_path=db_path)
+            span.set_attribute("tool.result_count", len(groups))
         add_log_groups(ledger, groups, incident.detected_at)
         found.append(f"Logs: {len(groups)} ERROR/WARN pattern(s).")
     else:
@@ -334,7 +351,13 @@ def tools(state: InvestigationState) -> dict:
 
     if "changes" in plan.sources:
         services = [plan.service, *plan.related_services]
-        changes = find_changes(services, plan.window_start, plan.window_end, db_path=db_path)
+        # changes = find_changes(services, plan.window_start, plan.window_end, db_path=db_path)
+        with tracer().start_as_current_span("tool.find_changes") as span:
+            span.set_attribute("tool.services", services)
+            span.set_attribute("tool.window_start", plan.window_start.isoformat())
+            span.set_attribute("tool.window_end", plan.window_end.isoformat())
+            changes = find_changes(services, plan.window_start, plan.window_end, db_path=db_path)
+            span.set_attribute("tool.result_count", len(changes))
         add_changes(ledger, changes, incident.detected_at)
         found.append(f"Changes: {len(changes)} in the window ({', '.join(item.change_id for item in changes) or 'none'}).")
     else:
@@ -345,6 +368,9 @@ def tools(state: InvestigationState) -> dict:
         found.append(f"CMDB: {len(dependencies.dependencies)} direct dependenc(ies).")
 
     summary = " ".join(found) or "No tool was run."
+    span = trace.get_current_span()
+    span.set_attribute("rca.evidence_ids", [item.evidence_id for item in ledger.items()])
+    span.set_attribute("rca.sources_run", list(plan.sources))
     return {
         "plan": plan,
         "evidence": ledger.items(),
@@ -431,6 +457,10 @@ def rca_reasoning_agent(state: InvestigationState) -> dict:
             "trace": [_step("rca_reasoning_agent", started, f"Attempt {attempt}: the answer is not a valid draft.")],
         }
     summary = f"Attempt {attempt}: {len(draft.hypotheses)} hypothesis(es) proposed."
+    span = trace.get_current_span()
+    span.set_attribute("rca.attempt", attempt)
+    span.set_attribute("rca.hypotheses_count", len(draft.hypotheses))
+    span.set_attribute("rca.top_hypothesis", draft.hypotheses[0].candidate_root_cause if draft.hypotheses else "")
     return {"attempts": attempt, "draft": draft, "problems": [], "trace": [_step("rca_reasoning_agent", started, summary)]}
 
 
@@ -444,10 +474,12 @@ def guardrail(state: InvestigationState) -> dict:
     if not problems:
         cited = {item for hypothesis in draft.hypotheses for item in hypothesis.supporting_evidence + hypothesis.contradicting_evidence}
         summary = f"Draft accepted on attempt {attempt}: the schema is valid and all {len(cited)} cited evidence ids exist."
+        trace.get_current_span().set_attribute("rca.guardrail", "accepted")
         return {"feedback": None, "trace": [_step("guardrail", started, summary, attempt=attempt)]}
 
     if attempt >= MAX_ATTEMPTS:
         reason = f"The RCA Reasoning Agent did not produce a valid draft in {attempt} attempts."
+        trace.get_current_span().set_attribute("rca.guardrail", "escalated")  # linia ~455
         return {
             "status": "ESCALATED",
             "escalation_reason": reason,
@@ -455,6 +487,7 @@ def guardrail(state: InvestigationState) -> dict:
         }
 
     summary = f"Draft refused on attempt {attempt}; asking again with the problems."
+    trace.get_current_span().set_attribute("rca.guardrail", "retry")    
     return {
         "feedback": format_feedback(problems),
         "trace": [_step("guardrail", started, summary, attempt=attempt, problems=problems)],
@@ -475,6 +508,11 @@ def confidence(state: InvestigationState) -> dict:
     summary = " ".join(f"{item.hypothesis_id}: {item.confidence} ({item.confidence_points} points)." for item in hypotheses)
     if weak:
         summary += " No hypothesis is above LOW: weakly supported, more evidence is recommended before approval."
+    span = trace.get_current_span()
+    for item in hypotheses:
+        span.set_attribute(f"rca.confidence.{item.hypothesis_id}", item.confidence)
+        span.set_attribute(f"rca.points.{item.hypothesis_id}", item.confidence_points)
+    span.set_attribute("rca.weakly_supported", weak)
     return {
         "hypotheses": hypotheses,
         "weakly_supported": weak,
@@ -558,13 +596,30 @@ def run_investigation(
     on_step is called with every step as soon as it finishes, so the command line and the
     interface can show the investigation while it runs.
     """
+    # inputs: InvestigationInput = {"incident_id": incident_id, "owner": owner, "db_path": str(db_path)}
+    # state: dict = {}
+    # for mode, chunk in graph.stream(inputs, stream_mode=["updates", "values"]):
+    #     if mode == "values":
+    #         state = chunk
+    #     elif on_step is not None:
+    #         for update in chunk.values():
+    #             for step in (update or {}).get("trace") or []:  # `start` sends None to empty the list
+    #                 on_step(step)
+    # return state["record"]
+
     inputs: InvestigationInput = {"incident_id": incident_id, "owner": owner, "db_path": str(db_path)}
     state: dict = {}
-    for mode, chunk in graph.stream(inputs, stream_mode=["updates", "values"]):
-        if mode == "values":
-            state = chunk
-        elif on_step is not None:
-            for update in chunk.values():
-                for step in (update or {}).get("trace") or []:  # `start` sends None to empty the list
-                    on_step(step)
-    return state["record"]
+    with tracer().start_as_current_span("rca.investigation") as span:
+        span.set_attribute("rca.incident_id", incident_id)
+        span.set_attribute("rca.owner", owner)
+        for mode, chunk in graph.stream(inputs, stream_mode=["updates", "values"]):
+            if mode == "values":
+                state = chunk
+            elif on_step is not None:
+                for update in chunk.values():
+                    for step in (update or {}).get("trace") or []:
+                        on_step(step)
+        record = state["record"]
+        span.set_attribute("rca.id", record.rca_id)
+        span.set_attribute("rca.status", record.status)
+    return record
