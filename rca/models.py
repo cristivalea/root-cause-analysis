@@ -229,6 +229,16 @@ class TimeWindow(BaseModel):
     incident_id: str | None = None  # the incident the window is built around, when there is one
 
 
+class InvestigationGuidance(BaseModel):
+    """What the Problem Manager may add when starting an investigation. Optional; checked by code
+    (rca/context.py) and recorded in the context with the source "Problem Manager"."""
+
+    notes: str | None = None  # read by the Investigation Planner
+    extra_services: list[str] = []  # also searched for logs and changes; must exist in the CMDB
+    change_window_days: int | None = Field(default=None, ge=7, le=90)  # instead of 7 days before the first incident
+    log_hours_before: int | None = Field(default=None, ge=2, le=168)  # instead of 2 hours before each detection
+
+
 class InvestigationContext(BaseModel):
     """What the investigation starts from, built by code from the problem and its incidents, never
     guessed by a model (rca/context.py). `sources` says where every value comes from."""
@@ -240,6 +250,7 @@ class InvestigationContext(BaseModel):
     related_services: list[str] = []
     log_windows: list[TimeWindow] = Field(min_length=1)  # one around every incident
     change_window: TimeWindow
+    notes: str | None = None  # from the Problem Manager
     sources: dict[str, str] = {}
 
 

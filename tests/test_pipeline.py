@@ -20,7 +20,7 @@ from rca.agents import historical, planner, reasoning
 from rca.agents.historical import HistoricalRCADecision, HistoricalRCAReview
 from rca.agents.planner import PlannerAnswer
 from rca.llm import LLMOutputError
-from rca.models import DraftRCA, Hypothesis
+from rca.models import DraftRCA, Hypothesis, InvestigationGuidance
 
 ROOT = Path(__file__).resolve().parents[1]
 INCIDENT_ID = "INC-2026-00482"
@@ -322,6 +322,17 @@ def test_a_plan_refused_three_times_escalates_before_any_tool(db_path, fakes):
     assert "search_queries" in fakes.planner.requests[1]
     assert record.evidence == [] and record.plan is None
     assert fakes.reasoning.requests == []
+
+
+def test_the_guidance_of_the_problem_manager_reaches_the_context_and_the_planner(db_path, fakes):
+    guidance = InvestigationGuidance(notes="Check the retry handler.", extra_services=["Network Services"])
+
+    record = pipeline.run_investigation(INCIDENT_ID, db_path=db_path, guidance=guidance)
+
+    assert record.context.notes == "Check the retry handler."
+    assert "Network Services" in record.context.services
+    assert "Check the retry handler." in fakes.planner.requests[0]
+    assert "Network Services" in record.trace[2].details["services"]
 
 
 # Several runs in the same thread, as in LangGraph Studio ---------------------------------

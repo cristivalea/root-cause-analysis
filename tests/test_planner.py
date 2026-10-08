@@ -101,3 +101,11 @@ def test_live_plan_for_the_payment_api_problem(payment_case):
     print("\n" + plan.model_dump_json(indent=2))
     assert plan.service == "Payment API"
     assert plan.search_queries
+
+
+def test_the_notes_of_the_problem_manager_reach_the_model(payment_case):
+    context, incidents, similar = payment_case
+
+    data = json.loads(build_user_input(context.model_copy(update={"notes": "Check the retry handler."}), incidents, similar))
+
+    assert data["problem_manager_notes"] == "Check the retry handler."

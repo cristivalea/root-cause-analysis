@@ -10,7 +10,7 @@ from streamlit import user
 
 from rca import storage, store
 from rca.config import DB_PATH
-from rca.models import Incident, RCARecord, RCAStatus
+from rca.models import Incident, InvestigationGuidance, RCARecord, RCAStatus
 from rca.pipeline import run_investigation
 
 from datetime import datetime, timedelta, timezone
@@ -105,6 +105,7 @@ def _serialize(obj: Any) -> Any:
 class StartInvestigationRequest(BaseModel):
     incident_id: str
     owner: str
+    guidance: InvestigationGuidance | None = None  # optional notes and wider search from the Problem Manager
 
 
 class ApplyReviewRequest(BaseModel):
@@ -196,6 +197,12 @@ def api_get_incident(incident_id: str, user: dict[str, Any] = Depends(
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/v1/services")
+def api_list_services():
+    """Every service of the CMDB, for the services the Problem Manager may add to an investigation."""
+    return storage.list_services(DB_PATH)
 
 
 @app.get("/api/v1/services/{service_name}/teams")
@@ -343,9 +350,12 @@ def api_start_investigation(req: StartInvestigationRequest):
             incident_id=req.incident_id,
             owner=req.owner,
             db_path=DB_PATH,
-            on_step=None
+            on_step=None,
+            guidance=req.guidance,
         )
         return _serialize(result)
+    except ValueError as exc:  # an unknown incident or a service the CMDB does not know
+        raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(exc))

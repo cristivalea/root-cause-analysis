@@ -7,6 +7,7 @@ import pytest
 
 from rca import storage
 from rca.context import build_context
+from rca.models import InvestigationGuidance
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -75,3 +76,38 @@ def test_unknown_ids_stop_with_an_error(db_path):
         build_context(db_path, incident_id="INC-2099-00001")
     with pytest.raises(ValueError, match="PRB-2099-00001"):
         build_context(db_path, problem_id="PRB-2099-00001")
+
+
+def test_the_guidance_of_the_problem_manager_widens_the_search_and_is_recorded(db_path):
+    guidance = InvestigationGuidance(notes="Check the egress proxy.", extra_services=["Network Services"],
+                                     change_window_days=30, log_hours_before=24)
+
+    context, _ = build_context(db_path, incident_id="INC-2026-00468", guidance=guidance)  # STORY-011
+
+    assert context.services == ["Payment API", "Network Services"]
+    assert context.notes == "Check the egress proxy."
+    detected = at("2026-09-08T10:20:00Z")
+    assert context.log_windows[0].start == detected - timedelta(hours=24)
+    assert context.change_window.start == detected - timedelta(days=30)
+    assert "Problem Manager" in context.sources["services"]
+    assert context.sources["change_window"].startswith("Problem Manager: 30 days")
+    assert context.sources["notes"] == "Problem Manager"
+
+
+def test_without_guidance_the_rules_apply_and_nothing_is_attributed_to_the_problem_manager(db_path):
+    context, _ = build_context(db_path, incident_id="INC-2026-00468")
+
+    assert context.notes is None
+    assert not any("Problem Manager" in value for value in context.sources.values())
+
+
+def test_a_service_the_cmdb_does_not_know_is_refused(db_path):
+    with pytest.raises(ValueError, match="Load Balancer"):
+        build_context(db_path, incident_id="INC-2026-00468", guidance=InvestigationGuidance(extra_services=["Load Balancer"]))
+
+
+def test_the_windows_of_the_guidance_have_limits():
+    with pytest.raises(ValueError):
+        InvestigationGuidance(change_window_days=3)  # narrower than the rule
+    with pytest.raises(ValueError):
+        InvestigationGuidance(log_hours_before=500)

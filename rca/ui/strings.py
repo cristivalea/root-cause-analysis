@@ -139,6 +139,18 @@ EN: dict[str, str] = {
     "selection.view_details": "View incident details",
     "selection.analyze": "Analyze Root Cause",
     "selection.analyze_help": "Start the investigation for the selected incident.",
+    # ---- Guidance from the Problem Manager ----
+    "guidance.title": "Guidance for the investigation (optional)",
+    "guidance.hint": "The investigation covers every incident of the problem, with fixed windows. "
+                     "Add what you already know; the defaults are used for anything left empty.",
+    "guidance.notes": "Notes for the investigation",
+    "guidance.notes_help": "What you suspect or want checked. The planner reads it as a hint, not as a fact.",
+    "guidance.services": "Also search these services",
+    "guidance.services_help": "Their logs and changes are searched too, for example a service the CMDB does not link.",
+    "guidance.change_days": "Search changes this many days before the first incident",
+    "guidance.change_days_help": "Default 7 days. Use more when the problem may have started with an older change.",
+    "guidance.log_hours": "Search logs this many hours before each incident",
+    "guidance.log_hours_help": "Default 2 hours. Use more for a slow degradation.",
     # ---- Incident details ----
     "details.title": "Incident details",
     "details.summary": "Summary",

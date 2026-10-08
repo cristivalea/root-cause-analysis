@@ -80,3 +80,13 @@ def test_an_incident_cannot_be_in_two_problems(tmp_path):
             raise AssertionError("the database accepted a second problem for the same incident")
         except sqlite3.IntegrityError:
             pass
+
+
+def test_the_services_of_the_cmdb_are_listed_once_in_order(tmp_path):
+    db_path = tmp_path / "sources.sqlite3"
+    storage.load_sources(db_path, ROOT / "data" / "sources")
+
+    services = storage.list_services(db_path)
+
+    assert services == sorted(set(services))
+    assert {"Payment API", "Network Services", "Kubernetes Platform"} <= set(services)

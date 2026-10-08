@@ -75,6 +75,7 @@ SELECTED_INCIDENT_KEY = "selected_incident_id"
 ACTIVE_RCA_KEY = "active_rca_id"
 RUN_REQUEST_KEY = "investigation_requested"
 RUN_ERROR_KEY = "investigation_error"
+GUIDANCE_KEY = "investigation_guidance"
 
 
 def sign_in(token: str, username: str, role: str) -> None:
@@ -129,9 +130,16 @@ def set_active_rca(rca_id: str | None) -> None:
     st.session_state[ACTIVE_RCA_KEY] = rca_id
 
 
-def request_investigation() -> None:
-    """Ask for an investigation to run. The investigation screen picks this up once."""
+def request_investigation(guidance: dict | None = None) -> None:
+    """Ask for an investigation to run. The investigation screen picks this up once.
+    guidance is what the Problem Manager adds (models.InvestigationGuidance); None means none."""
     st.session_state[RUN_REQUEST_KEY] = True
+    st.session_state[GUIDANCE_KEY] = guidance
+
+
+def investigation_guidance() -> dict | None:
+    """The guidance of the last request, so a retry after a failure keeps it."""
+    return st.session_state.get(GUIDANCE_KEY)
 
 
 def take_investigation_request() -> bool:

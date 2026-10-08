@@ -128,6 +128,7 @@ def run_investigation(incident_id: str, right) -> None:
             record = services.start_investigation(
                 incident_id,
                 owner=state.role_name(state.PROBLEM_MANAGER),
+                guidance=state.investigation_guidance(),
             )
     except services.ServiceError as error:
         state.set_investigation_error(str(error))
@@ -150,7 +151,7 @@ def failure_panel(message: str, incident_id: str | None) -> None:
     st.caption(t("investigation.failed_hint"))
     if incident_id and st.button(t("investigation.try_again"), type="primary", icon=":material/refresh:"):
         state.set_investigation_error(None)
-        state.request_investigation()
+        state.request_investigation(state.investigation_guidance())  # the same guidance as the failed run
         st.rerun()
     with st.expander(t("investigation.technical_detail")):
         st.code(message)

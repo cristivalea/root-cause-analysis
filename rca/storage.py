@@ -325,6 +325,12 @@ def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:
     return [IncidentEvent.model_validate(item) for item in payloads]
 
 
+def list_services(db_path: Path) -> list[str]:
+    """Every service that has components in the CMDB, in alphabetical order."""
+    with closing(_connect_read_only(db_path)) as connection:
+        return [row[0] for row in connection.execute("SELECT DISTINCT service FROM cmdb_items ORDER BY service")]
+
+
 def get_config_items_for_service(db_path: Path, service: str) -> list[ConfigItem]:
     payloads = _read_payloads(db_path, "SELECT payload FROM cmdb_items WHERE service = ? ORDER BY ci_id", [service])
     return [ConfigItem.model_validate(item) for item in payloads]

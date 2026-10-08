@@ -259,6 +259,15 @@ def services() -> list[str]:
     return sorted({incident.service for incident in list_incidents()})
 
 
+def cmdb_services() -> list[str]:
+    """Every service of the CMDB: the ones the Problem Manager may add to an investigation."""
+    try:
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/services", headers=_auth_headers(), timeout=10))
+        return list(resp.json())
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
 # @st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
 def teams_for_service(service: str) -> list[str]:
     try:
@@ -368,8 +377,9 @@ def start_investigation(
     incident_id: str,
     owner: str,
     on_step: Callable[[InvestigationStep], None] | None = None,
+    guidance: dict | None = None,
 ) -> RCARecord:
-    payload = {"incident_id": incident_id, "owner": owner}
+    payload = {"incident_id": incident_id, "owner": owner, "guidance": guidance}
     try:
         resp = _check_response(
             requests.post(f"{API_BASE_URL}/api/v1/investigations/start", headers=_auth_headers(), json=payload, timeout=180)

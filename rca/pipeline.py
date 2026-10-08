@@ -49,6 +49,7 @@ from rca.models import (
     Evidence,
     Incident,
     InvestigationContext,
+    InvestigationGuidance,
     InvestigationPlan,
     InvestigationStep,
     RCARecord,
@@ -75,6 +76,7 @@ class InvestigationInput(TypedDict, total=False):
 
     problem_id: str
     incident_id: str
+    guidance: dict  # models.InvestigationGuidance, optional
     owner: str
     db_path: str
 
@@ -249,6 +251,7 @@ def start(state: InvestigationState) -> dict:
         _db_path(state),
         incident_id=(state.get("incident_id") or "").strip() or None,
         problem_id=(state.get("problem_id") or "").strip() or None,
+        guidance=InvestigationGuidance.model_validate(state.get("guidance") or {}),
     )
     reference = incidents[-1]
     return {
@@ -639,11 +642,13 @@ def run_investigation(
     db_path: Path = DB_PATH,
     on_step: Callable[[InvestigationStep], None] | None = None,
     problem_id: str | None = None,
+    guidance: InvestigationGuidance | None = None,
 ) -> RCARecord:
     """Run the whole investigation for a problem and return the saved RCA record.
 
     Give problem_id, or incident_id: the investigation then covers the whole problem of that incident
-    (or the incident alone, when it belongs to no problem). on_step is called with every step as soon
+    (or the incident alone, when it belongs to no problem). guidance is what the Problem Manager adds
+    (notes, more services, wider windows), checked when the context is built. on_step is called with every step as soon
     as it finishes, so the command line and the interface can show the investigation while it runs.
     """
     inputs: InvestigationInput = {"owner": owner, "db_path": str(db_path)}
@@ -651,6 +656,8 @@ def run_investigation(
         inputs["problem_id"] = problem_id
     if incident_id:
         inputs["incident_id"] = incident_id
+    if guidance is not None:
+        inputs["guidance"] = guidance.model_dump()
     state: dict = {}
     with tracer().start_as_current_span("rca.investigation") as span:
         span.set_attribute("rca.problem_id", problem_id or "")

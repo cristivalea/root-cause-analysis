@@ -18,8 +18,9 @@ MAX_SEARCH_QUERIES = 5
 ALL_SOURCES: list[SourceName] = ["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
 
 INSTRUCTIONS = f"""You are the Investigation Planner in a Root Cause Analysis application for IT incidents.
-You receive a problem: one or more incidents that share the same unknown cause, and the past
-incidents that look similar. The services, the time windows and the sources to check are already
+You receive a problem: one or more incidents that share the same unknown cause, the past
+incidents that look similar and, sometimes, notes from the Problem Manager. Use the notes to
+decide what the queries look for; they are hints, not facts. The services, the time windows and the sources to check are already
 fixed by the application; you do not choose them. You do not investigate and you do not guess the cause.
 
 Write:
@@ -57,6 +58,7 @@ def build_user_input(context: InvestigationContext, incidents: list[Incident], s
             "problem_id": context.problem_id,
             "incidents_of_the_problem": [_incident_for_prompt(item) for item in incidents],
             "services": context.services,
+            "problem_manager_notes": context.notes,
             "similar_past_incidents": [_similar_incident_for_prompt(item) for item in similar_incidents],
         },
         indent=2,
