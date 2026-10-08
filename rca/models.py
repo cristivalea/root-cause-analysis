@@ -142,7 +142,9 @@ class Problem(SourceRecord):
     problem_id: str = Field(pattern=r"^PRB-\d{4}-\d{5}$")
     title: str
     description: str
-    status: Literal["Open", "Closed"]
+    # Manual: the application stopped (two rejected cases, or a case past its last revision) and
+    # people solve it outside; it is closed with a reason once they have.
+    status: Literal["Open", "Closed", "Manual"]
     priority: Literal["P1", "P2", "P3", "P4"]  # from the most severe incident: SEV-1 is P1
     services: list[str] = Field(min_length=1)
     created_at: datetime
@@ -160,7 +162,7 @@ class ProblemEvent(BaseModel):
     at: datetime
     by: str
     action: Literal["created", "incident_added", "incident_removed", "incident_moved_in", "incident_moved_out",
-                    "closed", "reopened"]
+                    "closed", "reopened", "manual"]
     incident_id: str | None = None
     reason: str | None = None
 

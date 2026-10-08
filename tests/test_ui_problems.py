@@ -96,3 +96,33 @@ suggestion_card(incident, services.suggestions()[incident.incident_id], {"INC-20
 
     app.button(key="reject").click().run()
     assert ("reject_suggestion", ("INC-2026-00371", ["INC-2025-01508"])) in api
+
+
+def test_a_case_in_progress_replaces_the_start_button(api, monkeypatch):
+    from datetime import datetime, timezone
+
+    from rca.models import RCARecord
+
+    draft = RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="DRAFT", owner="pm",
+                      created_at=datetime.now(timezone.utc), problem_id=PAYMENT.problem_id)
+    monkeypatch.setattr(services, "get_problem", lambda problem_id: {"problem": PAYMENT, "events": [], "rcas": [draft]})
+    app = AppTest.from_file(str(PAGES / "problems.py"), default_timeout=30)
+    app.query_params["problem"] = PAYMENT.problem_id
+    app.run()
+
+    assert not app.exception
+    assert not any(button.label == "Start RCA" for button in app.button)
+    assert any("RCA-2026-00001 is in progress" in item.value for item in app.info)
+
+
+def test_a_problem_in_manual_resolution_can_only_be_closed(api, monkeypatch):
+    manual = PAYMENT.model_copy(update={"status": "Manual"})
+    monkeypatch.setattr(services, "get_problem", lambda problem_id: {"problem": manual, "events": [], "rcas": []})
+    app = AppTest.from_file(str(PAGES / "problems.py"), default_timeout=30)
+    app.query_params["problem"] = PAYMENT.problem_id
+    app.run()
+
+    assert not app.exception
+    assert any("solved by people" in item.value for item in app.warning)
+    assert not any(button.label in ("Start RCA", "Reopen") for button in app.button)
+    assert any(button.label == "Close the problem" for button in app.button)

@@ -14,6 +14,8 @@ from rca.ui.components.page_header import page_header
 from rca.ui.strings import t, t_or_value
 
 FLASH_KEY = "problems_flash"  # what the last change said, shown once after the rerun
+ACTIVE_RCA = ("INVESTIGATING", "DRAFT", "PENDING_REVIEW", "MORE_DETAILS_REQUESTED")  # as rca/problems.py
+MAX_REJECTED_CASES = 2  # as rca/problems.py: the interface talks to the API only
 
 
 def open_problem(problem_id: str | None) -> None:
@@ -55,7 +57,7 @@ def act(change, *args) -> bool:
 
 
 def problem_list() -> None:
-    choice = st.segmented_control(t("problems.filter"), ["Open", "Closed", "all"], default="Open",
+    choice = st.segmented_control(t("problems.filter"), ["Open", "Manual", "Closed", "all"], default="Open",
                                   format_func=lambda value: t(f"problems.filter.{value}"), key="problems_filter")
     try:
         found = services.list_problems(None if choice in (None, "all") else choice)
@@ -154,9 +156,12 @@ def problem_detail(problem_id: str) -> None:
         history_section(events)
     with right:
         if is_open:
-            start_section(problem)
+            start_section(problem, rcas)
             add_section(problem)
             remove_section(problem)
+            close_section(problem)
+        elif problem.status == "Manual":
+            st.warning(t("problems.manual"), icon=":material/support_agent:")
             close_section(problem)
         else:
             reopen_section(problem)
@@ -196,9 +201,31 @@ def history_section(events) -> None:
                         + (f" — {event.reason}" if event.reason else ""))
 
 
-def start_section(problem) -> None:
+def cases(rcas) -> list:
+    """The last revision of every RCA case of the problem."""
+    last: dict = {}
+    for record in sorted(rcas, key=lambda item: (item.cycle, item.created_at)):
+        last[record.case] = record
+    return list(last.values())
+
+
+def start_section(problem, rcas) -> None:
     with st.container(border=True):
         st.markdown(f"**{t('problems.start_title')}**")
+        latest = cases(rcas)
+        active = [record for record in latest if record.status in ACTIVE_RCA]
+        if active:
+            # one case at a time: the case in progress is continued, not doubled
+            st.info(t("problems.active_case", rca=active[0].rca_id,
+                      status=t_or_value(f"rca_status.{active[0].status}", active[0].status)), icon=":material/info:")
+            if st.button(t("problems.open_rca"), key="open_active", type="primary"):
+                state.set_active_rca(active[0].rca_id)
+                st.switch_page(navigation.INVESTIGATION)
+            return
+        rejected = [record for record in latest if record.status == "REJECTED"]
+        if rejected:
+            st.caption(t("problems.rejected_count", count=len(rejected), maximum=MAX_REJECTED_CASES))
+            st.warning(t("problems.after_rejection", rca=rejected[-1].rca_id), icon=":material/warning:")
         reference = problem.incidents[-1].incident_id
         st.caption(t("problems.start_hint", incident=reference))
         guidance = guidance_form(key="problem_guidance")

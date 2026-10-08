@@ -13,6 +13,15 @@ The rules, enforced here and not by the interface:
 - an incident added while an RCA of the problem is in progress is not in that draft: a warning
   says so, and a new revision can include it.
 
+And for starting an RCA (check_can_start, called by the API, not by the pipeline: the evaluation
+scripts run the pipeline directly):
+- only an open problem gets an RCA, and only one case at a time: while a case is a draft, with the
+  expert or waiting for its next revision, only that next revision can start;
+- after a rejected case, a new case must start from something new (other incidents or other
+  guidance): the same input would give the same answer;
+- after MAX_REJECTED_CASES rejected cases, or a case escalated past its last revision, the problem
+  goes to manual resolution (status Manual, record_review_outcome): it gets no further RCA.
+
 Every change is written to problem_events and never rewritten, so the history of a problem shows
 what was done, by whom and why. A rule that refuses an operation raises ProblemError.
 """
@@ -28,10 +37,11 @@ from pathlib import Path
 
 from rca import storage, store
 from rca.config import DB_PATH
-from rca.models import Incident, Problem, ProblemEvent
+from rca.models import Incident, InvestigationGuidance, Problem, ProblemEvent, RCARecord
 
 ACTIVE_RCA = ("INVESTIGATING", "DRAFT", "PENDING_REVIEW", "MORE_DETAILS_REQUESTED")
 FAR_APART = timedelta(days=180)
+MAX_REJECTED_CASES = 2  # audit P.7: after the second rejected case the problem is solved by people
 
 
 class ProblemError(ValueError):
@@ -79,6 +89,73 @@ def unassigned_incidents(db_path: Path = DB_PATH) -> list[Incident]:
 
 def rcas_of(problem_id: str, db_path: Path = DB_PATH):
     return [record for record in store.list_rcas(db_path=db_path) if record.problem_id == problem_id]
+
+
+def cases_of(problem_id: str, db_path: Path = DB_PATH) -> dict[str, list[RCARecord]]:
+    """The RCA cases of a problem, each as its revisions in order."""
+    cases: dict[str, list[RCARecord]] = {}
+    for record in rcas_of(problem_id, db_path):
+        cases.setdefault(record.case, []).append(record)
+    return {case: sorted(records, key=lambda item: (item.cycle, item.created_at)) for case, records in cases.items()}
+
+
+def rejected_cases(problem_id: str, db_path: Path = DB_PATH) -> list[RCARecord]:
+    """The last revision of every case of the problem that the expert rejected, the oldest first."""
+    last = [records[-1] for records in cases_of(problem_id, db_path).values()]
+    return sorted((item for item in last if item.status == "REJECTED"), key=lambda item: item.created_at)
+
+
+def check_can_start(problem_id: str, guidance: InvestigationGuidance | None = None,
+                    previous_rca_id: str | None = None, db_path: Path = DB_PATH) -> None:
+    """Refuse, with the reason, an RCA the rules do not allow on this problem (see the module text)."""
+    problem = _problem(problem_id, db_path)
+    if problem.status != "Open":
+        reason = ("it is solved manually, outside the application" if problem.status == "Manual"
+                  else "it is closed; reopen it first")
+        raise ProblemError(f"{problem_id} gets no new RCA: {reason}.")
+    active = [records[-1] for records in cases_of(problem_id, db_path).values() if records[-1].status in ACTIVE_RCA]
+    if previous_rca_id:
+        others = [item.rca_id for item in active if item.rca_id != previous_rca_id]
+        if others:
+            raise ProblemError(f"{', '.join(others)} of {problem_id} is in progress: only one RCA case at a time.")
+        return
+    if active:
+        item = active[0]
+        raise ProblemError(f"{item.rca_id} of {problem_id} is in progress ({item.status}): only one RCA case at a time. "
+                           "Send it to the Technical Expert, or continue it when the expert asks for more details.")
+    rejected = rejected_cases(problem_id, db_path)
+    if len(rejected) >= MAX_REJECTED_CASES:
+        raise ProblemError(f"{problem_id} already has {len(rejected)} rejected cases: it is solved manually.")
+    if rejected:
+        last = rejected[-1]
+        before = last.context
+        new_incidents = before is None or set(before.incident_ids) != {link.incident_id for link in problem.incidents}
+        new_guidance = guidance is not None and guidance != (before.guidance if before else None) and guidance != InvestigationGuidance()
+        if not (new_incidents or new_guidance):
+            raise ProblemError(f"The last case of {problem_id} ({last.rca_id}) was rejected. Add guidance or incidents "
+                               "before starting a new case: the same input would give the same answer.")
+
+
+def record_review_outcome(record: RCARecord, by: str, db_path: Path = DB_PATH) -> Problem | None:
+    """After a decision of the expert: the second rejected case, or a case escalated past its last
+    revision, sends the problem to manual resolution. Returns the problem when its status changed."""
+    if not record.problem_id:
+        return None
+    problem = storage.get_problem(db_path, record.problem_id)
+    if problem is None or problem.status != "Open":
+        return None
+    if record.status == "ESCALATED_MANUAL":
+        reason = f"{record.rca_id} was escalated after its last revision."
+    elif record.status == "REJECTED" and len(rejected_cases(problem.problem_id, db_path)) >= MAX_REJECTED_CASES:
+        reason = f"{MAX_REJECTED_CASES} cases were rejected, the last one {record.rca_id}."
+    else:
+        return None
+    updated = problem.model_copy(update={"status": "Manual"})
+    with closing(_connect(db_path)) as connection:
+        _write_problem(connection, updated)
+        _event(connection, problem.problem_id, by, "manual", reason=reason)
+        connection.commit()
+    return _problem(problem.problem_id, db_path)
 
 
 # --------------------------------------------------------------------------------------
@@ -139,6 +216,8 @@ def attach_incident(problem_id: str, incident_id: str, by: str, move_reason: str
     """Add an incident to an open problem."""
     problem = _problem(problem_id, db_path)
     incident = _incident(incident_id, db_path)
+    if problem.status == "Manual":
+        raise ProblemError(f"{problem_id} is solved manually, outside the application. Create a new problem for {incident_id}.")
     if problem.status != "Open":
         raise ProblemError(f"{problem_id} is closed. Reopen it, or create a new problem for {incident_id}.")
     if incident_id in {link.incident_id for link in problem.incidents}:
@@ -177,11 +256,11 @@ def detach_incident(problem_id: str, incident_id: str, by: str, reason: str, db_
 
 
 def close_problem(problem_id: str, by: str, reason: str, db_path: Path = DB_PATH) -> Result:
-    """Close an open problem with a reason, for example when the cause is already known."""
+    """Close a problem with a reason: an open one whose cause is already known, or one solved manually."""
     problem = _problem(problem_id, db_path)
     if not (reason or "").strip():
         raise ProblemError("Give a reason to close a problem.")
-    if problem.status != "Open":
+    if problem.status == "Closed":
         raise ProblemError(f"{problem_id} is already closed.")
     active = [record.rca_id for record in rcas_of(problem_id, db_path) if record.status in ACTIVE_RCA]
     if active:
@@ -196,6 +275,8 @@ def reopen_problem(problem_id: str, by: str, reason: str, db_path: Path = DB_PAT
         raise ProblemError("Give a reason to reopen a problem.")
     if problem.status == "Open":
         raise ProblemError(f"{problem_id} is already open.")
+    if problem.status == "Manual":
+        raise ProblemError(f"{problem_id} is solved manually, outside the application. Close it with the outcome.")
     return _set_status(problem, "Open", by, reason.strip(), db_path)
 
 

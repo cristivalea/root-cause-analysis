@@ -149,6 +149,13 @@ EN: dict[str, str] = {
     "problems.filter.Open": "Open",
     "problems.filter.Closed": "Closed",
     "problems.filter.all": "All",
+    "problems.filter.Manual": "Manual resolution",
+    "problems.manual": "This problem is solved by people, outside the application: the expert rejected two cases, "
+                       "or a case went past its last revision. Close it with the outcome once it is solved.",
+    "problems.active_case": "{rca} is in progress ({status}). One RCA case at a time: continue it instead of starting another.",
+    "problems.rejected_count": "Rejected cases: {count} of {maximum}. After the last one the problem is solved manually.",
+    "problems.after_rejection": "{rca} was rejected. Start a new case only with something new: add guidance below "
+                                "or incidents to the problem. The same input would give the same answer.",
     "problems.none": "No problem to show.",
     "problems.select_hint": "Select a problem to see its incidents, its RCAs and its history.",
     "problems.col.problem": "Problem",
@@ -204,6 +211,10 @@ EN: dict[str, str] = {
     "event.incident_moved_out": "moved {incident} to another problem",
     "event.closed": "closed the problem",
     "event.reopened": "reopened the problem",
+    "event.manual": "sent the problem to manual resolution",
+    "cycle.rejected_next": "A new case for this problem must start from something new: guidance or other incidents. "
+                           "Add them on the problem page and start the RCA there.",
+    "cycle.open_problem": "Open {problem}",
     # ---- Incidents in no problem ----
     "incidents.title": "Incidents in no problem",
     "incidents.subtitle": "Each incident comes with a suggestion. You decide: attach it, start a new problem, "

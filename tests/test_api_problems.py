@@ -72,3 +72,21 @@ def test_suggestions_and_proposed_problems_come_with_their_reasons(client):
     rejected = http.post(f"/api/v1/incidents/{some['incident_id']}/reject-suggestion",
                          json={"targets": [some["problem_id"] or some["incident_ids"][0]]})
     assert rejected.status_code == 200
+
+
+def test_starting_an_rca_follows_the_rules_of_the_problem(client, monkeypatch):
+    from datetime import datetime, timezone
+
+    from rca import store
+    from rca.models import RCARecord
+
+    http, _ = client
+    problem_id = storage.get_problem_id_for_incident(api.DB_PATH, "INC-2026-00482")
+    store.save_rca(RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="DRAFT", owner="pm",
+                             created_at=datetime.now(timezone.utc), problem_id=problem_id), db_path=api.DB_PATH)
+    monkeypatch.setattr(api, "run_investigation", lambda **kwargs: pytest.fail("the investigation must not run"))
+
+    response = http.post("/api/v1/investigations/start", json={"incident_id": "INC-2026-00482", "owner": "pm"})
+
+    assert response.status_code == 400
+    assert "only one RCA case at a time" in response.json()["detail"]

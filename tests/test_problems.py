@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from rca import problems, storage, store
-from rca.models import RCARecord
+from rca.models import InvestigationGuidance, RCARecord
 from rca.problems import ProblemError
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -160,3 +160,75 @@ def test_unknown_ids_are_refused(db):
         problems.attach_incident("PRB-2099-00001", "INC-2026-00371", "pm", db_path=db)
     with pytest.raises(ProblemError, match="at least one incident"):
         problems.create_problem([" "], "pm", db_path=db)
+
+
+# Starting an RCA (check_can_start) and the outcome of a review (record_review_outcome) ----------
+
+
+def saved_rca(db, rca_id, status, case_id=None, cycle=1, guidance=None):
+    from rca.context import build_context
+
+    problem_id = payment_problem(db)
+    context, _ = build_context(db, problem_id=problem_id, guidance=guidance)
+    record = RCARecord(rca_id=rca_id, incident_id="INC-2026-00857", status=status, owner="pm",
+                       created_at=datetime.now(timezone.utc), problem_id=problem_id, context=context,
+                       case_id=case_id, cycle=cycle)
+    store.save_rca(record, db_path=db)
+    return record
+
+
+def test_only_one_rca_case_at_a_time_but_its_next_revision_may_start(db):
+    problem_id = payment_problem(db)
+    saved_rca(db, "RCA-2026-00001", "MORE_DETAILS_REQUESTED")
+
+    with pytest.raises(ProblemError, match="only one RCA case at a time"):
+        problems.check_can_start(problem_id, db_path=db)
+    problems.check_can_start(problem_id, previous_rca_id="RCA-2026-00001", db_path=db)  # the same case: allowed
+
+
+def test_a_technical_escalation_does_not_block_a_new_run(db):
+    saved_rca(db, "RCA-2026-00001", "ESCALATED")
+
+    problems.check_can_start(payment_problem(db), db_path=db)
+
+
+def test_after_a_rejection_a_new_case_needs_something_new(db):
+    problem_id = payment_problem(db)
+    saved_rca(db, "RCA-2026-00001", "REJECTED")
+
+    with pytest.raises(ProblemError, match="same input would give the same answer"):
+        problems.check_can_start(problem_id, db_path=db)
+    problems.check_can_start(problem_id, InvestigationGuidance(notes="Check the retry handler."), db_path=db)
+    problems.attach_incident(problem_id, "INC-2026-00371", "pm", db_path=db)
+    problems.check_can_start(problem_id, db_path=db)  # a new incident is something new too
+
+
+def test_the_second_rejected_case_sends_the_problem_to_manual_resolution(db):
+    problem_id = payment_problem(db)
+    first = saved_rca(db, "RCA-2026-00001", "REJECTED")
+    assert problems.record_review_outcome(first, "expert", db_path=db) is None  # one rejection: still open
+
+    second = saved_rca(db, "RCA-2026-00002", "REJECTED", guidance=InvestigationGuidance(change_window_days=30))
+    updated = problems.record_review_outcome(second, "expert", db_path=db)
+
+    assert updated.status == "Manual"
+    assert problems.problem_events(problem_id, db)[-1].action == "manual"
+    with pytest.raises(ProblemError, match="solved manually"):
+        problems.check_can_start(problem_id, InvestigationGuidance(notes="Try again."), db_path=db)
+    with pytest.raises(ProblemError, match="solved manually"):
+        problems.reopen_problem(problem_id, "pm", "Try again.", db_path=db)
+    with pytest.raises(ProblemError, match="solved manually"):
+        problems.attach_incident(problem_id, "INC-2026-00371", "pm", db_path=db)
+    closed = problems.close_problem(problem_id, "pm", "Fixed by the vendor, confirmed manually.", db_path=db).problem
+    assert closed.status == "Closed"
+
+
+def test_a_case_escalated_after_its_last_revision_sends_the_problem_to_manual_resolution(db):
+    record = saved_rca(db, "RCA-2026-00003", "ESCALATED_MANUAL", case_id="RCA-2026-00001", cycle=3)
+
+    assert problems.record_review_outcome(record, "expert", db_path=db).status == "Manual"
+
+
+def test_a_closed_problem_gets_no_rca(db):
+    with pytest.raises(ProblemError, match="closed; reopen it first"):
+        problems.check_can_start(closed_problem(db), db_path=db)

@@ -190,6 +190,14 @@ def next_cycle_panel(record) -> None:
                 st.markdown(review.comment)
             st.caption(t("review.decided_by", name=review.reviewer,
                          date=formatting.date_time(review.decided_at)))
+        if record.status == "REJECTED" and record.problem_id:
+            # a new case needs something new (guidance or incidents), which is given on the problem page
+            st.caption(t("cycle.rejected_next"))
+            if st.button(t("cycle.open_problem", problem=record.problem_id), type="primary", icon=theme.ICONS["problems"]):
+                st.query_params.clear()
+                st.query_params["problem"] = record.problem_id
+                st.switch_page(navigation.PROBLEMS)
+            return
         if st.button(t("cycle.start_next"), type="primary", icon=theme.ICONS["investigation"],
                      help=t("cycle.start_next_help")):
             # more details: the next revision of the same case. Rejected: a new case for the same problem.

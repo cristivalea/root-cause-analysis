@@ -439,6 +439,8 @@ def api_apply_review(
             requested_checks=req.requested_checks,
             guidance=req.guidance,
         )
+        # the second rejected case, or a case past its last revision, sends the problem to manual resolution
+        problems.record_review_outcome(result, user["username"], db_path=DB_PATH)
         return _serialize(result)
     except Exception as exc:
         traceback.print_exc()
@@ -481,6 +483,14 @@ def api_link_to_case(req: LinkCaseRequest):
 
 @app.post("/api/v1/investigations/start")
 def api_start_investigation(req: StartInvestigationRequest):
+    # The rules of Problem Management for starting an RCA (one case at a time, something new after a
+    # rejection, manual resolution after two) apply here, where the Problem Manager starts it.
+    problem_id = storage.get_problem_id_for_incident(DB_PATH, req.incident_id)
+    if problem_id:
+        try:
+            problems.check_can_start(problem_id, req.guidance, req.previous_rca_id, db_path=DB_PATH)
+        except problems.ProblemError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
     try:
         result = run_investigation(
             incident_id=req.incident_id,
