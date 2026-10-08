@@ -58,3 +58,17 @@ def test_the_technical_expert_cannot_change_problems(client):
 def test_an_unknown_problem_is_404(client):
     http, _ = client
     assert http.get("/api/v1/problems/PRB-2099-00001").status_code == 404
+
+
+@pytest.mark.skipif(not (ROOT / "chroma_db").exists(), reason="run scripts/ingest_chroma.py first")
+def test_suggestions_and_proposed_problems_come_with_their_reasons(client):
+    http, _ = client
+
+    found = http.get("/api/v1/incidents/unassigned/suggestions").json()
+    some = next(item for item in found.values() if item)
+    assert some["kind"] in ("open_problem", "closed_problem", "new_problem") and some["reasons"]
+    assert all(len(group) >= 3 for group in http.get("/api/v1/problems/proposed").json())
+
+    rejected = http.post(f"/api/v1/incidents/{some['incident_id']}/reject-suggestion",
+                         json={"targets": [some["problem_id"] or some["incident_ids"][0]]})
+    assert rejected.status_code == 200

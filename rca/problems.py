@@ -213,6 +213,19 @@ def dismiss_incident(incident_id: str, by: str, reason: str, db_path: Path = DB_
         connection.commit()
 
 
+def reject_suggestion(incident_id: str, targets: list[str], by: str, db_path: Path = DB_PATH) -> None:
+    """Remember that the Problem Manager rejected a suggestion for an incident, so it is not proposed
+    again (audit O.10, case 14). targets: the suggested problem, or the incidents of a proposed new problem."""
+    _incident(incident_id, db_path)
+    if not targets:
+        raise ProblemError("Say which suggestion is rejected.")
+    with closing(_connect(db_path)) as connection:
+        for target in targets:
+            connection.execute("INSERT OR REPLACE INTO rejected_suggestions VALUES (?, ?, ?, ?)",
+                               [incident_id, target, _now().isoformat(), by])
+        connection.commit()
+
+
 # --------------------------------------------------------------------------------------
 # Helpers
 # --------------------------------------------------------------------------------------

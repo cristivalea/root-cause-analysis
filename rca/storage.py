@@ -103,6 +103,16 @@ SCHEMAS = {
             reason TEXT
         )
     """,
+    # suggestions the Problem Manager rejected (target: a problem or an incident), never proposed again
+    "rejected_suggestions": """
+        CREATE TABLE IF NOT EXISTS rejected_suggestions (
+            incident_id TEXT NOT NULL,
+            target TEXT NOT NULL,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            PRIMARY KEY (incident_id, target)
+        )
+    """,
     # incidents the Problem Manager marked as needing no problem: they are no longer suggested
     "dismissed_incidents": """
         CREATE TABLE IF NOT EXISTS dismissed_incidents (

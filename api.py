@@ -1,4 +1,5 @@
 import json
+from dataclasses import asdict
 import os
 import traceback
 from pathlib import Path
@@ -8,7 +9,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from streamlit import user
 
-from rca import problems, storage, store
+from rca import problems, storage, store, suggestions
 from rca.config import DB_PATH
 from rca.models import Incident, InvestigationGuidance, RCARecord, RCAStatus
 from rca.pipeline import run_investigation
@@ -134,6 +135,10 @@ class ReasonRequest(BaseModel):
     reason: str
 
 
+class RejectSuggestionRequest(BaseModel):
+    targets: List[str]  # the suggested problem, or the incidents of a proposed new problem
+
+
 def _problem_result(result: problems.Result) -> dict:
     return {"problem": _serialize(result.problem), "warnings": result.warnings}
 
@@ -207,6 +212,27 @@ def api_unassigned_incidents(user: dict = Depends(require_roles("problem_manager
     return [_serialize(item) for item in problems.unassigned_incidents(DB_PATH)]
 
 
+@app.get("/api/v1/incidents/unassigned/suggestions")
+def api_suggestions(user: dict = Depends(require_roles("problem_manager"))):
+    """A grouping suggestion, or null, for every incident in no problem, with its reasons."""
+    try:
+        return {incident_id: (asdict(item) if item else None)
+                for incident_id, item in suggestions.suggest_all(DB_PATH).items()}
+    except Exception as exc:  # ChromaDB not built yet: the suggestions are missing, the rest still works
+        traceback.print_exc()
+        raise HTTPException(status_code=503, detail=f"Suggestions are not available: {exc}")
+
+
+@app.post("/api/v1/incidents/{incident_id}/reject-suggestion")
+def api_reject_suggestion(incident_id: str, req: RejectSuggestionRequest,
+                          user: dict = Depends(require_roles("problem_manager"))):
+    try:
+        problems.reject_suggestion(incident_id, req.targets, user["username"], db_path=DB_PATH)
+        return {"incident_id": incident_id, "rejected": req.targets}
+    except problems.ProblemError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.post("/api/v1/incidents/{incident_id}/dismiss")
 def api_dismiss_incident(incident_id: str, req: ReasonRequest, user: dict = Depends(require_roles("problem_manager"))):
     try:
@@ -256,6 +282,16 @@ def api_teams_for_service(service_name: str):
 @app.get("/api/v1/problems")
 def api_list_problems(status_filter: Optional[str] = None, user: dict = Depends(require_roles("problem_manager"))):
     return [_serialize(item) for item in problems.list_problems(status_filter, db_path=DB_PATH)]
+
+
+@app.get("/api/v1/problems/proposed")
+def api_proposed_problems(user: dict = Depends(require_roles("problem_manager"))):
+    """Groups of at least three alike incidents in no problem, proposed as new problems."""
+    try:
+        return suggestions.proposed_problems(DB_PATH)
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(status_code=503, detail=f"Proposed problems are not available: {exc}")
 
 
 @app.get("/api/v1/problems/{problem_id}")
