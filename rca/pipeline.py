@@ -456,8 +456,19 @@ def tools(state: InvestigationState) -> dict:
     }
 
 
+def _other_service(candidate: dict[str, Any], services: set[str]) -> str | None:
+    """The service of a past record when it is not a service of the problem, else None."""
+    service = candidate["metadata"].get("service")
+    return service if service and service not in services else None
+
+
 def historical_rca_agent(state: InvestigationState) -> dict:
-    """Agent 2: RAG over past RCAs, then the agent keeps only what is really similar."""
+    """Agent 2: RAG over past RCAs and incidents, then the agent keeps only what is really similar.
+
+    The rule that past records of other services are never evidence is applied by code first, so
+    it does not depend on the model; the agent judges only records of the services of the problem.
+    An invalid answer is asked again (technical retries, at most 3) before the history is given up.
+    """
     started = _now()
     incident, plan = state["incident"], state["plan"]
     ledger = EvidenceLedger(state["evidence"])
@@ -477,29 +488,41 @@ def historical_rca_agent(state: InvestigationState) -> dict:
     else:
         not_checked.append(_not_chosen("Past incidents"))
 
+    services = set(state["context"].services)
+    dropped: list[dict[str, str]] = [
+        {"id": item["id"], "reason": f"Another service ({_other_service(item, services)}): past records of other "
+                                     "services are never evidence."}
+        for item in candidates if _other_service(item, services)
+    ]
+    candidates = [item for item in candidates if not _other_service(item, services)]
+
     if not candidates:
+        summary = "No past RCA or incident of the services of the problem to review."
+        if dropped:
+            summary += f" Dropped {', '.join(item['id'] for item in dropped)}."
         return {
             "linked_incidents": [],
             "not_checked": not_checked,
-            "trace": [_step("historical_rca_agent", started, "No past RCA or incident to review.")],
+            "trace": [_step("historical_rca_agent", started, summary, kept=[], dropped=dropped)],
         }
 
-    try:
-        # The agent also returns its own evidence list; the pipeline uses only its decisions and
-        # records the kept results in the shared ledger, so the evidence ids stay unique.
-        review, _ = historical.review_historical_rcas(plan, candidates)
-    except LLMOutputError as exc:
-        note = f"The Historical RCA Agent did not return a valid answer, so past RCAs and incidents were not used ({exc})."
+    # The agent also returns its own evidence list; the pipeline uses only its decisions and
+    # records the kept results in the shared ledger, so the evidence ids stay unique.
+    result = run_with_retries(ask=lambda feedback: historical.review_historical_rcas(plan, candidates)[0],
+                              check=lambda review: [])
+    attempts = [{"attempt": attempt.number, "problems": attempt.problems} for attempt in result.attempts]
+    if result.escalated:
+        note = (f"The Historical RCA Agent did not return a valid answer in {len(result.attempts)} attempts, so past "
+                f"RCAs and incidents were not used ({result.attempts[-1].problems[0]}).")
         return {
             "linked_incidents": [],
             "not_checked": [*not_checked, note],
-            "trace": [_step("historical_rca_agent", started, note)],
+            "trace": [_step("historical_rca_agent", started, note, attempts=attempts, kept=[], dropped=dropped)],
         }
 
-    decisions = {decision.citation: decision for decision in review.decisions}
+    decisions = {decision.citation: decision for decision in result.value.decisions}
     incidents = {item.incident_id: item for item in state["similar_incidents"]}
     kept: list[dict[str, str]] = []
-    dropped: list[dict[str, str]] = []
     for candidate in candidates:
         decision = decisions.get(candidate["id"])
         if decision is None:
@@ -516,7 +539,7 @@ def historical_rca_agent(state: InvestigationState) -> dict:
         "evidence": ledger.items(),
         "linked_incidents": [item_id for item_id in kept_ids if item_id in incidents],
         "not_checked": not_checked,
-        "trace": [_step("historical_rca_agent", started, summary, kept=kept, dropped=dropped)],
+        "trace": [_step("historical_rca_agent", started, summary, kept=kept, dropped=dropped, attempts=attempts)],
     }
 
 

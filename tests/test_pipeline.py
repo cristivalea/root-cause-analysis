@@ -49,10 +49,13 @@ RCA_RESULTS = results(
     ("RCA-2025-00042::Timeline", "Payroll batch waits on PostgreSQL connections.",
      {"document_id": "RCA-2025-00042", "section_name": "Timeline", "service": "Payroll Service",
       "completion_date": 1750000000}, 0.30),
+    ("RCA-2024-00999::Timeline", "Payment API gateway errors during a certificate rotation.",
+     {"document_id": "RCA-2024-00999", "section_name": "Timeline", "service": "Payment API",
+      "completion_date": 1720000000}, 0.33),
 )
 
 
-# The sections read from the index for the RCAs found. RCA-2025-00042 has none, to test the fallback.
+# The sections read from the index for the RCAs found. RCA-2024-00999 has none, to test the fallback.
 RCA_SECTIONS = {
     "RCA-2025-00114": {
         "Summary": "Intermittent HTTP 500 errors and latency above 5 seconds.",
@@ -66,11 +69,11 @@ def plan_answer(queries=("payment requests fail with database connection timeout
     return PlannerAnswer(search_queries=list(queries), rationale="Both incidents show database connection timeouts.")
 
 
+# RCA-2025-00042 (Payroll) and INC-2026-00106 (Billing) never reach the agent: the code drops other services.
 HISTORY_REVIEW = HistoricalRCAReview(decisions=[
     HistoricalRCADecision(citation="RCA-2025-00114", relevant=True, reason="Same service and same symptoms."),
-    HistoricalRCADecision(citation="RCA-2025-00042", relevant=False, reason="Payroll Service, a different service."),
+    HistoricalRCADecision(citation="RCA-2024-00999", relevant=False, reason="Certificate rotation, different symptoms."),
     HistoricalRCADecision(citation="INC-2025-00401", relevant=True, reason="Same service, same timeouts."),
-    HistoricalRCADecision(citation="INC-2026-00106", relevant=False, reason="Billing Service, a different failure."),
 ])
 
 
@@ -219,7 +222,7 @@ def test_the_agent_judges_the_summary_and_root_cause_not_only_the_closest_sectio
     assert "Root Cause: Connection pool exhaustion" in history_request
     assert "13:58 UTC" not in history_request  # the Timeline that matched is not the text judged
     assert '"matched_section": "Timeline"' in history_request
-    assert "Payroll batch waits on PostgreSQL connections." in history_request  # no sections: closest one
+    assert "Payment API gateway errors during a certificate rotation." in history_request  # no sections: closest one
     assert "INC-2025-00401" in history_request
 
 
@@ -227,9 +230,41 @@ def test_the_distractors_do_not_become_evidence(db_path, fakes):
     record, _ = run(db_path)
 
     citations = {item.citation for item in record.evidence}
-    assert "RCA-2025-00042" not in citations and "INC-2026-00106" not in citations
+    assert "RCA-2025-00042" not in citations and "INC-2026-00106" not in citations and "RCA-2024-00999" not in citations
     history_step = record.trace[3]
-    assert [item["id"] for item in history_step.details["dropped"]] == ["RCA-2025-00042", "INC-2026-00106"]
+    assert [item["id"] for item in history_step.details["dropped"]] == ["RCA-2025-00042", "INC-2026-00106", "RCA-2024-00999"]
+
+
+def test_past_records_of_other_services_are_dropped_by_code_before_the_agent(db_path, fakes):
+    record, _ = run(db_path)
+
+    history_request = fakes.historical.requests[0]
+    assert "RCA-2025-00042" not in history_request and "INC-2026-00106" not in history_request
+    reasons = {item["id"]: item["reason"] for item in record.trace[3].details["dropped"]}
+    assert reasons["RCA-2025-00042"].startswith("Another service (Payroll Service)")
+    assert reasons["INC-2026-00106"].startswith("Another service (Billing Service)")
+
+
+def test_an_invalid_answer_of_the_historical_agent_is_asked_again_instead_of_losing_the_history(db_path, fakes):
+    fakes.historical = Fake(LLMOutputError("The answer is not valid JSON.", "not json"), HISTORY_REVIEW)
+
+    record, _ = run(db_path)
+
+    assert len(fakes.historical.requests) == 2
+    assert {"RCA-2025-00114", "INC-2025-00401"} <= {item.citation for item in record.evidence}
+    assert [item["attempt"] for item in record.trace[3].details["attempts"]] == [1, 2]
+
+
+def test_three_invalid_answers_continue_without_history_and_say_why(db_path, fakes):
+    fakes.historical = Fake(LLMOutputError("The answer is not valid JSON.", "not json"))
+    fakes.reasoning = Fake(TOOLS_ONLY_DRAFT)
+
+    record, _ = run(db_path)
+
+    assert len(fakes.historical.requests) == 3
+    assert record.status == "DRAFT"
+    assert not {"RCA-2025-00114", "INC-2025-00401"} & {item.citation for item in record.evidence}
+    assert any("did not return a valid answer in 3 attempts" in item for item in record.not_checked)
 
 
 def test_the_reasoning_agent_receives_the_ledger_with_times_relative_to_the_incidents(db_path, fakes):
