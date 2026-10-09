@@ -3,11 +3,12 @@
 from types import SimpleNamespace
 
 import httpx
+import openai
 import pytest
 from groq import RateLimitError
 from pydantic import BaseModel
 
-from rca import llm
+from rca import config, llm
 from rca.llm import LLMOutputError, ask_json, build_system_prompt, parse_output, with_feedback
 
 
@@ -68,6 +69,14 @@ class FakeCompletions:
         return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=result))])
 
 
+@pytest.fixture(autouse=True)
+def one_model(monkeypatch):
+    """Every test starts with only GROQ_MODEL and no model set aside."""
+    monkeypatch.setattr(config, "GROQ_MODEL", "openai/gpt-oss-120b")
+    monkeypatch.setattr(config, "LLM_FALLBACK", False)
+    monkeypatch.setattr(llm, "_exhausted", {})
+
+
 @pytest.fixture
 def fake_groq(monkeypatch):
     waits: list[float] = []
@@ -75,8 +84,34 @@ def fake_groq(monkeypatch):
 
     def install(*results):
         completions = FakeCompletions(*results)
-        monkeypatch.setattr(llm, "_client", lambda: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+        monkeypatch.setattr(llm, "_client",
+                            lambda provider: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
         return completions, waits
+
+    return install
+
+
+@pytest.fixture
+def fake_providers(monkeypatch):
+    """One fake client per model: {model name: [results]}. Returns the model names in the order they were asked."""
+    asked: list[str] = []
+    monkeypatch.setattr(llm, "_sleep", lambda seconds: None)
+    monkeypatch.setattr(config, "LLM_FALLBACK", True)
+    monkeypatch.setattr(config, "FALLBACK_MODELS", ["groq:openai/gpt-oss-20b", "gemini:gemini-3.5-flash",
+                                                    "openrouter:nvidia/nemotron-3-super-120b-a12b:free"])
+    for key in ("GROQ_API_KEY", "GEMINI_API_KEY", "OPENROUTER_API_KEY"):
+        monkeypatch.setattr(config, key, "test-key")
+
+    def install(results: dict[str, list]):
+        def create(model, **kwargs):
+            asked.append(model)
+            result = results[model].pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=result))])
+        completions = SimpleNamespace(create=create)
+        monkeypatch.setattr(llm, "_client", lambda provider: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+        return asked
 
     return install
 
@@ -121,3 +156,75 @@ def test_feedback_is_added_to_the_request():
     assert request.startswith("input")
     assert "Your previous answer was refused" in request and "EV-099" in request
     assert len(with_feedback("input", "x" * 10_000)) < 2_300
+
+
+# Fallback to the next model ------------------------------------------------------------
+
+VALID = '{"service": "Payment API", "symptoms": []}'
+
+
+def status_error(status: int) -> openai.APIStatusError:
+    request = httpx.Request("POST", "https://openrouter.ai/api/v1/chat/completions")
+    return openai.APIStatusError("error", response=httpx.Response(status, request=request), body=None)
+
+
+def test_without_fallback_only_groq_model_is_used():
+    assert llm.models() == ["groq:openai/gpt-oss-120b"]
+
+
+def test_fallback_order_groq_then_gemini_then_openrouter(monkeypatch):
+    monkeypatch.setattr(config, "LLM_FALLBACK", True)
+    monkeypatch.setattr(config, "FALLBACK_MODELS", ["openai/gpt-oss-20b", "gemini:gemini-3.5-flash",
+                                                    "openrouter:nvidia/nemotron-3-super-120b-a12b:free"])
+
+    assert llm.models() == ["groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b", "gemini:gemini-3.5-flash",
+                            "openrouter:nvidia/nemotron-3-super-120b-a12b:free"]
+    assert llm.split_model("openrouter:nvidia/nemotron-3-super-120b-a12b:free") == (
+        "openrouter", "nvidia/nemotron-3-super-120b-a12b:free")
+
+
+def test_daily_limit_moves_to_the_next_model_and_sets_the_first_aside(fake_providers):
+    asked = fake_providers({"openai/gpt-oss-120b": [rate_limit_error("3600")],
+                            "openai/gpt-oss-20b": [VALID, VALID]})
+
+    with llm.recording() as used:
+        ask_json("instructions", "input", Answer)
+        ask_json("instructions", "input", Answer)
+
+    assert asked == ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "openai/gpt-oss-20b"]  # 120b is not asked again
+    assert used == ["groq:openai/gpt-oss-20b", "groq:openai/gpt-oss-20b"]
+
+
+def test_every_model_at_its_limit_raises_the_rate_limit_error(fake_providers):
+    fake_providers({"openai/gpt-oss-120b": [rate_limit_error("3600")], "openai/gpt-oss-20b": [rate_limit_error("3600")],
+                    "gemini-3.5-flash": [openai.RateLimitError("quota", response=httpx.Response(
+                        429, request=httpx.Request("POST", "https://x")), body=None)] * 6,
+                    "nvidia/nemotron-3-super-120b-a12b:free": [rate_limit_error("3600")]})
+
+    with pytest.raises(RateLimitError):
+        ask_json("instructions", "input", Answer)
+
+
+def test_request_too_large_or_provider_down_moves_on_without_setting_aside(fake_providers):
+    asked = fake_providers({"openai/gpt-oss-120b": [status_error(413), VALID],
+                            "openai/gpt-oss-20b": [status_error(503)],
+                            "gemini-3.5-flash": [VALID]})
+
+    ask_json("instructions", "input", Answer)
+    ask_json("instructions", "input", Answer)
+
+    assert asked == ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "gemini-3.5-flash", "openai/gpt-oss-120b"]
+
+
+def test_an_invalid_answer_is_not_sent_to_another_model(fake_providers):
+    asked = fake_providers({"openai/gpt-oss-120b": ["not json"]})
+
+    with llm.recording() as used, pytest.raises(LLMOutputError):
+        ask_json("instructions", "input", Answer)
+
+    assert asked == ["openai/gpt-oss-120b"]  # the guardrail asks again, with the problems
+    assert used == ["groq:openai/gpt-oss-120b"]
+
+
+def test_json_in_a_code_block_is_accepted():
+    assert parse_output('```json\n{"service": "Payment API", "symptoms": []}\n```', Answer).service == "Payment API"

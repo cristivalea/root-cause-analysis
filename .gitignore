@@ -21,3 +21,6 @@ data/*.sqlite3
 # OS
 .DS_Store
 Thumbs.db
+
+# RAGAS: the saved answers of the judge (results/ragas/ itself is kept)
+results/ragas/.cache/

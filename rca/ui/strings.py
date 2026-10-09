@@ -367,6 +367,7 @@ EN: dict[str, str] = {
     "step.problems": "What had to be corrected",
     "step.warnings": "To check: evidence named in the text without being cited",
     "step.no_detail": "No further detail was recorded for this step.",
+    "step.models": "Model: {models}",
     "step.services_searched": "Services searched",
     "step.log_windows": "Logs read around each incident",
     "step.change_window": "Changes searched",

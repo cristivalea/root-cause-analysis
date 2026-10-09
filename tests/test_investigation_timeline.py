@@ -35,3 +35,27 @@ def test_the_evidence_step_shows_every_search_and_what_it_found():
     assert "Components depended on, from the CMDB (0)" in text
     assert "Nothing found" in text  # an empty search is shown, not hidden
     assert "Other incidents of the problem (1)" in text
+
+
+AGENT_APP = '''
+from datetime import datetime, timezone
+from rca.models import InvestigationStep
+from rca.ui.components.investigation_timeline import timeline
+
+at = datetime(2026, 7, 15, 10, 0, tzinfo=timezone.utc)
+timeline([
+    InvestigationStep(name="investigation_planner", summary="Plan.", started_at=at, finished_at=at,
+                      details={"models": ["groq:openai/gpt-oss-120b"]}),
+    InvestigationStep(name="rca_reasoning_agent", summary="Attempt 1: 2 hypothesis(es) proposed.", started_at=at,
+                      finished_at=at, details={"models": ["gemini:gemini-3.5-flash"]}),
+], running=False)
+'''
+
+
+def test_each_agent_step_shows_the_model_that_answered():
+    app = AppTest.from_string(AGENT_APP).run()
+
+    assert not app.exception
+    captions = [item.value for item in app.caption]
+    assert "Model: Groq · openai/gpt-oss-120b" in captions
+    assert "Model: Gemini · gemini-3.5-flash" in captions

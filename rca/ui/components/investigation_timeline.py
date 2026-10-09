@@ -186,6 +186,21 @@ def _result_line(step: InvestigationStep, plan=None, limit: int = 70) -> str:
     return first if len(first) <= limit else first[: limit - 1].rstrip(" ,;") + "..."
 
 
+PROVIDERS = {"groq": "Groq", "gemini": "Gemini", "openrouter": "OpenRouter"}
+
+
+def models_line(step: InvestigationStep) -> str | None:
+    """The models that answered an agent step, e.g. 'Groq · openai/gpt-oss-120b'. Several when a
+    retry was answered by another model, because the first one reached its daily limit."""
+    names = []
+    for model in (step.details or {}).get("models") or []:
+        provider, _, name = model.partition(":")
+        label = f"{PROVIDERS.get(provider, provider)} · {name}"
+        if label not in names:
+            names.append(label)
+    return t("step.models", models=", ".join(names)) if names else None
+
+
 def _line(name: str, state: str, step: InvestigationStep | None, plan=None) -> None:
     """One step: its name, where it stands, how long it took, and what it did."""
     style = theme.STEP_STATE[state]
@@ -196,6 +211,9 @@ def _line(name: str, state: str, step: InvestigationStep | None, plan=None) -> N
         with st.container(horizontal=True, vertical_alignment="center", horizontal_alignment="distribute"):
             st.markdown(heading)
             st.caption(duration or t(f"step.state.{state}"))
+        models = models_line(step) if step else None
+        if models:
+            st.caption(models)
         if state in ("queued", "running"):
             text = _step_text(name)
             if text:

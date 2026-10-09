@@ -1,0 +1,579 @@
+[
+  {
+    "story_id": "STORY-001",
+    "rca_id": "RCA-2026-00025",
+    "incident_id": "INC-2026-00101",
+    "citations": [
+      {
+        "citation": "LOG-PAYROLL-20260727-08",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-PAYROLL-20260727-07",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-006",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "RCA-2025-00042",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-010",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-PAYROLL-DB",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-007",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "INC-2025-00119",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-011",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00262",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-03-11 18:00, outside the window 2026-07-27 02:00 - 2026-07-27 08:15"
+      }
+    ],
+    "ledger_size": 15,
+    "relevant_in_ledger": 9,
+    "red_herrings_cited_by_main": [
+      "RCA-2025-00042"
+    ]
+  },
+  {
+    "story_id": "STORY-002",
+    "rca_id": "RCA-2026-00026",
+    "incident_id": "INC-2026-00482",
+    "citations": [
+      {
+        "citation": "LOG-PAY-20260714-14",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-PAY-20260714-15",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-002",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00871",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "RCA-2025-00114",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-007",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-PAYMENT-DB",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-005",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 14,
+    "relevant_in_ledger": 6,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-003",
+    "rca_id": "RCA-2026-00027",
+    "incident_id": "INC-2026-00103",
+    "citations": [
+      {
+        "citation": "LOG-PORTAL-20260810-03",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-PORTAL-20260810-02",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-PORTAL-20260810-01",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-004",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-PORTAL-LOCK-REDIS",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-008",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 9,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-004",
+    "rca_id": "RCA-2026-00028",
+    "incident_id": "INC-2026-00104",
+    "citations": [
+      {
+        "citation": "LOG-GW-20260501-01",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-GW-20260424-01",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-04-24 00:05, outside the window 2026-04-30 20:00 - 2026-05-01 04:35"
+      },
+      {
+        "citation": "RCA-2024-00088",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-011",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-CERT-MANAGER",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-005",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 12,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-005",
+    "rca_id": "RCA-2026-00029",
+    "incident_id": "INC-2026-00105",
+    "citations": [
+      {
+        "citation": "LOG-SETTLE-20260212-01",
+        "stage": "cited only by another hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00188",
+        "stage": "cited only by another hypothesis",
+        "evidence_id": "EV-005",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-SCHEMA-REGISTRY",
+        "stage": "in the ledger, NOT CITED",
+        "evidence_id": "EV-008",
+        "cited_by": [],
+        "reason": null
+      }
+    ],
+    "ledger_size": 15,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": [
+      "RCA-2025-00192"
+    ]
+  },
+  {
+    "story_id": "STORY-006",
+    "rca_id": "RCA-2026-00030",
+    "incident_id": "INC-2026-00106",
+    "citations": [
+      {
+        "citation": "LOG-BILL-20260630-05",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-BILL-20260630-02",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-002",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "RCA-2025-00230",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-008",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-BILLING-DB",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-004",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00766",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-06-24 21:00, outside the window 2026-06-30 20:00 - 2026-07-01 02:10"
+      }
+    ],
+    "ledger_size": 10,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-007",
+    "rca_id": "RCA-2026-00031",
+    "incident_id": "INC-2026-00107",
+    "citations": [
+      {
+        "citation": "LOG-NOTIF-20260317-01",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-03-17 14:00, outside the window 2026-03-18 22:25 - 2026-03-19 04:05"
+      },
+      {
+        "citation": "LOG-NOTIF-20260319-02",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-002",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00329",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-03-16 10:00, outside the window 2026-03-18 22:25 - 2026-03-19 04:05"
+      },
+      {
+        "citation": "RCA-2025-00390",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-010",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CI-NOTIF-BROKER-HOST",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-005",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 15,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": [
+      "CHG-2026-00341"
+    ]
+  },
+  {
+    "story_id": "STORY-008",
+    "rca_id": "RCA-2026-00032",
+    "incident_id": "INC-2026-00108",
+    "citations": [
+      {
+        "citation": "LOG-AUTH-20260404-08",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "LOG-AUTH-20260404-03",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00412",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-04-04 09:40, outside the window 2026-04-04 10:00 - 2026-04-04 13:02"
+      }
+    ],
+    "ledger_size": 12,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": [
+      "RCA-2025-00305",
+      "LOG-AUTH-20260404-02"
+    ]
+  },
+  {
+    "story_id": "STORY-009",
+    "rca_id": "RCA-2026-00033",
+    "incident_id": "INC-2026-00109",
+    "citations": [
+      {
+        "citation": "LOG-REP-20260115-02",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00053",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-01-12 16:00, outside the window 2026-01-15 02:00 - 2026-01-15 06:40"
+      },
+      {
+        "citation": "CI-COREDNS",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "INC-2026-00016",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": null
+      }
+    ],
+    "ledger_size": 6,
+    "relevant_in_ledger": 3,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-010",
+    "rca_id": "RCA-2026-00034",
+    "incident_id": "INC-2026-00110",
+    "citations": [
+      {
+        "citation": "LOG-USER-20260522-03",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-00712",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "RCA-2025-00012",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-007",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 12,
+    "relevant_in_ledger": 4,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-011",
+    "rca_id": "RCA-2026-00035",
+    "incident_id": "INC-2026-00468",
+    "citations": [
+      {
+        "citation": "LOG-PAY-20260908-01",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001",
+          "HYP-002"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 10,
+    "relevant_in_ledger": 3,
+    "red_herrings_cited_by_main": [
+      "CHG-2026-01102"
+    ]
+  },
+  {
+    "story_id": "STORY-012",
+    "rca_id": "RCA-2026-00036",
+    "incident_id": "INC-2026-00449",
+    "citations": [
+      {
+        "citation": "LOG-PORTAL-20260826-01",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-003",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-01058",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-005",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      }
+    ],
+    "ledger_size": 17,
+    "relevant_in_ledger": 5,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-013",
+    "rca_id": "RCA-2026-00037",
+    "incident_id": "INC-2026-00491",
+    "citations": [
+      {
+        "citation": "LOG-AUTH-20260911-01",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-09-11 09:00, outside the window 2026-09-15 06:00 - 2026-09-15 09:10"
+      },
+      {
+        "citation": "LOG-AUTH-20260915-03",
+        "stage": "CITED by the main hypothesis",
+        "evidence_id": "EV-001",
+        "cited_by": [
+          "HYP-001"
+        ],
+        "reason": null
+      },
+      {
+        "citation": "CHG-2026-01118",
+        "stage": "NOT IN THE LEDGER",
+        "evidence_id": null,
+        "cited_by": [],
+        "reason": "at 2026-09-10 11:00, outside the window 2026-09-15 06:00 - 2026-09-15 09:10"
+      },
+      {
+        "citation": "CI-SESSION-REDIS",
+        "stage": "in the ledger, NOT CITED",
+        "evidence_id": "EV-008",
+        "cited_by": [],
+        "reason": null
+      }
+    ],
+    "ledger_size": 14,
+    "relevant_in_ledger": 3,
+    "red_herrings_cited_by_main": []
+  }
+]

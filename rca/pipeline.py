@@ -42,7 +42,7 @@ from rca.config import DB_PATH
 from rca.context import build_context, merge_guidance
 from rca.evidence import EvidenceLedger, add_changes, add_dependencies, add_log_groups
 from rca.guardrails import MAX_ATTEMPTS, check_draft, format_feedback, run_with_retries, text_warnings
-from rca.llm import LLMOutputError
+from rca.llm import LLMOutputError, recording
 from rca.models import (
     AssessedHypothesis,
     DraftRCA,
@@ -362,10 +362,11 @@ def investigation_planner(state: InvestigationState) -> dict:
     """Agent 1: the search queries. A refused plan is asked again with the problems, at most 3 times."""
     started = _now()
     context, incidents, similar = state["context"], state["incidents"], state["similar_incidents"]
-    result = run_with_retries(
-        ask=lambda feedback: planner.plan_investigation(context, incidents, similar, feedback),
-        check=lambda plan: [],  # the plan is checked inside plan_investigation
-    )
+    with recording() as models:  # the model that answered each attempt, shown in the interface
+        result = run_with_retries(
+            ask=lambda feedback: planner.plan_investigation(context, incidents, similar, feedback),
+            check=lambda plan: [],  # the plan is checked inside plan_investigation
+        )
     attempts = [{"attempt": attempt.number, "problems": attempt.problems} for attempt in result.attempts]
 
     if result.escalated:
@@ -373,7 +374,7 @@ def investigation_planner(state: InvestigationState) -> dict:
         return {
             "status": "ESCALATED",
             "escalation_reason": reason,
-            "trace": [_step("investigation_planner", started, reason, attempts=attempts)],
+            "trace": [_step("investigation_planner", started, reason, attempts=attempts, models=models)],
         }
 
     plan = result.value
@@ -385,7 +386,7 @@ def investigation_planner(state: InvestigationState) -> dict:
         "plan": plan,
         "trace": [_step(
             "investigation_planner", started, summary,
-            attempts=attempts, search_queries=plan.search_queries, rationale=plan.rationale,
+            attempts=attempts, search_queries=plan.search_queries, rationale=plan.rationale, models=models,
         )],
     }
 
@@ -571,8 +572,9 @@ def historical_rca_agent(state: InvestigationState) -> dict:
 
     # The agent also returns its own evidence list; the pipeline uses only its decisions and
     # records the kept results in the shared ledger, so the evidence ids stay unique.
-    result = run_with_retries(ask=lambda feedback: historical.review_historical_rcas(plan, candidates)[0],
-                              check=lambda review: [])
+    with recording() as models:
+        result = run_with_retries(ask=lambda feedback: historical.review_historical_rcas(plan, candidates)[0],
+                                  check=lambda review: [])
     attempts = [{"attempt": attempt.number, "problems": attempt.problems} for attempt in result.attempts]
     if result.escalated:
         note = (f"The Historical RCA Agent did not return a valid answer in {len(result.attempts)} attempts, so past "
@@ -580,7 +582,8 @@ def historical_rca_agent(state: InvestigationState) -> dict:
         return {
             "linked_incidents": [],
             "not_checked": [*not_checked, note],
-            "trace": [_step("historical_rca_agent", started, note, attempts=attempts, kept=[], dropped=dropped)],
+            "trace": [_step("historical_rca_agent", started, note, attempts=attempts, kept=[], dropped=dropped,
+                           models=models)],
         }
 
     decisions = {decision.citation: decision for decision in result.value.decisions}
@@ -605,7 +608,8 @@ def historical_rca_agent(state: InvestigationState) -> dict:
         "evidence": ledger.items(),
         "linked_incidents": [item_id for item_id in kept_ids if item_id in incidents],
         "not_checked": not_checked,
-        "trace": [_step("historical_rca_agent", started, summary, kept=kept, dropped=dropped, attempts=attempts)],
+        "trace": [_step("historical_rca_agent", started, summary, kept=kept, dropped=dropped, attempts=attempts,
+                       models=models)],
     }
 
 
@@ -614,21 +618,23 @@ def rca_reasoning_agent(state: InvestigationState) -> dict:
     started = _now()
     attempt = state.get("attempts", 0) + 1
     try:
-        draft = reasoning.propose_draft(state["incident_id"], state["evidence"], state.get("feedback"),
-                                        state["context"].expert_request, as_lines(state.get("timeline") or []))
+        with recording() as models:
+            draft = reasoning.propose_draft(state["incident_id"], state["evidence"], state.get("feedback"),
+                                            state["context"].expert_request, as_lines(state.get("timeline") or []))
     except LLMOutputError as exc:
         return {
             "attempts": attempt,
             "draft": None,
             "problems": [str(exc)],
-            "trace": [_step("rca_reasoning_agent", started, f"Attempt {attempt}: the answer is not a valid draft.")],
+            "trace": [_step("rca_reasoning_agent", started, f"Attempt {attempt}: the answer is not a valid draft.",
+                           models=models)],
         }
     summary = f"Attempt {attempt}: {len(draft.hypotheses)} hypothesis(es) proposed."
     span = trace.get_current_span()
     span.set_attribute("rca.attempt", attempt)
     span.set_attribute("rca.hypotheses_count", len(draft.hypotheses))
     span.set_attribute("rca.top_hypothesis", draft.hypotheses[0].candidate_root_cause if draft.hypotheses else "")
-    return {"attempts": attempt, "draft": draft, "problems": [], "trace": [_step("rca_reasoning_agent", started, summary)]}
+    return {"attempts": attempt, "draft": draft, "problems": [], "trace": [_step("rca_reasoning_agent", started, summary, models=models)]}
 
 
 def guardrail(state: InvestigationState) -> dict:

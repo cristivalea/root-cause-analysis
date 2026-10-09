@@ -1,0 +1,872 @@
+[
+  {
+    "story_id": "STORY-001",
+    "kind": "success",
+    "incident_id": "INC-2026-00101",
+    "title": "Monday morning payroll batch overload",
+    "rca_id": "RCA-2026-00025",
+    "status": "DRAFT",
+    "duration_seconds": 18.9,
+    "plan_service": "Payroll Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 15,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 6,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-PAYROLL-20260727-08",
+      "LOG-PAYROLL-20260727-07",
+      "RCA-2025-00042",
+      "CI-PAYROLL-DB",
+      "INC-2025-00119",
+      "CHG-2026-00262"
+    ],
+    "found_in_ledger": [
+      "LOG-PAYROLL-20260727-08",
+      "LOG-PAYROLL-20260727-07",
+      "RCA-2025-00042",
+      "CI-PAYROLL-DB",
+      "INC-2025-00119"
+    ],
+    "cited_by_top": [
+      "LOG-PAYROLL-20260727-08",
+      "LOG-PAYROLL-20260727-07",
+      "RCA-2025-00042",
+      "CI-PAYROLL-DB",
+      "INC-2025-00119"
+    ],
+    "cited_by_any": [
+      "LOG-PAYROLL-20260727-08",
+      "LOG-PAYROLL-20260727-07",
+      "RCA-2025-00042",
+      "CI-PAYROLL-DB",
+      "INC-2025-00119"
+    ],
+    "red_herrings_cited_by_top": [
+      "RCA-2025-00042"
+    ],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (conexiunile PostgreSQL partajate) și mecanismul de defectare (epuizarea conexiunilor cauzată de scalarea workerilor de payroll la un număr mare de fire). Deși nu menționează explicit schimbarea CHG-2026-00262 sau detaliul lipsei limitării per pool, ea descrie exact același fenomen tehnic de rădăcină: creșterea numărului de fire de execuție a batch-ului de payroll care consumă toate conexiunile disponibile, afectând portalul.",
+        "confidence": "HIGH",
+        "points": 6,
+        "text": "Database connection exhaustion caused by payroll batch workers scaling up to maximum threads, exhausting PostgreSQL connections shared with the portal API."
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (pool-ul de conexiuni PostgreSQL) și mecanismul de defectare (epuizarea conexiunilor cauzată de batch-ul de payroll, ducând la timeouts). Deși nu menționează explicit autoscaling-ul sau schimbarea CHG-2026-00262, ea descrie exact simptomele și cauza imediată (presiunea pe pool-ul de conexiuni) care corespund cauzei rădăcină reale.",
+        "confidence": "HIGH",
+        "points": 6,
+        "text": "Insufficient database connection pool size or misconfiguration leading to connection pool pressure and timeouts during payroll batch processing."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-002",
+    "kind": "success",
+    "incident_id": "INC-2026-00482",
+    "title": "Payment API connection leak after v4.18.2",
+    "rca_id": "RCA-2026-00026",
+    "status": "DRAFT",
+    "duration_seconds": 152.8,
+    "plan_service": "Payment API",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 14,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 7,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-PAY-20260714-14",
+      "LOG-PAY-20260714-15",
+      "CHG-2026-00871",
+      "RCA-2025-00114",
+      "CI-PAYMENT-DB"
+    ],
+    "found_in_ledger": [
+      "LOG-PAY-20260714-14",
+      "LOG-PAY-20260714-15",
+      "CHG-2026-00871",
+      "RCA-2025-00114",
+      "CI-PAYMENT-DB"
+    ],
+    "cited_by_top": [
+      "LOG-PAY-20260714-14",
+      "LOG-PAY-20260714-15",
+      "CHG-2026-00871",
+      "RCA-2025-00114",
+      "CI-PAYMENT-DB"
+    ],
+    "cited_by_any": [
+      "LOG-PAY-20260714-14",
+      "LOG-PAY-20260714-15",
+      "CHG-2026-00871",
+      "RCA-2025-00114",
+      "CI-PAYMENT-DB"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ambele identifică aceeași componentă tehnică (Payment API / retry-handler) și același mecanism de defectare (sesiuni SQL neînchise care duc la epuizarea pool-ului de conexiuni la baza de date). Diferențele de formulare (HikariCP vs. database connection pool, v4.18.2 vs. deployment) sunt detalii contextuale care nu schimbă esența cauzei rădăcină.",
+        "confidence": "HIGH",
+        "points": 7,
+        "text": "The deployment of payment retry-handler changes introduced unclosed SQL sessions, exhausting the database connection pool."
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza candidată identifică o cauză externă (creșterea traficului) și un mecanism de saturație a pool-ului, în timp ce cauza reală este un defect de cod (connection leak) specific versiunii v4.18.2. Ipoteza ignoră explicit schimbările recente, care sunt sursa problemei.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "An increase in traffic load caused the database connection pool to become saturated, leading to timeouts independent of recent changes."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-003",
+    "kind": "edge",
+    "incident_id": "INC-2026-00103",
+    "title": "Customer Portal session errors after a regional failover (no useful history)",
+    "rca_id": "RCA-2026-00027",
+    "status": "DRAFT",
+    "duration_seconds": 65.2,
+    "plan_service": "Customer Portal",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 9,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "MEDIUM",
+    "points": 3,
+    "acceptable_confidence": [
+      "LOW",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-PORTAL-20260810-03",
+      "LOG-PORTAL-20260810-02",
+      "LOG-PORTAL-20260810-01",
+      "CI-PORTAL-LOCK-REDIS"
+    ],
+    "found_in_ledger": [
+      "LOG-PORTAL-20260810-03",
+      "LOG-PORTAL-20260810-02",
+      "LOG-PORTAL-20260810-01",
+      "CI-PORTAL-LOCK-REDIS"
+    ],
+    "cited_by_top": [
+      "LOG-PORTAL-20260810-03",
+      "LOG-PORTAL-20260810-02",
+      "LOG-PORTAL-20260810-01",
+      "CI-PORTAL-LOCK-REDIS"
+    ],
+    "cited_by_any": [
+      "LOG-PORTAL-20260810-03",
+      "LOG-PORTAL-20260810-02",
+      "LOG-PORTAL-20260810-01",
+      "CI-PORTAL-LOCK-REDIS"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (magazinul de lock-uri de sesiune) și mecanismul de defectare (latența de rețea cauzată de failover-ul regional care duce la expirarea/timeout-ul lock-urilor). Deși nu menționează explicit detaliul despre version check sau logout, ea acoperă cauza rădăcină tehnică: latența trans-regională care depășește TTL-ul lock-ului.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "Network latency caused by region failover to eu-central-1 leading to session lock store timeouts"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (Redis pentru lock-uri de sesiune) și mecanismul de defectare (degradarea performanței care duce la eșecuri la achiziția/ținerea lock-urilor). Deși cauza reală specifică latența trans-regiune și expirarea lease-ului, ipoteza acoperă esența problemei: performanța slabă a clusterului Redis pentru lock-uri a cauzat eșecuri funcționale.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "portal‑session‑lock‑redis cluster performance degradation causing lock acquisition failures"
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-004",
+    "kind": "success",
+    "incident_id": "INC-2026-00104",
+    "title": "API Gateway wildcard certificate expired",
+    "rca_id": "RCA-2026-00028",
+    "status": "DRAFT",
+    "duration_seconds": 106.2,
+    "plan_service": "API Gateway",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 12,
+    "hypotheses": 1,
+    "top1": false,
+    "topk": false,
+    "confidence": "HIGH",
+    "points": 6,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-GW-20260501-01",
+      "LOG-GW-20260424-01",
+      "RCA-2024-00088",
+      "CI-CERT-MANAGER"
+    ],
+    "found_in_ledger": [
+      "LOG-GW-20260501-01",
+      "RCA-2024-00088",
+      "CI-CERT-MANAGER"
+    ],
+    "cited_by_top": [
+      "LOG-GW-20260501-01",
+      "RCA-2024-00088",
+      "CI-CERT-MANAGER"
+    ],
+    "cited_by_any": [
+      "LOG-GW-20260501-01",
+      "RCA-2024-00088",
+      "CI-CERT-MANAGER"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": false,
+        "reason": "Ipoteza identifică corect componenta (certificatul TLS wildcard) și simptomul (expirare), dar eșuează să identifice mecanismul tehnic de defectare. Cauza reală este o eroare specifică de configurare/secret (token-ul API rotit fără actualizarea secretului cert-manager), în timp ce ipoteza atribuie problema unui 'proces de reînnoire ratat' generic, omițând cauza rădăcină a eșecului reînnoirii.",
+        "confidence": "HIGH",
+        "points": 6,
+        "text": "The wildcard TLS certificate used by the edge proxy nodes expired because the renewal process was missed."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-005",
+    "kind": "edge",
+    "incident_id": "INC-2026-00105",
+    "title": "Settlement consumer stuck on an incompatible message",
+    "rca_id": "RCA-2026-00029",
+    "status": "DRAFT",
+    "duration_seconds": 70.3,
+    "plan_service": "Settlement Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 15,
+    "hypotheses": 2,
+    "top1": false,
+    "topk": true,
+    "confidence": "MEDIUM",
+    "points": 5,
+    "acceptable_confidence": [
+      "HIGH",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-SETTLE-20260212-01",
+      "CHG-2026-00188",
+      "CI-SCHEMA-REGISTRY"
+    ],
+    "found_in_ledger": [
+      "LOG-SETTLE-20260212-01",
+      "CHG-2026-00188",
+      "CI-SCHEMA-REGISTRY"
+    ],
+    "cited_by_top": [],
+    "cited_by_any": [
+      "LOG-SETTLE-20260212-01",
+      "CHG-2026-00188"
+    ],
+    "red_herrings_cited_by_top": [
+      "RCA-2025-00192"
+    ],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza candidată identifică o cauză complet diferită (scrieri lente în ledger) și o declară independentă de schimbarea de schemă, în timp ce cauza reală este incompatibilitatea de schemă (v7 vs v6) care a dus la eșecul deserializării și la blocajul consumerului.",
+        "confidence": "MEDIUM",
+        "points": 5,
+        "text": "Slow ledger writes caused consumer lag and rebalance storms, similar to past incidents, independent of the schema change."
+      },
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (schimbarea de schemă a câmpului 'amount') și mecanismul de defectare (eroare de deserializare care duce la blocarea consumatorului și rebalansări). Deși menționează o schimbare specifică de tip (decimal la string) care nu este explicită în ground truth (doar 'changed the type'), aceasta este o detaliere plauzibilă a aceleiași cauze rădăcină: incompatibilitatea de schemă care împiedică deserializarea.",
+        "confidence": "LOW",
+        "points": 4,
+        "text": "The schema change that altered the 'amount' field from decimal to string caused deserialization errors, leading to consumer lag, rebalance storms, and commit failures."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-006",
+    "kind": "success",
+    "incident_id": "INC-2026-00106",
+    "title": "Month-end billing aggregation times out",
+    "rca_id": "RCA-2026-00030",
+    "status": "DRAFT",
+    "duration_seconds": 70.1,
+    "plan_service": "Billing Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 10,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 5,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-BILL-20260630-05",
+      "LOG-BILL-20260630-02",
+      "RCA-2025-00230",
+      "CI-BILLING-DB",
+      "CHG-2026-00766"
+    ],
+    "found_in_ledger": [
+      "LOG-BILL-20260630-05",
+      "LOG-BILL-20260630-02",
+      "RCA-2025-00230",
+      "CI-BILLING-DB"
+    ],
+    "cited_by_top": [
+      "LOG-BILL-20260630-05",
+      "LOG-BILL-20260630-02",
+      "RCA-2025-00230",
+      "CI-BILLING-DB"
+    ],
+    "cited_by_any": [
+      "LOG-BILL-20260630-05",
+      "LOG-BILL-20260630-02",
+      "RCA-2025-00230",
+      "CI-BILLING-DB"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (indexul compus (account_id, billing_period) pe tabela invoice_lines) și mecanismul de defectare (scanări complete ale tabelului și timeout-uri ale interogărilor). Deși nu menționează cauza rădăcină imediată (reconstrucția eronată a indexului în timpul pg_repack), ea descrie exact simptomele tehnice și defectul structural care au dus la eșecul incidentului, fiind echivalentă tehnic cu cauza reală.",
+        "confidence": "HIGH",
+        "points": 5,
+        "text": "Missing or corrupted composite index (account_id, billing_period) on invoice_lines causing full table scans and query timeouts"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza identifică o cauză eronată (saturația CPU din cauza sarcinilor concurente), în timp ce cauza reală este lipsa unui index compozit specific (account_id, billing_period) din cauza unei reconstrucții defectuoase a indexurilor (pg_repack cu DDL vechi), ceea ce a dus la full table scans și timeout-uri.",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "Database CPU saturation from concurrent workloads causing query timeouts in billing-service"
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-007",
+    "kind": "edge",
+    "incident_id": "INC-2026-00107",
+    "title": "Notification broker disk full during a campaign",
+    "rca_id": "RCA-2026-00031",
+    "status": "DRAFT",
+    "duration_seconds": 69.4,
+    "plan_service": "Notification Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 15,
+    "hypotheses": 2,
+    "top1": false,
+    "topk": false,
+    "confidence": "HIGH",
+    "points": 7,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-NOTIF-20260317-01",
+      "LOG-NOTIF-20260319-02",
+      "CHG-2026-00329",
+      "RCA-2025-00390",
+      "CI-NOTIF-BROKER-HOST"
+    ],
+    "found_in_ledger": [
+      "LOG-NOTIF-20260319-02",
+      "RCA-2025-00390",
+      "CI-NOTIF-BROKER-HOST"
+    ],
+    "cited_by_top": [
+      "LOG-NOTIF-20260319-02",
+      "RCA-2025-00390",
+      "CI-NOTIF-BROKER-HOST"
+    ],
+    "cited_by_any": [
+      "LOG-NOTIF-20260319-02",
+      "RCA-2025-00390",
+      "CI-NOTIF-BROKER-HOST"
+    ],
+    "red_herrings_cited_by_top": [
+      "CHG-2026-00341"
+    ],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": false,
+        "reason": "Ipoteza identifică corect componenta (RabbitMQ) și simptomul final (blocarea publisher-ilor din cauza lipsei spațiului pe disc), dar atribuie cauza directă încărcării campaniei (campaign load). Cauza reală este o eroare de configurație (logrotate) introdusă de un change management (CHG-2026-00329) care a șters excepția pentru log-urile RabbitMQ. Campania a fost doar un factor care a accelerat creșterea log-urilor, nu cauza rădăcină a defectării configurației.",
+        "confidence": "HIGH",
+        "points": 7,
+        "text": "RabbitMQ broker disk space exhausted due to campaign load, causing publisher blockage"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza candidată identifică greșit mecanismul de defectare. Cauza reală este o problemă de management al spațiului pe disc (disk full) cauzată de o configurație greșită a logrotate (care a ocolit /var/log/rabbitmq), ducând la blocarea brokerului. Ipoteza acuză un suprasarcină de volum de mesaje (overload) a worker-ului, ignorând complet cauza rădăcină (configurația OS/logrotate) și mecanismul specific (limita de spațiu liber RabbitMQ).",
+        "confidence": "LOW",
+        "points": 4,
+        "text": "Campaign launch caused a sudden spike in message volume that overloaded the notification worker, leading to publisher blockage"
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-008",
+    "kind": "success",
+    "incident_id": "INC-2026-00108",
+    "title": "Auth Service pods killed after a resource profile change",
+    "rca_id": "RCA-2026-00032",
+    "status": "DRAFT",
+    "duration_seconds": 71.6,
+    "plan_service": "Auth Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 12,
+    "hypotheses": 2,
+    "top1": false,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 5,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-AUTH-20260404-08",
+      "LOG-AUTH-20260404-03",
+      "CHG-2026-00412"
+    ],
+    "found_in_ledger": [
+      "LOG-AUTH-20260404-08",
+      "LOG-AUTH-20260404-03"
+    ],
+    "cited_by_top": [
+      "LOG-AUTH-20260404-08",
+      "LOG-AUTH-20260404-03"
+    ],
+    "cited_by_any": [
+      "LOG-AUTH-20260404-08",
+      "LOG-AUTH-20260404-03"
+    ],
+    "red_herrings_cited_by_top": [
+      "RCA-2025-00305",
+      "LOG-AUTH-20260404-02"
+    ],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": false,
+        "reason": "Ipoteza identifică corect simptomele (OOMKilled, heap exhaustion) și contextul (trafic), dar acuză un mecanism intern eronat (cache de introspecție a tokenurilor nelimitat) în loc de cauza reală, care a fost reducerea limitelor de memorie (memory limit) prin aplicarea unui profil de resurse incorect (Helm chart). Componenta defectă este configurația de resurse, nu logica aplicației.",
+        "confidence": "HIGH",
+        "points": 5,
+        "text": "Unbounded token introspection cache grew during traffic surge, exhausting JVM heap and causing OOMKilled pods"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (Auth Service) și mecanismul tehnic (limită de memorie insuficientă care duce la OOMKilled în timpul creșterii traficului), care este exact cauza rădăcină descrisă în ground truth (scăderea limitelor de memorie la 256Mi prin Helm chart, ducând la kill-uri repetate ale podurilor).",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "Auth Service pods had an insufficient memory limit, leading to OOMKilled during the traffic surge"
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-009",
+    "kind": "success",
+    "incident_id": "INC-2026-00109",
+    "title": "Nightly reporting DNS timeouts after CoreDNS scale-down",
+    "rca_id": "RCA-2026-00033",
+    "status": "DRAFT",
+    "duration_seconds": 62.6,
+    "plan_service": "Reporting Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 6,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "MEDIUM",
+    "points": 3,
+    "acceptable_confidence": [
+      "HIGH",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-REP-20260115-02",
+      "CHG-2026-00053",
+      "CI-COREDNS",
+      "INC-2026-00016"
+    ],
+    "found_in_ledger": [
+      "LOG-REP-20260115-02",
+      "CI-COREDNS"
+    ],
+    "cited_by_top": [
+      "LOG-REP-20260115-02",
+      "CI-COREDNS"
+    ],
+    "cited_by_any": [
+      "LOG-REP-20260115-02",
+      "CI-COREDNS"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (CoreDNS) și mecanismul de defectare (eșecuri de rezolvare DNS) care au afectat raportarea. Deși nu menționează explicit scăderea numărului de replici sau limitarea de interogări concurente, ea acoperă aceeași cauză rădăcină funcțională: indisponibilitatea sau comportamentul defectuos al serviciului DNS care a dus la timeout-uri în sarcinile de raportare.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "coredns service is misbehaving or unavailable, causing DNS resolution failures for reporting-batch"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza identifică corect componenta (CoreDNS) și simptomul (timeouts), dar atribuie cauza unei probleme de conectivitate de rețea (network connectivity issue), în timp ce cauza reală este o limitare de capacitate (concurrent query limit) provocată de reducerea replicilor (scale-down) și lipsa cache-ului local. Mecanismul de defectare este diferit: limitare de resurse/capacitate vs. problemă de rețea.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "network connectivity issue between reporting-batch and coredns causing intermittent DNS timeouts"
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-010",
+    "kind": "success",
+    "incident_id": "INC-2026-00110",
+    "title": "User Profile contract field reused after v3.2",
+    "rca_id": "RCA-2026-00034",
+    "status": "DRAFT",
+    "duration_seconds": 67.1,
+    "plan_service": "User Profile Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 12,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 7,
+    "acceptable_confidence": [
+      "HIGH"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-USER-20260522-03",
+      "CHG-2026-00712",
+      "RCA-2025-00012"
+    ],
+    "found_in_ledger": [
+      "LOG-USER-20260522-03",
+      "CHG-2026-00712",
+      "RCA-2025-00012"
+    ],
+    "cited_by_top": [
+      "LOG-USER-20260522-03",
+      "CHG-2026-00712",
+      "RCA-2025-00012"
+    ],
+    "cited_by_any": [
+      "LOG-USER-20260522-03",
+      "CHG-2026-00712",
+      "RCA-2025-00012"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (API Gateway) și mecanismul tehnic de defectare (reutilizarea unui număr de câmp protobuf care duce la interpretarea greșită a tipului de date), care este cauza rădăcină principală descrisă în Ground Truth.",
+        "confidence": "HIGH",
+        "points": 7,
+        "text": "The contract update reused a protobuf field number, causing the API gateway to misinterpret the new field type."
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (API Gateway transcoder) și mecanismul de defectare (descriptor cache stale / mismatched field types) care a dus la decodarea eronată a câmpului. Deși nu menționează detaliul specific al reutilizării numărului de câmp 7 sau cauza rădăcină procesuală (verificarea breaking-change doar în repo-ul gateway), ea descrie exact același simptom tehnic și componenta afectată ca și cauza reală.",
+        "confidence": "MEDIUM",
+        "points": 4,
+        "text": "The API gateway transcoder descriptor cache was stale and did not load the updated contract, leading to mismatched field types."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-011",
+    "kind": "edge",
+    "incident_id": "INC-2026-00468",
+    "title": "Merchant webhooks blocked after a vendor IP change",
+    "rca_id": "RCA-2026-00035",
+    "status": "DRAFT",
+    "duration_seconds": 106.3,
+    "plan_service": "Payment API",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 10,
+    "hypotheses": 2,
+    "top1": false,
+    "topk": false,
+    "confidence": "MEDIUM",
+    "points": 3,
+    "acceptable_confidence": [
+      "LOW",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-PAY-20260908-01"
+    ],
+    "found_in_ledger": [
+      "LOG-PAY-20260908-01"
+    ],
+    "cited_by_top": [
+      "LOG-PAY-20260908-01"
+    ],
+    "cited_by_any": [
+      "LOG-PAY-20260908-01"
+    ],
+    "red_herrings_cited_by_top": [
+      "CHG-2026-01102"
+    ],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": false,
+        "reason": "Ipoteza candidată acuză incorect deployment-ul v4.21.0 și mecanismul de timeout/încărcare, în timp ce cauza reală este mutarea IP-urilor furnizorului de webhook-uri, care a fost respinsă de proxy-ul de egress configurat pe IP-uri fixe. Ground Truth specifică explicit că deployment-ul este irelevant.",
+        "confidence": "MEDIUM",
+        "points": 3,
+        "text": "The deployment of Payment API v4.21.0 introduced a new 'settlement_date' field that increased webhook payload size or processing time, causing egress proxy timeouts and a retry backlog."
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza identifică corect componenta (egress proxy) și exclude corect deployment-ul, dar eșuează să identifice mecanismul specific de defectare. Cauza reală este o deniere explicită a traficului din cauza schimbării adresei IP a furnizorului (allowlist IP), în timp ce ipoteza sugerează generic 'timeouts' sau o problemă de rețea, omițând cauza rădăcină (mismatch IP/allowlist).",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "An unrelated network or egress proxy issue caused timeouts, independent of the recent deployment."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-012",
+    "kind": "edge",
+    "incident_id": "INC-2026-00449",
+    "title": "Customer Portal origin overload after a CDN rule change",
+    "rca_id": "RCA-2026-00036",
+    "status": "DRAFT",
+    "duration_seconds": 75.5,
+    "plan_service": "Customer Portal",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 17,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "HIGH",
+    "points": 5,
+    "acceptable_confidence": [
+      "HIGH",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-PORTAL-20260826-01",
+      "CHG-2026-01058"
+    ],
+    "found_in_ledger": [
+      "LOG-PORTAL-20260826-01",
+      "CHG-2026-01058"
+    ],
+    "cited_by_top": [
+      "LOG-PORTAL-20260826-01",
+      "CHG-2026-01058"
+    ],
+    "cited_by_any": [
+      "LOG-PORTAL-20260826-01",
+      "CHG-2026-01058"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta (regula de cache CDN) și mecanismul de defectare (fragmentarea cache-ului care duce la scăderea hit ratio și creșterea încărcării pe origin), care sunt echivalente tehnice cu adăugarea antetului 'Vary: Cookie' din cauza reală.",
+        "confidence": "HIGH",
+        "points": 5,
+        "text": "The CDN cache rule change at 18:20 UTC caused cache fragmentation, reducing hit ratio and increasing origin load, leading to upstream timeouts."
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza candidată identifică o cauză complet diferită (redesign-ul portalului și creșterea dimensiunii payload-ului), în timp ce cauza reală este o regulă CDN greșită ('Vary: Cookie') care a dus la colapsul ratei de hit și la saturarea originului. Componenta (CDN vs. Portal/Payload) și mecanismul (cache invalidation vs. volum de date) sunt diferite.",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "The portal redesign at 18:35 UTC increased payload size and complexity, causing higher origin load and upstream timeouts."
+      }
+    ]
+  },
+  {
+    "story_id": "STORY-013",
+    "kind": "edge",
+    "incident_id": "INC-2026-00491",
+    "title": "Session store evictions after a token lifetime change (log gap)",
+    "rca_id": "RCA-2026-00037",
+    "status": "DRAFT",
+    "duration_seconds": 73.1,
+    "plan_service": "Auth Service",
+    "plan_sources": [
+      "logs",
+      "changes",
+      "cmdb",
+      "historical_rcas",
+      "historical_incidents"
+    ],
+    "evidence_count": 14,
+    "hypotheses": 2,
+    "top1": true,
+    "topk": true,
+    "confidence": "LOW",
+    "points": 2,
+    "acceptable_confidence": [
+      "LOW",
+      "MEDIUM"
+    ],
+    "calibrated": true,
+    "expected_citations": [
+      "LOG-AUTH-20260911-01",
+      "LOG-AUTH-20260915-03",
+      "CHG-2026-01118",
+      "CI-SESSION-REDIS"
+    ],
+    "found_in_ledger": [
+      "LOG-AUTH-20260915-03",
+      "CI-SESSION-REDIS"
+    ],
+    "cited_by_top": [
+      "LOG-AUTH-20260915-03"
+    ],
+    "cited_by_any": [
+      "LOG-AUTH-20260915-03"
+    ],
+    "red_herrings_cited_by_top": [],
+    "verdicts": [
+      {
+        "hypothesis_id": "HYP-001",
+        "match": true,
+        "reason": "Ipoteza identifică corect componenta tehnică (Redis session store) și mecanismul de defectare (evicting/eliminarea cheilor de sesiune), care este cauza directă a erorilor de autentificare. Deși nu menționează cauza rădăcină a creșterii memoriei (extinderea duratei token-ului), ea descrie corect simptomul tehnic și componenta afectată, fiind echivalentă tehnic cu descrierea din Ground Truth privind evictarea cheilor.",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "Redis session store eviction caused session keys to be removed, leading to SessionNotFound errors in Auth Service"
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "match": false,
+        "reason": "Ipoteza identifică o problemă de epuizare a memoriei la nivelul podurilor Auth Service, în timp ce cauza reală este o epuizare a memoriei în Redis (session store) cauzată de o configurare greșită a duratei de viață a tokenurilor. Componenta afectată (Redis vs. Auth Service pods) și mecanismul specific (evictarea cheilor din Redis vs. restart/degradare a podurilor) sunt diferite.",
+        "confidence": "LOW",
+        "points": 2,
+        "text": "Auth Service pods experienced memory exhaustion, causing restarts or degraded performance and resulting in session store connection errors"
+      }
+    ]
+  }
+]
