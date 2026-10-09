@@ -313,6 +313,16 @@ EN: dict[str, str] = {
     "step.build_timeline.title": "Order the events",
     "step.build_timeline.text": "Puts the incidents, the logs and the changes on one time axis and marks the first error.",
     "step.timeline_line": "{count} moments in time order",
+    "diagram.five_whys_title": "5 Whys",
+    "diagram.five_whys_how": "Why the incident happened, step by step, for the best supported cause ({hypothesis}). "
+                             "Every step shows its evidence; a dashed step has none yet and is the question to check.",
+    "diagram.fishbone_title": "Fishbone",
+    "diagram.fishbone_how": "Several causes are equally supported, so their contributing factors are shown by category. "
+                            "A dashed factor has no evidence yet.",
+    "diagram.why": "Why {number}",
+    "diagram.because": "because",
+    "diagram.to_check": "to check",
+    "diagram.written": "The diagram, written out",
     "timeline.title": "Timeline",
     "timeline.how_to_read": "The facts of the investigation in time order. A change before the first error can have "
                             "caused it; a change after it cannot.",
@@ -397,6 +407,7 @@ EN: dict[str, str] = {
     "evidence.HISTORICAL_INCIDENT": "Past incident",
     "evidence.INCIDENT": "The incident",
     "draft.missing_evidence": "What would confirm or rule it out, not found yet",
+    "draft.brief_note": "The evidence, the diagram and the timeline are for the Technical Expert, who reviews the analysis.",
     "evidence.source": "Source",
     # ---- Sending the analysis on ----
     "send.action": "Send to Technical Expert",

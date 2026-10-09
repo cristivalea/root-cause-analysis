@@ -308,6 +308,25 @@ class InvestigationPlan(BaseModel):
         return self
 
 
+FishboneCategory = Literal["Change / Release", "Configuration", "Capacity", "Dependencies", "Monitoring", "Process"]
+
+
+class WhyStep(BaseModel):
+    """One step of a 5 Whys chain, from the symptom down to the candidate cause."""
+
+    why: str
+    because: str
+    evidence: list[str] = []  # evidence ids; a step without evidence is an open question
+
+
+class CauseFactor(BaseModel):
+    """One contributing factor of a fishbone diagram."""
+
+    category: FishboneCategory
+    factor: str
+    evidence: list[str] = []  # evidence ids
+
+
 class Hypothesis(BaseModel):
     """A candidate root cause proposed by the RCA Reasoning Agent. No confidence on purpose:
     the model writes the reasons, the code calculates the level."""
@@ -319,6 +338,8 @@ class Hypothesis(BaseModel):
     contradicting_evidence: list[str]  # evidence ids only
     recommended_validation: list[str]
     missing_evidence: list[str] = []  # what would confirm or rule it out but is not in the ledger
+    why_chain: list[WhyStep] = Field(default=[], max_length=5)  # for the 5 Whys diagram (rca/diagram.py)
+    factors: list[CauseFactor] = []  # for the fishbone diagram
 
 
 class DraftRCA(BaseModel):

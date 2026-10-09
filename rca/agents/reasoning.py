@@ -56,6 +56,13 @@ Rules for every hypothesis:
   hypotheses must explain. Every hypothesis should explain all of them, or say which it does not.
 - When the text of a hypothesis names an evidence id, cite it in supporting_evidence or
   contradicting_evidence. Never write an id that is not in the ledger.
+- why_chain: the 5 Whys of the hypothesis, from the symptom down to the candidate cause. Each step
+  asks "why" about the previous answer and gives the evidence ids that show it. Stop where the
+  evidence stops: at most 5 steps, fewer when the evidence ends earlier, and a step without
+  evidence only as the last one, for the open question an expert must check.
+- factors: the contributing factors of the hypothesis for a fishbone diagram, each in one category
+  (Change / Release, Configuration, Capacity, Dependencies, Monitoring, Process) with its evidence ids.
+  Only factors the evidence supports; an empty category is fine.
 - A change close in time is not a cause by itself: some changes in the window are innocent.
   A change made after the first error cannot have caused that error, so it is never supporting
   evidence for a cause.

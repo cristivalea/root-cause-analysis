@@ -51,8 +51,9 @@ def metadata(record: RCARecord, *, context: str | None = None) -> None:
 
 
 def candidate_causes(record: RCARecord, *, with_metadata: bool = False,
-                     context: str | None = None) -> None:
-    """Each candidate cause with its confidence, its reasons and the evidence behind it."""
+                     context: str | None = None, brief: bool = False) -> None:
+    """Each candidate cause with its confidence, its reasons and the evidence behind it.
+    brief: only the cause and its confidence, the view of the Problem Manager (audit P.5)."""
     st.subheader(t("draft.candidate_causes"))
     st.caption(t("draft.candidate_note"))
     if with_metadata:
@@ -72,6 +73,8 @@ def candidate_causes(record: RCARecord, *, with_metadata: bool = False,
                 st.badge(f"{t('draft.confidence')}: {hypothesis.confidence}", color=confidence.color)
                 st.caption(t("draft.confidence_points", points=hypothesis.confidence_points))
             st.markdown(f"**{hypothesis.candidate_root_cause}**")
+            if brief:
+                continue
 
             if hypothesis.reasons:
                 st.caption(t("draft.why"))
@@ -167,15 +170,18 @@ def extra_checks(review) -> list[str]:
 
 
 def rca_draft(record: RCARecord, *, with_metadata: bool = False,
-              context: str | None = None) -> None:
+              context: str | None = None, brief: bool = False) -> None:
     """The whole analysis, in the order it is read.
 
     A screen that shows one analysis on its own asks for the metadata, which then sits
     under the title of the first section. The history already says which analysis it is
     around the analysis itself, so it leaves it out.
     """
-    candidate_causes(record, with_metadata=with_metadata, context=context)
+    candidate_causes(record, with_metadata=with_metadata, context=context, brief=brief)
     summary(record)
+    if brief:  # the Problem Manager: the summary, the causes and their confidence; the expert reads the rest
+        st.caption(t("draft.brief_note"))
+        return
     related_incidents(record)
     next_steps(record)
     evidence(record)

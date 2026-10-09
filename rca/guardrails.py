@@ -5,7 +5,8 @@ An answer from a model is untrusted until it passes the checks (doc 06, 6.4):
 2. the citations: every evidence id exists in the evidence ledger;
 3. every hypothesis has at least one supporting evidence;
 4. at least two hypotheses, or a written reason why there is only one;
-5. no evidence id written in the text of a hypothesis that is not in the ledger (an invented citation).
+5. no evidence id named by a hypothesis that is not in the ledger (an invented citation): in its text,
+   in the steps of its 5 Whys chain or in its fishbone factors.
 
 An evidence id that exists and is named in the text without being cited is not refused: it is a
 warning (text_warnings), saved with the guardrail step for the expert.
@@ -30,10 +31,15 @@ EVIDENCE_ID = re.compile(r"\bEV-\d{3}\b")
 
 
 def _text_ids(hypothesis) -> set[str]:
-    """The evidence ids written in the words of a hypothesis."""
+    """The evidence ids a hypothesis names outside its citation lists: in its words, and in the steps
+    and factors of its diagram (rca/diagram.py)."""
     text = " ".join([hypothesis.candidate_root_cause, *hypothesis.reasons, *hypothesis.recommended_validation,
-                     *hypothesis.missing_evidence])
-    return set(EVIDENCE_ID.findall(text))
+                     *hypothesis.missing_evidence, *(f"{step.why} {step.because}" for step in hypothesis.why_chain),
+                     *(factor.factor for factor in hypothesis.factors)])
+    named = set(EVIDENCE_ID.findall(text))
+    named |= {item for step in hypothesis.why_chain for item in step.evidence}
+    named |= {item for factor in hypothesis.factors for item in factor.evidence}
+    return named
 
 
 def text_warnings(draft: DraftRCA) -> list[str]:

@@ -216,7 +216,7 @@ def analysis_panel(record) -> None:
     if record.status == "ESCALATED_MANUAL":
         st.warning(t("investigation.escalated_manual"), icon=":material/warning:")
         st.caption(t("investigation.escalated_manual_hint"))
-        rca_draft.rca_draft(record, with_metadata=True, context=t("cycle.number", number=record.cycle))
+        rca_draft.rca_draft(record, with_metadata=True, context=t("cycle.number", number=record.cycle), brief=True)
         return
     if record.status == "ESCALATED":
         st.warning(t("investigation.escalated"), icon=":material/warning:")
@@ -235,6 +235,7 @@ def analysis_panel(record) -> None:
         record,
         with_metadata=True,
         context=t("cycle.number", number=record.cycle) if record.cycle > 1 else None,
+        brief=True,
     )
     # What happens next comes after the whole analysis, never before it.
     if record.status in ("REJECTED", "MORE_DETAILS_REQUESTED"):
