@@ -190,3 +190,21 @@ def test_live_guardrail_and_confidence_for_payment_api(payment_ledger):
         print("   supporting", item.supporting_evidence, "contradicting", item.contradicting_evidence)
         for reason in item.confidence_reasons:
             print("   -", reason)
+
+
+def test_an_evidence_id_named_in_the_text_but_not_in_the_ledger_is_refused():
+    invented = hypothesis().model_copy(update={"reasons": ["The deploy EV-099 came first."]})
+
+    problems = check_draft(draft(invented, single_reason="Only one explanation fits."), LEDGER_IDS)
+
+    assert any("names in its text evidence ids that are not in the ledger: EV-099" in item for item in problems)
+
+
+def test_an_existing_evidence_named_but_not_cited_is_only_a_warning():
+    from rca.guardrails import text_warnings
+
+    uncited = hypothesis().model_copy(update={"reasons": ["EV-001 shows the timeouts; EV-002 shows the deploy."]})
+    checked = draft(uncited, single_reason="Only one explanation fits.")
+
+    assert check_draft(checked, LEDGER_IDS) == []
+    assert text_warnings(checked) == ["HYP-001 names EV-002 in its text without citing it."]

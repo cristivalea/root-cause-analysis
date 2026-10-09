@@ -210,7 +210,9 @@ class LogGroup(BaseModel):
 # Application data
 # --------------------------------------------------------------------------------------
 
-EvidenceType = Literal["LOG", "CHANGE", "CMDB", "HISTORICAL_RCA", "HISTORICAL_INCIDENT"]
+# INCIDENT: the incident being investigated, with its symptoms. It is what must be explained, so it
+# earns no confidence points (rca/confidence.py).
+EvidenceType = Literal["INCIDENT", "LOG", "CHANGE", "CMDB", "HISTORICAL_RCA", "HISTORICAL_INCIDENT"]
 SourceName = Literal["logs", "changes", "cmdb", "historical_rcas", "historical_incidents"]
 ConfidenceLevel = Literal["HIGH", "MEDIUM", "LOW"]
 # The states an RCA goes through.
@@ -303,6 +305,7 @@ class Hypothesis(BaseModel):
     supporting_evidence: list[str]  # evidence ids only
     contradicting_evidence: list[str]  # evidence ids only
     recommended_validation: list[str]
+    missing_evidence: list[str] = []  # what would confirm or rule it out but is not in the ledger
 
 
 class DraftRCA(BaseModel):

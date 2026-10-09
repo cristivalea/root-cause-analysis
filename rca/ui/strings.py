@@ -345,6 +345,7 @@ EN: dict[str, str] = {
     "step.rated_many": "{count} candidate causes rated",
     "step.attempt": "Attempt {number}",
     "step.problems": "What had to be corrected",
+    "step.warnings": "To check: evidence named in the text without being cited",
     "step.no_detail": "No further detail was recorded for this step.",
     "step.services_searched": "Services searched",
     "step.log_windows": "Logs read around each incident",
@@ -384,6 +385,8 @@ EN: dict[str, str] = {
     "evidence.CMDB": "Service dependency",
     "evidence.HISTORICAL_RCA": "Past analysis",
     "evidence.HISTORICAL_INCIDENT": "Past incident",
+    "evidence.INCIDENT": "The incident",
+    "draft.missing_evidence": "What would confirm or rule it out, not found yet",
     "evidence.source": "Source",
     # ---- Sending the analysis on ----
     "send.action": "Send to Technical Expert",

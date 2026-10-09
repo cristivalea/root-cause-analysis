@@ -47,6 +47,13 @@ Rules for every hypothesis:
 - supporting_evidence cites every fact the hypothesis really relies on, including the CMDB
   dependency that connects the failing component to the suspected cause, and nothing else.
 - recommended_validation lists concrete checks a Technical Expert can do to confirm or reject it.
+- missing_evidence lists the facts that would confirm or rule out the hypothesis but are not in the
+  ledger, for example "database connection metrics during the batch" or "the configuration of the
+  pool before the change". Do not write evidence ids there.
+- The ledger starts with the incident being investigated (type INCIDENT): its symptoms are what the
+  hypotheses must explain. Every hypothesis should explain all of them, or say which it does not.
+- When the text of a hypothesis names an evidence id, cite it in supporting_evidence or
+  contradicting_evidence. Never write an id that is not in the ledger.
 - A change close in time is not a cause by itself: some changes in the window are innocent.
   A change made after the first error cannot have caused that error, so it is never supporting
   evidence for a cause.

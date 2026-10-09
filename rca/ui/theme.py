@@ -76,6 +76,7 @@ EVIDENCE: dict[str, Style] = {
     "CMDB": Style("gray", ":material/lan:"),
     "HISTORICAL_RCA": Style("gray", ":material/menu_book:"),
     "HISTORICAL_INCIDENT": Style("gray", ":material/replay:"),
+    "INCIDENT": Style("gray", ":material/report:"),
 }
 
 FALLBACK = Style("gray")

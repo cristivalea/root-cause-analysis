@@ -10,6 +10,7 @@ tuned and defended. Points are counted once per kind of evidence:
 | A past RCA with the same cause on the same service                         | 2      |
 | A similar past incident                                                    | 1      |
 | A CMDB dependency that confirms the technical path                         | 1      |
+| The incident itself (its symptoms): what must be explained, not support     | 0      |
 
 Levels: 5 or more points from at least 3 kinds of evidence is HIGH; 5 or more from only 2
 kinds, or 3-4 points, is MEDIUM; 2 or less is LOW. Without log evidence the level cannot be
@@ -25,6 +26,7 @@ from datetime import datetime, timezone
 from rca.models import AssessedHypothesis, ConfidenceLevel, DraftRCA, Evidence, EvidenceType, Hypothesis
 
 POINTS: dict[EvidenceType, int] = {
+    "INCIDENT": 0,
     "LOG": 2,
     "CHANGE": 2,
     "HISTORICAL_RCA": 2,
@@ -32,6 +34,7 @@ POINTS: dict[EvidenceType, int] = {
     "CMDB": 1,
 }
 REASONS: dict[EvidenceType, str] = {
+    "INCIDENT": "The incident itself",
     "LOG": "Log evidence of the symptom",
     "CHANGE": "Change on the affected service or a direct dependency, before the first error",
     "HISTORICAL_RCA": "Past RCA with the same cause on the same service",
@@ -65,6 +68,8 @@ def assess_hypothesis(
     for evidence_id in hypothesis.supporting_evidence:
         item = evidence_by_id.get(evidence_id)
         if item is None:  # the guardrail already refuses unknown ids
+            continue
+        if item.type == "INCIDENT":  # the symptom to explain is neither a point nor a source
             continue
         if item.type == "CHANGE":
             if item.timestamp is None:

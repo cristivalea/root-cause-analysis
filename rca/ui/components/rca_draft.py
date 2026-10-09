@@ -90,6 +90,11 @@ def candidate_causes(record: RCARecord, *, with_metadata: bool = False,
                 for item in contradicting:
                     st.markdown(f"- {_evidence_line(item)}")
 
+            if hypothesis.missing_evidence:
+                st.caption(t("draft.missing_evidence"))
+                for item in hypothesis.missing_evidence:
+                    st.markdown(f"- {item}")
+
             if hypothesis.recommended_validation:
                 with st.expander(t("draft.how_to_validate")):
                     for check in hypothesis.recommended_validation:

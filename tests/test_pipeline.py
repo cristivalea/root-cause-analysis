@@ -100,19 +100,21 @@ def draft(*hypotheses: Hypothesis) -> DraftRCA:
     )
 
 
-# The ledger of the problem: EV-001..002 logs around INC-2026-00482, EV-003..004 logs around INC-2026-00857,
-# EV-005..008 changes (EV-006 the deploy CHG-2026-00871), EV-009..010 CMDB, EV-011 INC-2026-00482 (same
-# problem), EV-012 RCA-2025-00114, EV-013 INC-2025-00401.
+# The ledger of the problem: EV-001 the incident itself (INC-2026-00857, type INCIDENT), EV-002..003 logs
+# around INC-2026-00482, EV-004..005 logs around INC-2026-00857, EV-006..009 changes (EV-007 the deploy
+# CHG-2026-00871), EV-010..011 CMDB, EV-012 INC-2026-00482 (same problem), EV-013 RCA-2025-00114,
+# EV-014 INC-2025-00401.
 LEDGER = [
+    "INC-2026-00857",
     "LOG-PAY-20260714-14", "LOG-PAY-20260714-15", "LOG-PAY-20260715-06", "LOG-PAY-20260715-01",
     "CHG-2026-00845", "CHG-2026-00871", "CHG-2026-00873", "CHG-2026-00876",
     "CI-PAYMENT-DB", "CI-PAYMENT-QUEUE", "INC-2026-00482", "RCA-2025-00114", "INC-2025-00401",
 ]
 GOOD_DRAFT = draft(
-    hypothesis("HYP-001", ["EV-001", "EV-002", "EV-006", "EV-009", "EV-012", "EV-013"]),
-    hypothesis("HYP-002", ["EV-001", "EV-009"], contradicting=["EV-012"]),
+    hypothesis("HYP-001", ["EV-002", "EV-003", "EV-007", "EV-010", "EV-013", "EV-014"]),
+    hypothesis("HYP-002", ["EV-002", "EV-010"], contradicting=["EV-013"]),
 )
-TOOLS_ONLY_DRAFT = draft(hypothesis("HYP-001", ["EV-001", "EV-006"]), hypothesis("HYP-002", ["EV-003"]))
+TOOLS_ONLY_DRAFT = draft(hypothesis("HYP-001", ["EV-002", "EV-007"]), hypothesis("HYP-002", ["EV-004"]))
 INVENTED_DRAFT = draft(hypothesis("HYP-001", ["EV-099"]), hypothesis("HYP-002", ["EV-001"]))
 
 
@@ -275,6 +277,18 @@ def test_the_reasoning_agent_receives_the_ledger_with_times_relative_to_the_inci
     assert "34 minutes before the first incident of the problem (INC-2026-00482)" in request
     assert "before the detection of INC-2026-00857" in request  # a log line of the recurrence
     assert "Judged relevant because: Same service and same symptoms." in request
+
+
+def test_the_ledger_starts_with_the_incident_and_the_guardrail_keeps_its_warnings(db_path, fakes):
+    named = hypothesis("HYP-001", ["EV-002", "EV-007"]).model_copy(update={"reasons": ["EV-013 had the same cause."]})
+    fakes.reasoning = Fake(draft(named, hypothesis("HYP-002", ["EV-004"])))
+
+    record, _ = run(db_path)
+
+    assert (record.evidence[0].type, record.evidence[0].citation) == ("INCIDENT", REFERENCE_ID)
+    assert "Symptoms:" in record.evidence[0].description
+    guardrail = next(step for step in record.trace if step.name == "guardrail")
+    assert guardrail.details["warnings"] == ["HYP-001 names EV-013 in its text without citing it."]
 
 
 # The context fixes what is searched -----------------------------------------------------

@@ -124,6 +124,7 @@ def _details(step: InvestigationStep, plan=None) -> None:
         if details.get("attempt"):
             st.caption(t("step.attempt", number=details["attempt"]))
         _listing(t("step.problems"), list(details.get("problems", [])))
+        _listing(t("step.warnings"), list(details.get("warnings", [])))
 
     if not details and step.name in ("rca_reasoning_agent", "confidence"):
         st.caption(t("step.no_detail"))

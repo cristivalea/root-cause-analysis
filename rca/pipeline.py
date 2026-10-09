@@ -41,7 +41,7 @@ from rca.confidence import assess_draft, is_weakly_supported
 from rca.config import DB_PATH
 from rca.context import build_context, merge_guidance
 from rca.evidence import EvidenceLedger, add_changes, add_dependencies, add_log_groups
-from rca.guardrails import MAX_ATTEMPTS, check_draft, format_feedback, run_with_retries
+from rca.guardrails import MAX_ATTEMPTS, check_draft, format_feedback, run_with_retries, text_warnings
 from rca.llm import LLMOutputError
 from rca.models import (
     AssessedHypothesis,
@@ -377,6 +377,18 @@ def tools(state: InvestigationState) -> dict:
     not_checked: list[str] = []
     found: dict[str, list[str]] = {}
 
+    # First the incident itself: its symptoms are what the hypotheses must explain (no confidence points).
+    reference = by_id[context.reference_incident_id]
+    ledger.add(
+        "INCIDENT",
+        reference.incident_id,
+        f"The incident under investigation, {reference.incident_id} on {reference.service} ({reference.severity}), "
+        f"detected {reference.detected_at:%Y-%m-%d %H:%M} UTC: {reference.title}. {reference.description} "
+        f"Symptoms: {'; '.join(reference.symptoms)}.",
+        reference.incident_id,
+        reference.detected_at,
+    )
+
     dependencies = []
     for service in context.services:
         with tracer().start_as_current_span("tool.find_dependencies") as span:
@@ -576,7 +588,8 @@ def guardrail(state: InvestigationState) -> dict:
         cited = {item for hypothesis in draft.hypotheses for item in hypothesis.supporting_evidence + hypothesis.contradicting_evidence}
         summary = f"Draft accepted on attempt {attempt}: the schema is valid and all {len(cited)} cited evidence ids exist."
         trace.get_current_span().set_attribute("rca.guardrail", "accepted")
-        return {"feedback": None, "trace": [_step("guardrail", started, summary, attempt=attempt)]}
+        return {"feedback": None, "trace": [_step("guardrail", started, summary, attempt=attempt,
+                                                  warnings=text_warnings(draft))]}
 
     if attempt >= MAX_ATTEMPTS:
         reason = f"The RCA Reasoning Agent did not produce a valid draft in {attempt} attempts."

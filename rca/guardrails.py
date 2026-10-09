@@ -4,12 +4,17 @@ An answer from a model is untrusted until it passes the checks (doc 06, 6.4):
 1. the shape: the answer matches the Pydantic schema (done in rca.llm, LLMOutputError);
 2. the citations: every evidence id exists in the evidence ledger;
 3. every hypothesis has at least one supporting evidence;
-4. at least two hypotheses, or a written reason why there is only one.
+4. at least two hypotheses, or a written reason why there is only one;
+5. no evidence id written in the text of a hypothesis that is not in the ledger (an invented citation).
+
+An evidence id that exists and is named in the text without being cited is not refused: it is a
+warning (text_warnings), saved with the guardrail step for the expert.
 
 If a check fails, the model is asked again with the problems included in the request.
 After MAX_ATTEMPTS failed attempts the case is escalated to a person.
 """
 
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Generic, TypeVar
@@ -21,6 +26,24 @@ from rca.models import DraftRCA, Evidence
 T = TypeVar("T")
 
 MAX_ATTEMPTS = 3
+EVIDENCE_ID = re.compile(r"\bEV-\d{3}\b")
+
+
+def _text_ids(hypothesis) -> set[str]:
+    """The evidence ids written in the words of a hypothesis."""
+    text = " ".join([hypothesis.candidate_root_cause, *hypothesis.reasons, *hypothesis.recommended_validation,
+                     *hypothesis.missing_evidence])
+    return set(EVIDENCE_ID.findall(text))
+
+
+def text_warnings(draft: DraftRCA) -> list[str]:
+    """Evidence named in the text of a hypothesis but not cited by it: the claim may rest on it unseen."""
+    warnings = []
+    for hypothesis in draft.hypotheses:
+        uncited = sorted(_text_ids(hypothesis) - set(hypothesis.supporting_evidence) - set(hypothesis.contradicting_evidence))
+        if uncited:
+            warnings.append(f"{hypothesis.hypothesis_id} names {', '.join(uncited)} in its text without citing it.")
+    return warnings
 
 
 @dataclass
@@ -60,6 +83,10 @@ def check_draft(draft: DraftRCA, evidence_ids: set[str]) -> list[str]:
                 )
         if not hypothesis.supporting_evidence:
             problems.append(f"{hypothesis.hypothesis_id} has no supporting evidence")
+        invented = sorted(_text_ids(hypothesis) - evidence_ids)
+        if invented:
+            problems.append(f"{hypothesis.hypothesis_id} names in its text evidence ids that are not in the ledger: "
+                            f"{', '.join(invented)}")
 
     if not draft.hypotheses:
         problems.append("the draft has no hypotheses")
