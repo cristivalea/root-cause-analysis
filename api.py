@@ -383,9 +383,11 @@ def api_get_rca(rca_id: str, user: dict[str, Any] = Depends(
     ),):
     try:
         rca = store.get_rca(rca_id, db_path=DB_PATH)
-        # if not rca:
-        #     raise HTTPException(status_code=404, detail=f"RCA {rca_id} nu a fost găsit.")
-        if user["role"] == "technical_expert" and rca.status != "PENDING_REVIEW":
+        if not rca:
+            raise HTTPException(status_code=404, detail=f"RCA {rca_id} nu a fost găsit.")
+        # The expert does not see the drafts the Problem Manager has not sent yet, but sees every RCA
+        # that was sent: the one waiting for a decision, and after the decision what was decided.
+        if user["role"] == "technical_expert" and rca.status == "DRAFT":
             raise HTTPException(status_code=404, detail="RCA-ul nu este disponibil pentru review.")
         return _serialize(rca)
     except HTTPException:

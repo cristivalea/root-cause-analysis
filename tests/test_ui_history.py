@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from rca.ui import navigation, services, state
@@ -89,13 +90,19 @@ def test_a_validated_case_shows_the_root_cause_that_was_agreed():
     assert any(final.final_root_cause in item.value for item in app.markdown)
 
 
-def test_history_is_open_to_both_roles():
-    for role in (state.PROBLEM_MANAGER, state.TECHNICAL_EXPERT):
-        app = AppTest.from_file(MAIN, default_timeout=60).run()
-        app.session_state[state.ROLE_KEY] = role
-        app.switch_page(navigation.HISTORY).run()
-        assert not app.exception
-        assert app.title[0].value == t("history.title")
+def test_history_is_a_page_of_the_problem_manager():
+    """Since the sign-in, the Technical Expert has Home and Review only; the earlier revisions of a case
+    are shown to the expert on the review page."""
+    app = AppTest.from_file(MAIN, default_timeout=60).run()
+    app.switch_page(navigation.HISTORY).run()
+    assert not app.exception
+    assert app.title[0].value == t("history.title")
+
+    expert = AppTest.from_file(MAIN, default_timeout=60)
+    expert.session_state[state.ROLE_KEY] = state.TECHNICAL_EXPERT
+    expert.run()
+    with pytest.raises(ValueError, match="Could not find a navigation page"):
+        expert.switch_page(navigation.HISTORY)
 
 
 def test_an_address_pointing_at_no_case_says_so():

@@ -4,8 +4,13 @@ The ledger is built from the real tools on the mock data, with the same function
 The historical evidence is written by hand, so these tests need neither Ollama nor the Historical RCA Agent.
 """
 
+import os
 from datetime import datetime
 from pathlib import Path
+
+# The tests use fake answers: they are not sent to LangSmith, even when .env turns tracing on.
+# Set before rca.config reads .env, which never replaces a variable that is already set.
+os.environ["LANGSMITH_TRACING"] = "false"
 
 import pytest
 
@@ -53,3 +58,119 @@ def payment_ledger(tmp_path_factory):
     db_path = tmp_path_factory.mktemp("payment_ledger") / "sources.sqlite3"
     storage.load_sources(db_path, ROOT / "data" / "sources")
     return build_payment_ledger(db_path)
+
+
+# --------------------------------------------------------------------------------------
+# The interface tests (tests/test_ui_*.py) run the real pages against the real API, in process:
+# - the HTTP requests of rca/ui/services.py go to the FastAPI app through its TestClient, on a
+#   temporary copy of the data with RCAs in every status, so no server and no saved RCA are needed;
+# - every AppTest starts signed in as the Problem Manager; a test that needs the Technical Expert
+#   sets the role in the session, and the role reaches the API with each request.
+# --------------------------------------------------------------------------------------
+
+UI_RCA_FIXTURE = ROOT / "tests" / "fixtures" / "sample_rca_record.json"
+
+
+def seed_ui_rcas(db_path: Path) -> None:
+    """One RCA in every status the pages show, and a case with two revisions."""
+    import json
+
+    from rca import store
+    from rca.models import RCARecord, ReviewDecision
+
+    base = RCARecord.model_validate(json.loads(UI_RCA_FIXTURE.read_text(encoding="utf-8")))
+    decided = datetime.fromisoformat("2026-09-15T10:00:00+00:00")
+
+    def save(rca_id, status, **changes):
+        store.save_rca(base.model_copy(update={"rca_id": rca_id, "status": status, **changes}), db_path=db_path)
+
+    save("RCA-2026-00101", "DRAFT")
+    save("RCA-2026-00102", "PENDING_REVIEW")
+    save("RCA-2026-00103", "ESCALATED", hypotheses=[], investigation_summary="The RCA Reasoning Agent did not "
+         "produce a valid draft in 3 attempts.")
+    save("RCA-2026-00104", "FINAL", final_root_cause=base.hypotheses[0].candidate_root_cause, completed_at=decided,
+         review=ReviewDecision(reviewer="expert", decision="APPROVE", hypothesis_id=base.hypotheses[0].hypothesis_id,
+                               comment="Confirmed with the pool metrics.", decided_at=decided))
+    save("RCA-2026-00105", "MORE_DETAILS_REQUESTED", case_id="RCA-2026-00105",
+         review=ReviewDecision(reviewer="expert", decision="REQUEST_MORE_DETAILS", comment="Check the pool size.\n"
+                               "Check the retry settings.", decided_at=decided,
+                               requested_checks=["Check the pool size.", "Check the retry settings."]))
+    save("RCA-2026-00106", "PENDING_REVIEW", case_id="RCA-2026-00105", cycle=2, parent_rca_id="RCA-2026-00105")
+    save("RCA-2026-00107", "REJECTED", completed_at=decided,
+         review=ReviewDecision(reviewer="expert", decision="REJECT", comment="The deploy is not on the failing path.",
+                               decided_at=decided))
+
+
+@pytest.fixture(autouse=True)
+def ui_through_the_api(request, monkeypatch, tmp_path):
+    module = request.node.module.__name__
+    if not module.startswith("test_ui_") or module == "test_ui_problems":  # test_ui_problems replaces the API itself
+        yield
+        return
+
+    import requests as http
+    import streamlit as st
+    from fastapi import Request
+    from fastapi.testclient import TestClient
+    from streamlit.testing.v1 import AppTest
+
+    import api
+    from rca.ui import services, state
+
+    db_path = tmp_path / "ui.sqlite3"
+    storage.load_sources(db_path, ROOT / "data" / "sources")
+    seed_ui_rcas(db_path)
+    monkeypatch.setattr(api, "DB_PATH", db_path)
+
+    def signed_in(request: Request) -> dict:
+        return {"username": "tester", "role": request.headers.get("X-Test-Role") or state.PROBLEM_MANAGER, "active": True}
+
+    api.app.dependency_overrides[api.get_current_user] = signed_in
+    client = TestClient(api.app)
+
+    class Response:
+        """What rca.ui.services expects from requests: raise_for_status, text, json, status_code."""
+
+        def __init__(self, response):
+            self.response, self.text, self.status_code = response, response.text, response.status_code
+
+        def json(self):
+            return self.response.json()
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise http.HTTPError(str(self.status_code))
+
+    class Requests:
+        HTTPError = http.HTTPError
+        exceptions = http.exceptions
+
+        def get(self, url, headers=None, timeout=None, **kwargs):
+            return Response(client.get(url, headers=headers, **kwargs))
+
+        def post(self, url, headers=None, json=None, timeout=None, **kwargs):
+            return Response(client.post(url, headers=headers, json=json, **kwargs))
+
+    def role_header() -> dict:
+        try:
+            role = st.session_state.get(state.ROLE_KEY)
+        except Exception:  # outside a page, in the body of a test
+            role = None
+        return {"X-Test-Role": role or state.PROBLEM_MANAGER}
+
+    monkeypatch.setattr(services, "requests", Requests())
+    monkeypatch.setattr(services, "API_BASE_URL", "")
+    monkeypatch.setattr(services, "_auth_headers", role_header)
+
+    original = AppTest.from_file.__func__
+
+    def from_file(cls, *args, **kwargs):
+        app = original(cls, *args, **kwargs)
+        app.session_state[state.TOKEN_KEY] = "test-token"
+        app.session_state[state.USERNAME_KEY] = "tester"
+        app.session_state[state.ROLE_KEY] = state.PROBLEM_MANAGER
+        return app
+
+    monkeypatch.setattr(AppTest, "from_file", classmethod(from_file))
+    yield
+    api.app.dependency_overrides.clear()

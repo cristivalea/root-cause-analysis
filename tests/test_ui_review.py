@@ -12,9 +12,10 @@ MAIN = str(Path(__file__).resolve().parents[1] / "rca" / "ui" / "main.py")
 
 
 def open_review(rca_id: str | None = None, *, as_expert: bool = True) -> AppTest:
-    app = AppTest.from_file(MAIN, default_timeout=60).run()
-    if as_expert:
+    app = AppTest.from_file(MAIN, default_timeout=60)
+    if as_expert:  # the review page is a page of the expert's navigation only
         app.session_state[state.ROLE_KEY] = state.TECHNICAL_EXPERT
+    app.run()
     if rca_id:
         app.query_params["rca"] = rca_id
     app.switch_page(navigation.REVIEW).run()
@@ -36,17 +37,19 @@ def test_the_queue_lists_what_is_waiting_for_a_decision():
 
 
 def test_a_review_can_be_opened_by_its_link_in_a_new_session():
-    """A Technical Expert may come back a day later, from a link, in a fresh browser."""
+    """A Technical Expert may come back a day later, from a link, in a fresh browser, once signed in."""
     record = stored("PENDING_REVIEW")
-    if record is None:
-        return
-    app = open_review(record.rca_id, as_expert=False)
+    app = open_review(record.rca_id)
     assert not app.exception
-    assert any(button.label == t("review.switch_role") for button in app.button)
-
-    app.button[0].click().run()
     assert app.session_state["role"] == state.TECHNICAL_EXPERT
     assert any(button.label == t("decision.approve") for button in app.button)
+
+
+def test_the_expert_sees_what_was_decided_but_not_the_drafts_not_sent_yet():
+    """After a decision the review shows its outcome; a draft the Problem Manager has not sent stays private."""
+    assert "could not be found" not in " ".join(item.value for item in open_review(stored("FINAL").rca_id).info)
+    draft = open_review(stored("DRAFT").rca_id)
+    assert any(t("review.not_found") in item.value for item in draft.info)
 
 
 # ---- The decisions ----

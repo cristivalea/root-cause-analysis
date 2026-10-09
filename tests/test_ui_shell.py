@@ -17,8 +17,16 @@ from rca.ui.strings import EN, t
 MAIN = str(Path(__file__).resolve().parents[1] / "rca" / "ui" / "main.py")
 
 
-def run_app() -> AppTest:
-    return AppTest.from_file(MAIN, default_timeout=60).run()
+def run_app(role: str = state.PROBLEM_MANAGER) -> AppTest:
+    """The application, signed in with the given role (tests/conftest.py signs every AppTest in)."""
+    app = AppTest.from_file(MAIN, default_timeout=60)
+    app.session_state[state.ROLE_KEY] = role
+    return app.run()
+
+
+def labels(app: AppTest) -> list[str]:
+    """The buttons of the page, without the sign-out button of the shell."""
+    return [button.label for button in app.button if not button.label.startswith("Deconectare")]
 
 
 # ---- The shell ----
@@ -46,23 +54,22 @@ def test_every_page_of_the_problem_manager_opens(page, title_key):
 
 
 def test_the_review_page_belongs_to_the_technical_expert():
-    """The page stays reachable by link in any role, and says whose screen it is."""
-    app = run_app()
+    """Since the sign-in, each role has its own pages: the Problem Manager has no review page."""
+    with pytest.raises(ValueError, match="Could not find a navigation page"):
+        run_app().switch_page(navigation.REVIEW)
+
+    app = run_app(state.TECHNICAL_EXPERT)
     app.switch_page(navigation.REVIEW).run()
-    assert any(t("review.wrong_role") in info.value for info in app.info)
-    assert any(button.label == t("review.switch_role") for button in app.button)
-
-
-def test_the_expert_gets_the_review_page_without_leaving_where_they_are():
-    app = run_app()
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
-    app.switch_page(navigation.REVIEW).run()
-    assert app.title[0].value == t("review.title")
-    assert not any(t("review.wrong_role") in info.value for info in app.info)
-
-    app.segmented_control[0].set_value(state.PROBLEM_MANAGER).run()
     assert not app.exception
-    assert app.title[0].value == t("review.title")  # the page stays open, the role changed
+    assert app.title[0].value == t("review.title")
+
+
+def test_the_role_comes_from_the_sign_in_and_cannot_be_changed_on_a_page():
+    for role in state.ROLES:
+        app = run_app(role)
+        assert not app.exception
+        assert not app.segmented_control  # no role selector any more
+        assert any(button.label == "Deconectare (tester)" for button in app.button)
 
 
 # ---- The design system ----
@@ -97,12 +104,12 @@ def test_home_explains_the_four_steps_and_offers_one_way_to_start():
     texts = [item.value for item in app.markdown] + [item.value for item in app.caption]
     for step in ("home.step_1", "home.step_2", "home.step_3", "home.step_4"):
         assert any(t(f"{step}.title") in text for text in texts)
-    assert [button.label for button in app.button] == [t("home.cta")]
+    assert labels(app) == [t("home.cta")]
 
 
 def test_the_home_button_opens_the_incident_selection():
     app = run_app()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == t("home.cta")).click().run()
     assert not app.exception
     assert app.title[0].value == t("start_rca.title")
 
@@ -111,7 +118,7 @@ def test_only_the_expert_is_told_what_is_waiting_for_review():
     app = run_app()
     assert not any(t("home.expert.open_review") == button.label for button in app.button)
 
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
+    app = run_app(state.TECHNICAL_EXPERT)
     waiting = len(services.list_rcas(status="PENDING_REVIEW"))
     labels = [button.label for button in app.button]
     if waiting:
@@ -122,8 +129,7 @@ def test_only_the_expert_is_told_what_is_waiting_for_review():
 
 def test_the_role_survives_moving_to_another_page():
     """Widget state is dropped between pages, so the role is kept under its own key."""
-    app = run_app()
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
+    app = run_app(state.TECHNICAL_EXPERT)
     [button for button in app.button if button.label == t("home.expert.open_review")][0].click().run()
     assert app.title[0].value == t("review.title")
     assert app.session_state["role"] == state.TECHNICAL_EXPERT
