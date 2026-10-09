@@ -51,9 +51,14 @@ def _as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def first_error_time(evidence: list[Evidence], detected_at: datetime) -> datetime:
-    """The earliest log evidence in the ledger, or the detection time when there is none."""
-    log_times = [_as_utc(item.timestamp) for item in evidence if item.type == "LOG" and item.timestamp]
+def first_error_time(evidence: list[Evidence], detected_at: datetime, services: list[str] | None = None) -> datetime:
+    """The earliest log evidence in the ledger, or the detection time when there is none.
+
+    services: the services of the problem. Only their logs count: an error on a dependency, earlier
+    than the first error of the problem, must not take its points from a change made before it.
+    A log evidence without a service (an older record) counts as one of the problem."""
+    log_times = [_as_utc(item.timestamp) for item in evidence if item.type == "LOG" and item.timestamp
+                 and (services is None or item.service is None or item.service in services)]
     return min(log_times, default=_as_utc(detected_at))
 
 
@@ -118,10 +123,11 @@ def assess_hypothesis(
     )
 
 
-def assess_draft(draft: DraftRCA, evidence: list[Evidence], detected_at: datetime) -> list[AssessedHypothesis]:
-    """All hypotheses with their confidence, the strongest first."""
+def assess_draft(draft: DraftRCA, evidence: list[Evidence], detected_at: datetime,
+                 services: list[str] | None = None) -> list[AssessedHypothesis]:
+    """All hypotheses with their confidence, the strongest first. services: those of the problem."""
     evidence_by_id = {item.evidence_id: item for item in evidence}
-    first_error = first_error_time(evidence, detected_at)
+    first_error = first_error_time(evidence, detected_at, services)
     assessed = [assess_hypothesis(hypothesis, evidence_by_id, first_error) for hypothesis in draft.hypotheses]
     return sorted(assessed, key=lambda item: (-BANDS.index(item.confidence), -item.confidence_points))
 

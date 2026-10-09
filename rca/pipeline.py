@@ -429,9 +429,11 @@ def tools(state: InvestigationState) -> dict:
         dependencies.append(result)
 
     found["logs"] = []
+    found["dependency_logs"] = []
     for window in context.log_windows:
         incident = by_id[window.incident_id]
-        for service in context.services:
+        for service in [*context.services, *context.related_services]:
+            dependency = service not in context.services
             with tracer().start_as_current_span("tool.find_logs") as span:
                 span.set_attribute("tool.service", service)
                 span.set_attribute("tool.window_start", window.start.isoformat())
@@ -439,8 +441,8 @@ def tools(state: InvestigationState) -> dict:
                 groups = find_logs(service, window.start, window.end, db_path=db_path)
                 span.set_attribute("tool.result_count", len(groups))
             add_log_groups(ledger, groups, incident.detected_at,
-                           f"the detection of {incident.incident_id}" if several else "detection")
-            found["logs"] += [group.examples[0].log_id for group in groups]
+                           f"the detection of {incident.incident_id}" if several else "detection", dependency)
+            found["dependency_logs" if dependency else "logs"] += [group.examples[0].log_id for group in groups]
 
     first, window = incidents[0], context.change_window
     services = [*context.services, *context.related_services]
@@ -474,7 +476,8 @@ def tools(state: InvestigationState) -> dict:
         found["problem_incidents"].append(item.incident_id)
 
     summary = (
-        f"Logs: {len(found['logs'])} ERROR/WARN pattern(s) around {len(context.log_windows)} incident(s). "
+        f"Logs: {len(found['logs'])} ERROR/WARN pattern(s) around {len(context.log_windows)} incident(s), "
+        f"{len(found['dependency_logs'])} on the services it depends on. "
         f"Changes: {len(found['changes'])} from {window.start:%Y-%m-%d} to {window.end:%Y-%m-%d} "
         f"({', '.join(found['changes']) or 'none'}). CMDB: {len(found['cmdb'])} component(s) depended on."
     )
@@ -506,7 +509,8 @@ def _other_service(candidate: dict[str, Any], services: set[str]) -> str | None:
 def build_timeline(state: InvestigationState) -> dict:
     """Code: the facts found so far on one time axis, with the first error marked (rca/timeline.py)."""
     started = _now()
-    entries = timeline_of(state["evidence"], state["context"].incident_ids, state["incidents"][0].detected_at)
+    entries = timeline_of(state["evidence"], state["context"].incident_ids, state["incidents"][0].detected_at,
+                          state["context"].services)
     first = next((entry for entry in entries if entry.marker == "first error"), None)
     before = [entry.citation for entry in entries if entry.marker == "before the first error"]
     summary = f"{len(entries)} moment(s) on the timeline."
@@ -666,7 +670,8 @@ def confidence(state: InvestigationState) -> dict:
     """The rules: HIGH / MEDIUM / LOW for each hypothesis, and the weakly supported mark."""
     started = _now()
     # without log evidence, the first error is the detection of the first incident of the problem
-    hypotheses = assess_draft(state["draft"], state["evidence"], state["incidents"][0].detected_at)
+    hypotheses = assess_draft(state["draft"], state["evidence"], state["incidents"][0].detected_at,
+                              state["context"].services)
     weak = is_weakly_supported(hypotheses)
     summary = " ".join(f"{item.hypothesis_id}: {item.confidence} ({item.confidence_points} points)." for item in hypotheses)
     if weak:

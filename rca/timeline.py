@@ -27,10 +27,13 @@ def _utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def build_timeline(evidence: list[Evidence], problem_incidents: list[str], first_detected: datetime) -> list[TimelineEntry]:
+def build_timeline(evidence: list[Evidence], problem_incidents: list[str], first_detected: datetime,
+                   services: list[str] | None = None) -> list[TimelineEntry]:
     """The entries in time order. problem_incidents: the incidents of the problem, whose detections are on it;
-    first_detected: the detection of the first incident, used as the first error when there is no log."""
-    first_error = first_error_time(evidence, first_detected)
+    first_detected: the detection of the first incident, used as the first error when there is no log;
+    services: those of the problem, whose logs decide the first error (a dependency's logs are on the
+    timeline but do not move it)."""
+    first_error = first_error_time(evidence, first_detected, services)
     entries = []
     for item in evidence:
         if item.timestamp is None:

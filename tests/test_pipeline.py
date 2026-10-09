@@ -354,6 +354,32 @@ def test_the_history_says_what_was_done_then_and_that_the_problem_came_back_afte
     assert "came back after RCA-2025-00114" in step_of(record, "historical_rca_agent").summary
 
 
+def test_the_logs_of_the_services_the_problem_depends_on_are_read_and_labelled(db_path, fakes):
+    record, _ = run(db_path)
+
+    tools_step = step_of(record, "tools")
+    assert set(record.context.related_services) <= set(tools_step.details["services"])
+    for item in record.evidence:
+        if item.type == "LOG" and item.service not in record.context.services:
+            assert item.description.startswith(f"On {item.service}, a dependency: ")
+            assert item.citation in tools_step.details["found"]["dependency_logs"]
+    # whatever the dependencies log, the first error is still the Payment API's own
+    assert step_of(record, "build_timeline").details["first_error"] == "LOG-PAY-20260714-14"
+
+
+def test_the_coredns_errors_of_the_reporting_problem_are_found_on_its_kubernetes_dependency(db_path, fakes, monkeypatch):
+    # STORY-009: the cause is on the shared Kubernetes platform; the evidence is kept even if the draft fails
+    monkeypatch.setattr(pipeline.rag, "query_collection", lambda *args, **kwargs: [])
+    fakes.reasoning = Fake(INVENTED_DRAFT)
+
+    record = pipeline.run_investigation("INC-2026-00109", db_path=db_path)
+
+    dependency_logs = [item for item in record.evidence if item.type == "LOG" and item.service == "Kubernetes Platform"]
+    assert dependency_logs
+    assert dependency_logs[0].description.startswith("On Kubernetes Platform, a dependency: ")
+    assert {item.service for item in record.evidence if item.type == "LOG"} >= {"Reporting Service", "Kubernetes Platform"}
+
+
 # The context fixes what is searched -----------------------------------------------------
 
 
@@ -362,7 +388,7 @@ def test_every_source_is_checked_around_every_incident_of_the_problem(db_path, f
 
     tools_step = record.trace[2]
     assert [window["incident_id"] for window in tools_step.details["log_windows"]] == [INCIDENT_ID, REFERENCE_ID]
-    assert set(tools_step.details["found"]) == {"logs", "changes", "cmdb", "problem_incidents"}
+    assert set(tools_step.details["found"]) == {"logs", "dependency_logs", "changes", "cmdb", "problem_incidents"}
     assert tools_step.details["found"]["problem_incidents"] == [INCIDENT_ID]
     # the change on the API Gateway is not on the Payment API or a service it depends on
     assert "CHG-2026-00872" not in tools_step.details["found"]["changes"]

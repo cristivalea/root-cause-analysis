@@ -69,7 +69,8 @@ def _window(window: dict) -> str:
 
 
 # What the evidence step searched, source by source, in the order it searched them.
-FOUND = (("logs", "step.found_logs"), ("changes", "step.found_changes"), ("cmdb", "step.found_cmdb"),
+FOUND = (("logs", "step.found_logs"), ("dependency_logs", "step.found_dependency_logs"),
+         ("changes", "step.found_changes"), ("cmdb", "step.found_cmdb"),
          ("problem_incidents", "step.found_problem_incidents"))
 
 

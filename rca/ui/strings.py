@@ -372,6 +372,7 @@ EN: dict[str, str] = {
     "step.change_window": "Changes searched",
     "step.found_logs": "Log patterns found ({count})",
     "step.found_changes": "Changes found ({count})",
+    "step.found_dependency_logs": "Log patterns on the services it depends on ({count})",
     "step.found_cmdb": "Components depended on, from the CMDB ({count})",
     "step.found_problem_incidents": "Other incidents of the problem ({count})",
     "step.found_none": "Nothing found: this rules it out for the searched window.",

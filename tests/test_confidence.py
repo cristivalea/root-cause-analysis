@@ -148,3 +148,12 @@ def test_the_incident_itself_earns_no_points_and_is_not_a_source():
                                      suggested_workaround=None, change_likely_required=False), ledger, DETECTED_AT)
 
     assert (assessed[0].confidence, assessed[0].confidence_points) == ("LOW", 0)
+
+
+def test_an_error_on_a_dependency_does_not_move_the_first_error_of_the_problem():
+    dependency_log = Evidence(evidence_id="EV-098", type="LOG", source="k8s", description="CoreDNS errors.",
+                              citation="LOG-K8S-1", timestamp=at("13:00"), service="Kubernetes Platform")
+    ledger = [*LEDGER, dependency_log]
+
+    assert first_error_time(ledger, DETECTED_AT) == at("13:00")  # without the services: any log counts
+    assert first_error_time(ledger, DETECTED_AT, ["Payment API"]) == at("14:05")  # the problem's own first error

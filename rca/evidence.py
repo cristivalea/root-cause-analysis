@@ -28,6 +28,7 @@ class EvidenceLedger:
         citation: str,
         timestamp: datetime | None = None,
         related_ids: list[str] | None = None,
+        service: str | None = None,
     ) -> Evidence:
         """Record a fact and return it with its id.
 
@@ -46,6 +47,7 @@ class EvidenceLedger:
             citation=citation,
             timestamp=timestamp,
             related_ids=[item for item in related_ids or [] if item != citation],
+            service=service,
         )
         self._items.append(evidence)
         return evidence
@@ -79,19 +81,23 @@ def relative_to_detection(moment: datetime, detected_at: datetime, of: str = "de
     return f"{amount} {side} {of}"
 
 
-def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection") -> None:
-    """One evidence per log group, cited by its first line; the other lines are kept as related ids."""
+def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection",
+                   dependency: bool = False) -> None:
+    """One evidence per log group, cited by its first line; the other lines are kept as related ids.
+    dependency: the lines come from a service the problem depends on, which the description says."""
     for group in groups:
         first = group.examples[0]
+        where = f"On {group.service}, a dependency: " if dependency else ""
         ledger.add(
             "LOG",
             ", ".join(group.hosts),
-            f"{group.count} {group.level} log line(s) of type {group.error_type} between "
+            f"{where}{group.count} {group.level} log line(s) of type {group.error_type} between "
             f"{group.first_seen:%Y-%m-%d %H:%M} and {group.last_seen:%H:%M} UTC, the first "
             f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{first.message}\"",
             first.log_id,
             group.first_seen,
             group.log_ids,
+            group.service,
         )
 
 

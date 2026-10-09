@@ -244,6 +244,7 @@ class Evidence(BaseModel):
     citation: str  # id of the original record, for example CHG-2026-00871
     timestamp: datetime | None = None
     related_ids: list[str] = []  # the other records the evidence stands for: every line of a log group
+    service: str | None = None  # the service of a log line: one of the problem, or a dependency
 
 
 class TimeWindow(BaseModel):
