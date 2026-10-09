@@ -310,6 +310,16 @@ EN: dict[str, str] = {
     "step.investigation_planner.title": "Plan the investigation",
     "step.investigation_planner.text": "Writes the searches for past incidents and analyses. The services "
                                        "and time windows come from the problem and its incidents.",
+    "step.build_timeline.title": "Order the events",
+    "step.build_timeline.text": "Puts the incidents, the logs and the changes on one time axis and marks the first error.",
+    "step.timeline_line": "{count} moments in time order",
+    "timeline.title": "Timeline",
+    "timeline.how_to_read": "The facts of the investigation in time order. A change before the first error can have "
+                            "caused it; a change after it cannot.",
+    "timeline.first error": "first error",
+    "timeline.before the first error": "before the first error",
+    "timeline.after the first error": "after the first error",
+    "timeline.incident detected": "incident detected",
     "step.tools.title": "Collect evidence",
     "step.tools.text": "Checks the logs around every incident, the changes since a week before the first one, "
                        "and the service dependencies.",

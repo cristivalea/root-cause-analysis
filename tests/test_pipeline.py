@@ -175,6 +175,11 @@ def fakes(monkeypatch):
     return Fakes
 
 
+def step_of(record, name):
+    """The last run of a step, found by its name rather than its position."""
+    return [step for step in record.trace if step.name == name][-1]
+
+
 def run(db_path):
     steps = []
     record = pipeline.run_investigation(INCIDENT_ID, owner="Test Manager", db_path=db_path, on_step=steps.append)
@@ -207,7 +212,7 @@ def test_the_payment_api_draft_is_built_and_saved(db_path, fakes):
 def test_the_steps_are_reported_in_order_as_they_finish(db_path, fakes):
     record, steps = run(db_path)
 
-    names = ["similar_incidents", "investigation_planner", "tools", "historical_rca_agent",
+    names = ["similar_incidents", "investigation_planner", "tools", "build_timeline", "historical_rca_agent",
              "rca_reasoning_agent", "guardrail", "confidence"]
     assert [step.name for step in steps] == names
     assert steps == record.trace
@@ -241,7 +246,7 @@ def test_the_distractors_do_not_become_evidence(db_path, fakes):
 
     citations = {item.citation for item in record.evidence}
     assert "RCA-2025-00042" not in citations and "INC-2026-00106" not in citations and "RCA-2024-00999" not in citations
-    history_step = record.trace[3]
+    history_step = step_of(record, "historical_rca_agent")
     assert [item["id"] for item in history_step.details["dropped"]] == ["RCA-2025-00042", "INC-2026-00106", "RCA-2024-00999"]
 
 
@@ -250,7 +255,7 @@ def test_past_records_of_other_services_are_dropped_by_code_before_the_agent(db_
 
     history_request = fakes.historical.requests[0]
     assert "RCA-2025-00042" not in history_request and "INC-2026-00106" not in history_request
-    reasons = {item["id"]: item["reason"] for item in record.trace[3].details["dropped"]}
+    reasons = {item["id"]: item["reason"] for item in step_of(record, "historical_rca_agent").details["dropped"]}
     assert reasons["RCA-2025-00042"].startswith("Another service (Payroll Service)")
     assert reasons["INC-2026-00106"].startswith("Another service (Billing Service)")
 
@@ -262,7 +267,7 @@ def test_an_invalid_answer_of_the_historical_agent_is_asked_again_instead_of_los
 
     assert len(fakes.historical.requests) == 2
     assert {"RCA-2025-00114", "INC-2025-00401"} <= {item.citation for item in record.evidence}
-    assert [item["attempt"] for item in record.trace[3].details["attempts"]] == [1, 2]
+    assert [item["attempt"] for item in step_of(record, "historical_rca_agent").details["attempts"]] == [1, 2]
 
 
 def test_three_invalid_answers_continue_without_history_and_say_why(db_path, fakes):
@@ -316,8 +321,21 @@ def test_a_past_rca_that_links_an_incident_is_found_even_when_its_text_is_not(db
     request = fakes.historical.requests[0]
     assert '"found_by": "search, and links INC-2025-00401"' in request  # RCA-2025-00114, found both ways
     assert '"found_by": "links INC-2025-00401"' in request  # RCA-2024-00500, found by the link only
-    dropped = {item["id"]: item["reason"] for item in record.trace[3].details["dropped"]}
+    dropped = {item["id"]: item["reason"] for item in step_of(record, "historical_rca_agent").details["dropped"]}
     assert dropped["RCA-2024-00600"].startswith("Another service (Billing Service)")  # the rule holds for links too
+
+
+def test_the_timeline_is_saved_and_sent_to_the_reasoning_agent(db_path, fakes):
+    record, _ = run(db_path)
+
+    markers = {entry.citation: entry.marker for entry in record.timeline}
+    assert markers["CHG-2026-00871"] == "before the first error"  # the deploy, 7 minutes before the first timeout
+    assert markers["CHG-2026-00876"] == "after the first error"  # the rollback
+    assert markers["LOG-PAY-20260714-14"] == "first error"
+    assert markers["INC-2026-00482"] == markers[REFERENCE_ID] == "incident detected"
+    assert "RCA-2025-00114" not in markers  # history is not on the timeline of this problem
+    assert step_of(record, "build_timeline").details["first_error"] == "LOG-PAY-20260714-14"
+    assert '"timeline"' in fakes.reasoning.requests[0] and "(first error)" in fakes.reasoning.requests[0]
 
 
 # The context fixes what is searched -----------------------------------------------------
@@ -369,7 +387,7 @@ def test_a_refused_draft_is_asked_again_with_the_problems(db_path, fakes):
     record, _ = run(db_path)
 
     assert record.status == "DRAFT"
-    assert [step.name for step in record.trace[4:]] == [
+    assert [step.name for step in record.trace[5:]] == [
         "rca_reasoning_agent", "guardrail", "rca_reasoning_agent", "guardrail",
         "rca_reasoning_agent", "guardrail", "confidence",
     ]
@@ -496,8 +514,9 @@ def test_a_second_run_in_the_same_thread_starts_from_zero(db_path, fakes):
     reasoning_steps = [step.summary for step in second.trace if step.name == "rca_reasoning_agent"]
     assert [summary.split(":")[0] for summary in reasoning_steps] == ["Attempt 1", "Attempt 2", "Attempt 3"]
     # Only the steps and notes of the second run are saved with it.
-    assert [step.name for step in second.trace][:4] == ["similar_incidents", "investigation_planner", "tools", "historical_rca_agent"]
-    assert len(second.trace) == 11
+    assert [step.name for step in second.trace][:5] == ["similar_incidents", "investigation_planner", "tools",
+                                                        "build_timeline", "historical_rca_agent"]
+    assert len(second.trace) == 12
     assert second.not_checked == ["No database metrics."]
     assert [item.evidence_id for item in second.evidence] == [item.evidence_id for item in first.evidence]
 

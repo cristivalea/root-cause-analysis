@@ -17,6 +17,7 @@ from rca.ui.components import rca_draft
 from rca.ui.components.cause_diagram import cause_diagram
 from rca.ui.components.incident_card import incident_summary
 from rca.ui.components.page_header import page_header
+from rca.ui.components.timeline_view import timeline_view
 from rca.ui.strings import t
 
 # REVIEWER_KEY = "reviewer_name"
@@ -269,6 +270,7 @@ def review(rca_id: str) -> None:
             with st.container(border=True):
                 incident_summary(incident)
         cause_diagram(record, incident.title if incident else None)
+        timeline_view(record)
 
     # The decisions close the page: the whole analysis has been read by the time they
     # are in reach.

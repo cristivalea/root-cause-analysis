@@ -23,6 +23,7 @@ STEPS = (
     "similar_incidents",
     "investigation_planner",
     "tools",
+    "build_timeline",
     "historical_rca_agent",
     "rca_reasoning_agent",
     "guardrail",
@@ -163,6 +164,9 @@ def _result_line(step: InvestigationStep, plan=None, limit: int = 70) -> str:
     if step.name == "tools" and details.get("evidence") is not None:
         count = details["evidence"]
         return t("step.collected_count_one") if count == 1 else t("step.collected_count", count=count)
+
+    if step.name == "build_timeline" and details.get("moments") is not None:
+        return t("step.timeline_line", count=details["moments"])
 
     if step.name == "rca_reasoning_agent":
         count = _counted(summary, r"(\d+) hypothesis")

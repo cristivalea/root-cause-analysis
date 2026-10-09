@@ -15,7 +15,9 @@ from rca.models import DraftRCA, Evidence
 
 INSTRUCTIONS = """You are the RCA Reasoning Agent in a Root Cause Analysis application for IT incidents.
 You receive the evidence ledger of one investigation: the facts found in the logs, the changes,
-the CMDB and the past incidents and RCAs. Each fact has an evidence id such as EV-001.
+the CMDB and the past incidents and RCAs. Each fact has an evidence id such as EV-001. You also
+receive the timeline: the same facts in time order, with the first error and the changes made
+before and after it marked. Use it for the order of events; it holds no fact that is not in the ledger.
 The ledger is the only information you have. Do not use anything that is not in it.
 
 Work in this order:
@@ -68,11 +70,13 @@ about it, and when the ledger cannot answer it, write that in not_checked. Never
 incident_id is the id given in the input. Write in English."""
 
 
-def build_user_input(incident_id: str, evidence: list[Evidence], expert_request: str | None = None) -> str:
+def build_user_input(incident_id: str, evidence: list[Evidence], expert_request: str | None = None,
+                     timeline: list[str] | None = None) -> str:
     return json.dumps(
         {
             "incident_id": incident_id,
             **({"technical_expert_request": expert_request} if expert_request else {}),
+            **({"timeline": timeline} if timeline else {}),
             "evidence_ledger": [item.model_dump(mode="json") for item in evidence],
         },
         indent=2,
@@ -85,13 +89,15 @@ def propose_draft(
     evidence: list[Evidence],
     feedback: str | None = None,
     expert_request: str | None = None,
+    timeline: list[str] | None = None,
 ) -> DraftRCA:
     """Ask the model for the draft RCA, based only on the evidence ledger.
 
     feedback is the reason the previous answer was refused, added by the guardrail on a retry.
     expert_request is what the Technical Expert asked in the review of the previous revision.
+    timeline is the ledger in time order with the first error marked (rca/timeline.py).
     Raises LLMOutputError when the answer is not valid JSON or does not match DraftRCA.
     """
-    draft = ask_json(INSTRUCTIONS, with_feedback(build_user_input(incident_id, evidence, expert_request), feedback), DraftRCA)
+    draft = ask_json(INSTRUCTIONS, with_feedback(build_user_input(incident_id, evidence, expert_request, timeline), feedback), DraftRCA)
     # The incident id is known by the code, so the model cannot attach the draft to another incident.
     return draft.model_copy(update={"incident_id": incident_id})

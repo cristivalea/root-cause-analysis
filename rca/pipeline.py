@@ -4,7 +4,7 @@ The graph only routes. Every judgement is made by one of the three agents and ev
 ordinary code in the other modules; each node calls them and writes what it found into the
 state. The path:
 
-    start → similar_incidents → investigation_planner ─┬─► tools → historical_rca_agent
+    start → similar_incidents → investigation_planner ─┬─► tools → build_timeline → historical_rca_agent
                                                        └─► save_rca            (escalated)
 
     historical_rca_agent → rca_reasoning_agent → guardrail ─┬─► confidence → save_rca
@@ -48,6 +48,7 @@ from rca.models import (
     DraftRCA,
     Evidence,
     Incident,
+    TimelineEntry,
     InvestigationContext,
     InvestigationGuidance,
     InvestigationPlan,
@@ -55,6 +56,7 @@ from rca.models import (
     RCARecord,
     RCAStatus,
 )
+from rca.timeline import as_lines, build_timeline as timeline_of
 from rca.tools import find_changes, find_dependencies, find_logs
 from rca.observability import tracer
 
@@ -93,6 +95,7 @@ class InvestigationState(InvestigationInput, total=False):
     similar_incidents: list[Incident]
     plan: InvestigationPlan
     evidence: list[Evidence]
+    timeline: list[TimelineEntry]
     linked_incidents: list[str]
     draft: DraftRCA | None
     attempts: int
@@ -295,6 +298,7 @@ def start(state: InvestigationState) -> dict:
         "similar_incidents": [],
         "plan": None,
         "evidence": [],
+        "timeline": [],
         "linked_incidents": [],
         "draft": None,
         "attempts": 0,
@@ -487,6 +491,21 @@ def _other_service(candidate: dict[str, Any], services: set[str]) -> str | None:
     return service if service and service not in services else None
 
 
+def build_timeline(state: InvestigationState) -> dict:
+    """Code: the facts found so far on one time axis, with the first error marked (rca/timeline.py)."""
+    started = _now()
+    entries = timeline_of(state["evidence"], state["context"].incident_ids, state["incidents"][0].detected_at)
+    first = next((entry for entry in entries if entry.marker == "first error"), None)
+    before = [entry.citation for entry in entries if entry.marker == "before the first error"]
+    summary = f"{len(entries)} moment(s) on the timeline."
+    if first:
+        summary += f" First error {first.at:%Y-%m-%d %H:%M} UTC ({first.citation})."
+    summary += f" Changes before it: {', '.join(before) or 'none'}."
+    return {"timeline": entries, "trace": [_step("build_timeline", started, summary, moments=len(entries),
+                                                  first_error=first.citation if first else None,
+                                                  changes_before=before)]}
+
+
 def historical_rca_agent(state: InvestigationState) -> dict:
     """Agent 2: RAG over past RCAs and incidents, then the agent keeps only what is really similar.
 
@@ -575,7 +594,7 @@ def rca_reasoning_agent(state: InvestigationState) -> dict:
     attempt = state.get("attempts", 0) + 1
     try:
         draft = reasoning.propose_draft(state["incident_id"], state["evidence"], state.get("feedback"),
-                                        state["context"].expert_request)
+                                        state["context"].expert_request, as_lines(state.get("timeline") or []))
     except LLMOutputError as exc:
         return {
             "attempts": attempt,
@@ -674,6 +693,7 @@ def save_rca(state: InvestigationState) -> dict:
         context=state.get("context"),
         plan=state.get("plan"),
         evidence=state.get("evidence", []),
+        timeline=state.get("timeline", []),
         trace=state["trace"],
         investigation_summary=draft.investigation_summary if draft else state.get("escalation_reason", ""),
         observed_patterns=draft.observed_patterns if draft else [],
@@ -703,7 +723,7 @@ def save_rca(state: InvestigationState) -> dict:
 def build_graph(checkpointer=None):
     """The compiled graph. The checkpointer keeps the state between runs (Studio adds its own)."""
     builder = StateGraph(InvestigationState, input_schema=InvestigationInput)
-    for node in (start, similar_incidents, investigation_planner, tools, historical_rca_agent,
+    for node in (start, similar_incidents, investigation_planner, tools, build_timeline, historical_rca_agent,
                  rca_reasoning_agent, guardrail, confidence, save_rca):
         builder.add_node(node.__name__, node)
 
@@ -711,7 +731,8 @@ def build_graph(checkpointer=None):
     builder.add_edge("start", "similar_incidents")
     builder.add_edge("similar_incidents", "investigation_planner")
     builder.add_conditional_edges("investigation_planner", after_planner, ["tools", "save_rca"])
-    builder.add_edge("tools", "historical_rca_agent")
+    builder.add_edge("tools", "build_timeline")
+    builder.add_edge("build_timeline", "historical_rca_agent")
     builder.add_edge("historical_rca_agent", "rca_reasoning_agent")
     builder.add_edge("rca_reasoning_agent", "guardrail")
     builder.add_conditional_edges("guardrail", after_guardrail, ["confidence", "rca_reasoning_agent", "save_rca"])

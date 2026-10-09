@@ -279,6 +279,17 @@ class InvestigationContext(BaseModel):
     sources: dict[str, str] = {}
 
 
+class TimelineEntry(BaseModel):
+    """One fact of the ledger on the time axis of the investigation (rca/timeline.py)."""
+
+    at: datetime
+    evidence_id: str
+    type: EvidenceType
+    citation: str
+    what: str
+    marker: str | None = None  # "incident detected", "first error", "before/after the first error"
+
+
 class InvestigationPlan(BaseModel):
     """Answer of the Investigation Planner: what to look for, where and when."""
 
@@ -378,6 +389,7 @@ class RCARecord(BaseModel):
     context: InvestigationContext | None = None
     plan: InvestigationPlan | None = None
     evidence: list[Evidence] = []
+    timeline: list[TimelineEntry] = []
     trace: list[InvestigationStep] = []
 
     investigation_summary: str = ""
