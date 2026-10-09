@@ -76,3 +76,12 @@ def test_the_investigation_of_a_story_is_found_through_any_incident_of_its_probl
 
     assert record_for_story(entry, [other]) is other
     assert record_for_story(story([]) | {"problem_incidents": []}, [other]) is None
+
+
+def test_a_log_line_that_is_not_the_first_of_its_group_is_in_the_ledger_through_the_group():
+    record = RECORD.model_copy(deep=True)
+    record.evidence[0].related_ids = ["LOG-PAY-20260714-30"]  # EV-001: its group also holds this line
+
+    trace = trace_story(story(["LOG-PAY-20260714-30"]), record, LOGS, CHANGES)
+
+    assert (trace.citations[0].stage, trace.citations[0].evidence_id) == (CITED_BY_MAIN, "EV-001")

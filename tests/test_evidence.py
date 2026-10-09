@@ -67,3 +67,22 @@ def test_two_components_depending_on_the_same_one_are_both_kept():
     assert [item.citation for item in ledger.items()] == ["CI-PAYROLL-DB", "CI-PAYROLL-SFTP"]
     database = ledger.items()[0].description
     assert "CI-PAYROLL-APP" in database and "CI-PAYROLL-WORKER" in database
+
+
+def test_a_log_group_keeps_every_line_as_a_related_id():
+    from datetime import datetime, timezone
+
+    from rca.evidence import add_log_groups
+    from rca.models import LogEntry, LogGroup
+
+    at = datetime(2026, 7, 14, 14, 5, tzinfo=timezone.utc)
+    lines = [LogEntry(log_id=f"LOG-PAY-20260714-{n}", timestamp=at, service="Payment API", host="h", level="ERROR",
+                      message="timeout", error_type="ConnectionTimeout") for n in (14, 20, 21)]
+    group = LogGroup(service="Payment API", level="ERROR", error_type="ConnectionTimeout", count=3, first_seen=at,
+                     last_seen=at, hosts=["h"], examples=lines[:1], log_ids=[line.log_id for line in lines])
+    ledger = EvidenceLedger()
+
+    add_log_groups(ledger, [group], at)
+
+    assert ledger.items()[0].citation == "LOG-PAY-20260714-14"
+    assert ledger.items()[0].related_ids == ["LOG-PAY-20260714-20", "LOG-PAY-20260714-21"]

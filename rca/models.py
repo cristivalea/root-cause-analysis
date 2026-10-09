@@ -204,6 +204,7 @@ class LogGroup(BaseModel):
     last_seen: datetime
     hosts: list[str]
     examples: list[LogEntry]  # the first few lines, kept as citations
+    log_ids: list[str] = []  # every line of the group
 
 
 # --------------------------------------------------------------------------------------
@@ -242,6 +243,7 @@ class Evidence(BaseModel):
     description: str
     citation: str  # id of the original record, for example CHG-2026-00871
     timestamp: datetime | None = None
+    related_ids: list[str] = []  # the other records the evidence stands for: every line of a log group
 
 
 class TimeWindow(BaseModel):

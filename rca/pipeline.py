@@ -165,8 +165,9 @@ def _rca_sections(rca_ids: list[str]) -> dict[str, dict[str, str]]:
     return sections
 
 
-def _past_rca_candidates(plan: InvestigationPlan, before: datetime) -> list[dict[str, Any]]:
-    """The past RCAs closest to the search queries of the plan, each with the text the agent judges.
+def _past_rca_candidates(plan: InvestigationPlan, before: datetime, linked_to: list[str] | None = None) -> list[dict[str, Any]]:
+    """The past RCAs closest to the search queries of the plan, and the past RCAs that link an incident
+    of the problem or a similar incident (linked_to), each with the text the agent judges.
 
     The search works on sections, but the evidence is the RCA: the candidate is cited by the RCA
     id (RCA-2025-00114), so the same RCA found in several sections is judged and counted once.
@@ -181,6 +182,17 @@ def _past_rca_candidates(plan: InvestigationPlan, before: datetime) -> list[dict
                 best[rca_id] = {**result, "id": rca_id}
 
     closest = sorted(best.values(), key=lambda item: item["distance"])[:MAX_PAST_RCAS]
+    for item in closest:
+        item["found_by"] = "search"
+    # An RCA that links one of these incidents is found by the link, whatever its wording.
+    for rca_id, link in rag.rcas_linked_to(linked_to or [], int(before.timestamp())).items():
+        reason = f"links {', '.join(link['incidents'])}"
+        known = next((item for item in closest if item["id"] == rca_id), None)
+        if known is not None:
+            known["found_by"] = f"search, and {reason}"
+        else:
+            metadata = {"document_id": rca_id, "service": link["service"], "completion_date": link["completion_date"]}
+            closest.append({"id": rca_id, "document": "", "metadata": metadata, "distance": None, "found_by": reason})
     sections = _rca_sections([item["id"] for item in closest])
 
     candidates = []
@@ -192,7 +204,8 @@ def _past_rca_candidates(plan: InvestigationPlan, before: datetime) -> list[dict
             "id": item["id"],
             # Without these sections in the index, the closest section is the only text there is.
             "document": "\n".join(judged) or item["document"][:MAX_SECTION_LENGTH],
-            "metadata": {**metadata, "matched_section": item["metadata"].get("section_name"), "source_type": "rca"},
+            "metadata": {**metadata, "matched_section": item["metadata"].get("section_name"), "source_type": "rca",
+                         "found_by": item["found_by"]},
         })
     return candidates
 
@@ -489,7 +502,8 @@ def historical_rca_agent(state: InvestigationState) -> dict:
 
     if "historical_rcas" in plan.sources:
         try:
-            candidates += _past_rca_candidates(plan, incident.detected_at)
+            linked_to = [*state["context"].incident_ids, *(item.incident_id for item in state["similar_incidents"])]
+            candidates += _past_rca_candidates(plan, incident.detected_at, linked_to)
         except Exception as exc:  # Ollama or ChromaDB is not available: the investigation continues without them
             not_checked.append(f"Past RCAs could not be searched ({type(exc).__name__}: {exc}).")
     else:

@@ -243,6 +243,28 @@ def upsert_records(records: list[dict[str, Any]], collection_name: str, model: s
     log(f"Upserted {len(records)} items into collection '{collection_name}'.")
 
 
+def rcas_linked_to(incident_ids: list[str], before_timestamp: int | None = None) -> dict[str, dict[str, Any]]:
+    """The past RCAs that link any of the given incidents ("Linked Incidents" of the RCA document),
+    completed before before_timestamp: {rca_id: {"incidents": [the linked ones among the given],
+    "service": ..., "completion_date": ...}}. No embedding is needed: the links are in the metadata."""
+    wanted = set(incident_ids)
+    if not wanted:
+        return {}
+    client = chromadb.PersistentClient(path=str(ROOT / "chroma_db"))
+    collection = client.get_collection(name="historical_rcas")
+    found: dict[str, list[str]] = {}
+    for meta in collection.get(include=["metadatas"])["metadatas"]:
+        completed = meta.get("completion_date")
+        if before_timestamp is not None and isinstance(completed, (int, float)) and completed >= before_timestamp:
+            continue
+        linked = [item for item in str(meta.get("linked_incidents") or "").split(",") if item in wanted]
+        if linked:
+            entry = found.setdefault(meta["document_id"], {"incidents": [], "service": meta.get("service"),
+                                                           "completion_date": completed})
+            entry["incidents"] = sorted(set(entry["incidents"]) | set(linked))
+    return found
+
+
 def query_collection(
     collection_name: str,
     query_text: str,

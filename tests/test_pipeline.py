@@ -151,6 +151,8 @@ def fakes(monkeypatch):
         planner = Fake(plan_answer())
         historical = Fake(HISTORY_REVIEW)
         reasoning = Fake(GOOD_DRAFT)
+        linked: dict = {}  # what rag.rcas_linked_to answers
+        linked_calls: list = []
 
     def fake_query_collection(collection_name, query_text, limit=5, before_timestamp=None, **kwargs):
         Fakes.search_calls.append(collection_name)
@@ -160,6 +162,12 @@ def fakes(monkeypatch):
         return INCIDENT_RESULTS if collection_name == "historical_incidents" else RCA_RESULTS
 
     monkeypatch.setattr(pipeline.rag, "query_collection", fake_query_collection)
+
+    def fake_linked(incident_ids, before_timestamp=None):
+        Fakes.linked_calls.append((list(incident_ids), before_timestamp))
+        return Fakes.linked
+
+    monkeypatch.setattr(pipeline.rag, "rcas_linked_to", fake_linked)
     monkeypatch.setattr(pipeline, "_rca_sections", lambda rca_ids: {key: RCA_SECTIONS[key] for key in rca_ids if key in RCA_SECTIONS})
     monkeypatch.setattr(planner, "ask_json", lambda *args: Fakes.planner(*args))
     monkeypatch.setattr(historical, "ask_json", lambda *args, **kwargs: Fakes.historical(*kwargs.values()))
@@ -289,6 +297,27 @@ def test_the_ledger_starts_with_the_incident_and_the_guardrail_keeps_its_warning
     assert "Symptoms:" in record.evidence[0].description
     guardrail = next(step for step in record.trace if step.name == "guardrail")
     assert guardrail.details["warnings"] == ["HYP-001 names EV-013 in its text without citing it."]
+
+
+def test_a_past_rca_that_links_an_incident_is_found_even_when_its_text_is_not(db_path, fakes):
+    fakes.linked = {
+        "RCA-2025-00114": {"incidents": ["INC-2025-00401"], "service": "Payment API", "completion_date": PAYMENT_RCA_DATE},
+        "RCA-2024-00500": {"incidents": ["INC-2025-00401"], "service": "Payment API", "completion_date": 1710000000},
+        "RCA-2024-00600": {"incidents": ["INC-2025-00401"], "service": "Billing Service", "completion_date": 1710000000},
+    }
+    fakes.historical = Fake(HistoricalRCAReview(decisions=[*HISTORY_REVIEW.decisions,
+        HistoricalRCADecision(citation="RCA-2024-00500", relevant=False, reason="Different symptoms.")]))
+
+    record, _ = run(db_path)
+
+    incidents, before = fakes.linked_calls[0]
+    assert {"INC-2026-00482", "INC-2026-00857", "INC-2025-00401"} <= set(incidents)  # the problem and the similar ones
+    assert before == int(datetime.fromisoformat(REFERENCE_DETECTED).timestamp())
+    request = fakes.historical.requests[0]
+    assert '"found_by": "search, and links INC-2025-00401"' in request  # RCA-2025-00114, found both ways
+    assert '"found_by": "links INC-2025-00401"' in request  # RCA-2024-00500, found by the link only
+    dropped = {item["id"]: item["reason"] for item in record.trace[3].details["dropped"]}
+    assert dropped["RCA-2024-00600"].startswith("Another service (Billing Service)")  # the rule holds for links too
 
 
 # The context fixes what is searched -----------------------------------------------------

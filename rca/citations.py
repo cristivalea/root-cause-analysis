@@ -100,7 +100,9 @@ def _why_missing(citation: str, record: RCARecord, logs: dict[str, dict], change
 
 
 def trace_story(story: dict, record: RCARecord, logs: dict[str, dict], changes: dict[str, dict]) -> StoryTrace:
-    by_citation = {item.citation: item for item in record.evidence}
+    # a log line that is not the first of its group is still in the ledger, through the group
+    by_citation = {related: item for item in record.evidence for related in item.related_ids}
+    by_citation |= {item.citation: item for item in record.evidence}
     main = record.hypotheses[0] if record.hypotheses else None
     citations = []
     for citation in story["expected_citations"]:
@@ -116,14 +118,15 @@ def trace_story(story: dict, record: RCARecord, logs: dict[str, dict], changes: 
         citations.append(CitationTrace(citation, stage, evidence.evidence_id, cited_by))
 
     relevant = relevant_citations(story)
-    main_cited = {item.citation for item in record.evidence if main and item.evidence_id in main.supporting_evidence}
+    main_cited = {cited for item in record.evidence if main and item.evidence_id in main.supporting_evidence
+                  for cited in (item.citation, *item.related_ids)}
     return StoryTrace(
         story_id=story["story_id"],
         rca_id=record.rca_id,
         incident_id=record.incident_id,
         citations=citations,
         ledger_size=len(record.evidence),
-        relevant_in_ledger=sum(1 for item in record.evidence if item.citation in relevant),
+        relevant_in_ledger=sum(1 for item in record.evidence if relevant & {item.citation, *item.related_ids}),
         red_herrings_cited_by_main=[item["citation"] for item in story["red_herrings"] if item["citation"] in main_cited],
     )
 

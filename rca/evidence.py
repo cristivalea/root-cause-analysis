@@ -27,6 +27,7 @@ class EvidenceLedger:
         description: str,
         citation: str,
         timestamp: datetime | None = None,
+        related_ids: list[str] | None = None,
     ) -> Evidence:
         """Record a fact and return it with its id.
 
@@ -44,6 +45,7 @@ class EvidenceLedger:
             description=description,
             citation=citation,
             timestamp=timestamp,
+            related_ids=[item for item in related_ids or [] if item != citation],
         )
         self._items.append(evidence)
         return evidence
@@ -78,7 +80,7 @@ def relative_to_detection(moment: datetime, detected_at: datetime, of: str = "de
 
 
 def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection") -> None:
-    """One evidence per log group, cited by its first line."""
+    """One evidence per log group, cited by its first line; the other lines are kept as related ids."""
     for group in groups:
         first = group.examples[0]
         ledger.add(
@@ -89,6 +91,7 @@ def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: 
             f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{first.message}\"",
             first.log_id,
             group.first_seen,
+            group.log_ids,
         )
 
 
