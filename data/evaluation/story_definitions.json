@@ -121,7 +121,7 @@
     "story_id": "STORY-006",
     "title": "Month-end billing aggregation times out",
     "kind": "success",
-    "demo_purpose": "Second time pattern (last business day of the month) and the 'request more evidence' loop: the cause is a maintenance change 6 days before, found only with a wider window.",
+    "demo_purpose": "Second time pattern (last business day of the month, June and July): the cause is a maintenance change 6 days before the first failure, inside the change window of the problem.",
     "service": "Billing Service",
     "business_service": "Billing",
     "target_incident": "INC-2026-00106",

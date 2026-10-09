@@ -53,8 +53,9 @@
       ],
       "weakly_supported": false,
       "expert_decision": "APPROVE",
-      "note": "CHG-2026-00262 is older than the 7 day maximum window, so the investigation cannot see it. The autoscaler log lines and the recurrence start (March 2026) point to it; the expert confirms it."
+      "note": "CHG-2026-00262 (11 March) is inside the change window of the problem, which starts 7 days before its first incident (16 March), so the first revision can cite it. RCA-2025-00042 was completed before the problem started: the answer must say why it came back (the autoscaling replaced its 32-thread cap)."
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -320,6 +321,7 @@
       "expert_decision": "APPROVE",
       "note": null
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -536,6 +538,7 @@
       "expert_decision": "REQUEST_MORE_DETAILS",
       "note": "Without history the best possible support is logs plus CMDB. A HIGH result here means the innocent banner change was cited as support. The expert should ask for the lock lease configuration before approving."
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -735,7 +738,17 @@
       ],
       "weakly_supported": false,
       "expert_decision": "APPROVE",
-      "note": "The credential rotation is 25 days before the incident, outside the window, and the cert-manager logs belong to the Kubernetes Platform, which the log tool does not read for this service. The expert confirms the renewal failure from those logs."
+      "note": "The credential rotation (CHG-2026-00361, 6 April) is 25 days before the incident, outside the 7 day change window, and the renewal failures are days before it, outside the 2 hour log window. The first revision finds the expiry and the past RCA; the expert asks for 30 days of changes and a week of logs, and the next revision finds the rotation. The first expiry warning (LOG-GW-20260424-01, 7 days and 3 hours before) stays beyond the longest log window (168 hours)."
+    },
+    "expert_followup": {
+      "request": "Check the changes of the last 30 days and the certificate renewal logs of the last week.",
+      "guidance": {
+        "change_window_days": 30,
+        "log_hours_before": 168
+      },
+      "expected_new_citations": [
+        "CHG-2026-00361"
+      ]
     },
     "five_whys": [
       {
@@ -946,6 +959,7 @@
       "expert_decision": "APPROVE",
       "note": "A second hypothesis based on RCA-2025-00192 (rebalance storm) is expected and should be ranked lower because the deserialization errors come first."
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -1157,9 +1171,10 @@
         "HIGH"
       ],
       "weakly_supported": false,
-      "expert_decision": "REQUEST_MORE_DETAILS",
-      "note": "With a window of a few hours the application finds the missing index pattern (logs + RCA-2025-00230) but not why the index is missing. The expert asks for database changes in the last 7 days; the second cycle finds CHG-2026-00766."
+      "expert_decision": "APPROVE",
+      "note": "CHG-2026-00766 (24 June) is 6 days before the first incident of the problem (30 June), inside its change window, so the first revision finds why the index is missing. The July close fails the same way: the run per region did not bring the index back."
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -1384,8 +1399,17 @@
         "HIGH"
       ],
       "weakly_supported": false,
-      "expert_decision": "APPROVE",
-      "note": "With a window shorter than 3 days the baseline change (CHG-2026-00329) is not found; the draft should then list the log rotation configuration as not checked, and the expert confirms the change."
+      "expert_decision": "REQUEST_MORE_DETAILS",
+      "note": "CHG-2026-00329 (16 March) is inside the change window. The disk warnings start 36 hours before the first incident, outside the 2 hour log window, so in the first revision the first error found is the alarm at 02:18 and the campaign change (01:55) earns points: the trap of the story. The expert asks for 48 hours of logs; the warnings from 17 March become the first error and the campaign loses its points."
+    },
+    "expert_followup": {
+      "request": "Check the broker disk usage in the two days before each incident.",
+      "guidance": {
+        "log_hours_before": 48
+      },
+      "expected_new_citations": [
+        "LOG-NOTIF-20260317-01"
+      ]
     },
     "five_whys": [
       {
@@ -1602,6 +1626,7 @@
       "expert_decision": "APPROVE",
       "note": null
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -1801,6 +1826,7 @@
       "expert_decision": "APPROVE",
       "note": "Needs a window that starts before 12 January 16:00 (3 days). With a window of one night only, the change is not seen and the result is MEDIUM."
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -2003,6 +2029,7 @@
       "expert_decision": "APPROVE",
       "note": null
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -2179,7 +2206,18 @@
       ],
       "weakly_supported": null,
       "expert_decision": "REQUEST_MORE_DETAILS",
-      "note": "The egress proxy logs belong to Network Services and the vendor notice is not in any source; the CMDB also has no link from the Payment API to the egress proxy. A HIGH result that blames v4.21.0 is a wrong answer."
+      "note": "The egress proxy logs belong to Network Services and the vendor notice is not in any source; the CMDB also has no link from the Payment API to the egress proxy. A HIGH result that blames v4.21.0 is a wrong answer. When the Problem Manager or the expert adds Network Services, the next revision finds the proxy denying the relay from 09:01, before the deployment."
+    },
+    "expert_followup": {
+      "request": "Check the egress proxy: are the webhook deliveries denied?",
+      "guidance": {
+        "extra_services": [
+          "Network Services"
+        ]
+      },
+      "expected_new_citations": [
+        "LOG-NET-20260908-01"
+      ]
     },
     "five_whys": [
       {
@@ -2388,6 +2426,7 @@
       "expert_decision": "APPROVE",
       "note": null
     },
+    "expert_followup": null,
     "five_whys": [
       {
         "step": 1,
@@ -2589,7 +2628,16 @@
       ],
       "weakly_supported": null,
       "expert_decision": "REQUEST_MORE_DETAILS",
-      "note": "First cycle with a window of a few hours: few log lines and a gap, so weak support is the correct result. Second cycle with a 7 day window: memory growth and CHG-2026-01118 give HIGH."
+      "note": "CHG-2026-01118 (10 September) is inside the change window, but the memory growth (11-14 September) is outside the 2 hour log window and the incident logs have a gap, so the first revision is weakly supported. The expert asks for 5 days of logs; the next revision finds the memory growth."
+    },
+    "expert_followup": {
+      "request": "Check the memory of the session store in the days before the incident.",
+      "guidance": {
+        "log_hours_before": 120
+      },
+      "expected_new_citations": [
+        "LOG-AUTH-20260911-01"
+      ]
     },
     "five_whys": [
       {

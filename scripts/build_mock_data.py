@@ -35,7 +35,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from mock_data import catalog  # noqa: E402
 from mock_data.stories import STORIES  # noqa: E402
-from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry, Problem  # noqa: E402
+from rca.models import (  # noqa: E402
+    Change, CIRelationship, ConfigItem, Incident, IncidentEvent, InvestigationGuidance, LogEntry, Problem,
+)
 
 SEED = 20260930
 NOW = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
@@ -673,6 +675,10 @@ def build_answer_key(world: World) -> dict:
             "expected_citations": [world.cite(item) for item in answer["expected_citations"]],
             "red_herrings": [{"citation": world.cite(item["citation"]), "why": item["why"]} for item in answer["red_herrings"]],
             "expected_outcome": answer["expected_outcome"],
+            # what the expert asks after the first revision, the wider search it gives, and what it must find
+            "expert_followup": ({**answer["expert_followup"], "expected_new_citations": [
+                world.cite(item) for item in answer["expert_followup"]["expected_new_citations"]]}
+                if answer.get("expert_followup") else None),
             "five_whys": [{"step": index, "why": why, "because": because, "evidence": [world.cite(item) for item in evidence],
                            "verifiable_from_sources": bool(evidence)}
                           for index, (why, because, evidence) in enumerate(answer["five_whys"], start=1)],
@@ -823,7 +829,10 @@ def validate(world: World, answer_key: dict) -> list[str]:
         for citation in entry["expected_citations"]:
             if citation in items and citation not in citable:
                 problems.append(f"{story_id} expects {citation}, which the CMDB lookup never returns for {entry['service']}")
+        if entry["expert_followup"]:
+            InvestigationGuidance.model_validate(entry["expert_followup"]["guidance"])
         cited = entry["expected_citations"] + [item["citation"] for item in entry["timeline"] + entry["red_herrings"]]
+        cited += (entry["expert_followup"] or {}).get("expected_new_citations", [])
         cited += [item for step in entry["five_whys"] for item in step["evidence"]]
         cited += [item for factors in entry["fishbone"].values() for factor in factors for item in factor["evidence"]]
         for citation in cited:
