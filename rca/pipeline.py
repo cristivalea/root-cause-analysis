@@ -64,7 +64,8 @@ DEFAULT_OWNER = "Problem Manager"
 MAX_SIMILAR_INCIDENTS = 5
 MAX_PAST_RCAS = 5
 MAX_SECTION_LENGTH = 800  # characters of a past RCA section sent to the Historical RCA Agent
-JUDGED_SECTIONS = ("Summary", "Root Cause")  # what the agent reads of each past RCA: the symptoms and the cause
+# What the agent reads of each past RCA: the symptoms, the cause, and the fix that was meant to stop it.
+JUDGED_SECTIONS = ("Summary", "Root Cause", "Corrective Actions")
 
 
 def _add_or_clear(current: list, update: list | None) -> list:
@@ -214,9 +215,10 @@ def _past_rca_candidates(plan: InvestigationPlan, before: datetime, linked_to: l
 
 
 def _incident_candidate(incident: Incident) -> dict[str, Any]:
+    done = f" | What was done then: {incident.initial_mitigation}" if incident.initial_mitigation else ""
     return {
         "id": incident.incident_id,
-        "document": _incident_text(incident),
+        "document": _incident_text(incident) + done,
         "metadata": {
             "source_type": "incident",
             "service": incident.service,
@@ -225,32 +227,42 @@ def _incident_candidate(incident: Incident) -> dict[str, Any]:
     }
 
 
-def _add_history(ledger: EvidenceLedger, candidate: dict[str, Any], reason: str, incidents: dict[str, Incident]) -> None:
+def _add_history(ledger: EvidenceLedger, candidate: dict[str, Any], reason: str, incidents: dict[str, Incident],
+                 first_incident: datetime) -> bool:
+    """Record a past record the agent kept. Returns True for a past RCA completed before the first incident
+    of the problem: the problem came back after it, so its corrective action did not prevent it (a fact
+    computed here from the dates, not judged by the model)."""
     metadata = candidate["metadata"]
     if metadata["source_type"] == "incident":
         incident = incidents[candidate["id"]]
+        done = f" What was done then: {incident.initial_mitigation}" if incident.initial_mitigation else ""
         ledger.add(
             "HISTORICAL_INCIDENT",
             incident.incident_id,
             f"Past {incident.service} incident {incident.incident_id}, detected {incident.detected_at:%Y-%m-%d}: "
-            f"{incident.title}. {incident.description} Symptoms: {'; '.join(incident.symptoms)}. "
+            f"{incident.title}. {incident.description} Symptoms: {'; '.join(incident.symptoms)}.{done} "
             f"Judged similar because: {reason}",
             incident.incident_id,
             incident.detected_at,
         )
-        return
+        return False
 
     completed = metadata.get("completion_date")
     completed_at = datetime.fromtimestamp(completed, tz=timezone.utc) if isinstance(completed, (int, float)) else None
+    came_back = completed_at is not None and completed_at < first_incident
+    recurrence = (f" The problem came back after this RCA: it was completed {completed_at:%Y-%m-%d}, before the first "
+                  f"incident of this problem ({first_incident:%Y-%m-%d}), so its corrective action did not prevent it."
+                  if came_back else "")
     ledger.add(
         "HISTORICAL_RCA",
         candidate["id"],
         f"Past RCA {candidate['id']} for {metadata.get('service', 'an unknown service')}"
         f"{f', completed {completed_at:%Y-%m-%d}' if completed_at else ''}. "
-        f"{candidate['document']} Judged relevant because: {reason}",
+        f"{candidate['document']} Judged relevant because: {reason}{recurrence}",
         candidate["id"],
         completed_at,
     )
+    return came_back
 
 
 # --------------------------------------------------------------------------------------
@@ -575,11 +587,14 @@ def historical_rca_agent(state: InvestigationState) -> dict:
         elif not decision.relevant:
             dropped.append({"id": candidate["id"], "reason": decision.reason})
         else:
-            kept.append({"id": candidate["id"], "reason": decision.reason})
-            _add_history(ledger, candidate, decision.reason, incidents)
+            came_back = _add_history(ledger, candidate, decision.reason, incidents, state["incidents"][0].detected_at)
+            kept.append({"id": candidate["id"], "reason": decision.reason, "came_back_after": came_back})
 
     kept_ids = [item["id"] for item in kept]
     summary = f"Kept {', '.join(kept_ids) or 'nothing'}. Dropped {', '.join(item['id'] for item in dropped) or 'nothing'}."
+    came_back = [item["id"] for item in kept if item["came_back_after"]]
+    if came_back:
+        summary += f" The problem came back after {', '.join(came_back)}: its corrective action did not prevent it."
     return {
         "evidence": ledger.items(),
         "linked_incidents": [item_id for item_id in kept_ids if item_id in incidents],

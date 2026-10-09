@@ -61,6 +61,7 @@ RCA_SECTIONS = {
         "Summary": "Intermittent HTTP 500 errors and latency above 5 seconds.",
         "Timeline": "13:58 UTC: Release deployment completed on Payment API pods.",
         "Root Cause": "Connection pool exhaustion from unclosed SQL sessions in the retry handler.",
+        "Corrective Actions": "try-with-resources in every repository method; leak detection enabled.",
     },
 }
 
@@ -336,6 +337,21 @@ def test_the_timeline_is_saved_and_sent_to_the_reasoning_agent(db_path, fakes):
     assert "RCA-2025-00114" not in markers  # history is not on the timeline of this problem
     assert step_of(record, "build_timeline").details["first_error"] == "LOG-PAY-20260714-14"
     assert '"timeline"' in fakes.reasoning.requests[0] and "(first error)" in fakes.reasoning.requests[0]
+
+
+def test_the_history_says_what_was_done_then_and_that_the_problem_came_back_after_the_rca(db_path, fakes):
+    record, _ = run(db_path)
+
+    request = fakes.historical.requests[0]
+    assert "Corrective Actions: try-with-resources" in request  # the agent judges the fix too
+    assert "What was done then: Rolling restart" in request  # the mitigation of the past incident
+    by_citation = {item.citation: item for item in record.evidence}
+    # RCA-2025-00114 was completed in November 2025, the problem started in July 2026: it came back after it
+    assert "The problem came back after this RCA" in by_citation["RCA-2025-00114"].description
+    assert "What was done then: Rolling restart" in by_citation["INC-2025-00401"].description
+    kept = {item["id"]: item for item in step_of(record, "historical_rca_agent").details["kept"]}
+    assert kept["RCA-2025-00114"]["came_back_after"] is True and kept["INC-2025-00401"]["came_back_after"] is False
+    assert "came back after RCA-2025-00114" in step_of(record, "historical_rca_agent").summary
 
 
 # The context fixes what is searched -----------------------------------------------------
