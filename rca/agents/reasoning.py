@@ -56,13 +56,16 @@ Rules for every hypothesis:
   hypotheses must explain. Every hypothesis should explain all of them, or say which it does not.
 - When the text of a hypothesis names an evidence id, cite it in supporting_evidence or
   contradicting_evidence. Never write an id that is not in the ledger.
-- why_chain: the 5 Whys of the hypothesis, from the symptom down to the candidate cause. Each step
-  asks "why" about the previous answer and gives the evidence ids that show it. Stop where the
-  evidence stops: at most 5 steps, fewer when the evidence ends earlier, and a step without
-  evidence only as the last one, for the open question an expert must check.
-- factors: the contributing factors of the hypothesis for a fishbone diagram, each in one category
-  (Change / Release, Configuration, Capacity, Dependencies, Monitoring, Process) with its evidence ids.
-  Only factors the evidence supports; an empty category is fine.
+- why_chain: only for HYP-001, the best supported hypothesis; leave it empty for the others. The
+  5 Whys from the symptom down to the candidate cause: each step asks "why" about the previous
+  answer and gives the evidence ids that show it. Stop where the evidence stops: at most 5 steps,
+  fewer when the evidence ends earlier, and a step without evidence only as the last one, for the
+  open question an expert must check.
+- factors: at most 3 contributing factors of the hypothesis for a fishbone diagram, each in one
+  category (Change / Release, Configuration, Capacity, Dependencies, Monitoring, Process) with its
+  evidence ids. Only factors the evidence supports.
+- Keep it short: at most 3 reasons, 3 recommended validations and 3 missing evidence items per
+  hypothesis, each one sentence. Write every field of the answer.
 - A change close in time is not a cause by itself: some changes in the window are innocent.
   A change made after the first error cannot have caused that error, so it is never supporting
   evidence for a cause.
@@ -77,6 +80,12 @@ about it, and when the ledger cannot answer it, write that in not_checked. Never
 incident_id is the id given in the input. Write in English."""
 
 
+# What the agent reads of every evidence. The other fields (every line of a log group, the service,
+# the source) are for the interface and the evaluation, and would only make the request bigger: the
+# free tier of Groq refuses a request over 8000 tokens.
+LEDGER_FIELDS = {"evidence_id", "type", "citation", "timestamp", "description"}
+
+
 def build_user_input(incident_id: str, evidence: list[Evidence], expert_request: str | None = None,
                      timeline: list[str] | None = None) -> str:
     return json.dumps(
@@ -84,10 +93,10 @@ def build_user_input(incident_id: str, evidence: list[Evidence], expert_request:
             "incident_id": incident_id,
             **({"technical_expert_request": expert_request} if expert_request else {}),
             **({"timeline": timeline} if timeline else {}),
-            "evidence_ledger": [item.model_dump(mode="json") for item in evidence],
+            "evidence_ledger": [item.model_dump(mode="json", include=LEDGER_FIELDS) for item in evidence],
         },
-        indent=2,
         ensure_ascii=False,
+        separators=(",", ":"),
     )
 
 

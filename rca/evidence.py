@@ -81,6 +81,13 @@ def relative_to_detection(moment: datetime, detected_at: datetime, of: str = "de
     return f"{amount} {side} {of}"
 
 
+MAX_EXAMPLE = 160  # characters of the example line: the whole line is in the logs, by its citation
+
+
+def _example(message: str) -> str:
+    return message if len(message) <= MAX_EXAMPLE else message[: MAX_EXAMPLE - 3].rstrip() + "..."
+
+
 def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection",
                    dependency: bool = False) -> None:
     """One evidence per log group, cited by its first line; the other lines are kept as related ids.
@@ -93,7 +100,7 @@ def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: 
             ", ".join(group.hosts),
             f"{where}{group.count} {group.level} log line(s) of type {group.error_type} between "
             f"{group.first_seen:%Y-%m-%d %H:%M} and {group.last_seen:%H:%M} UTC, the first "
-            f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{first.message}\"",
+            f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{_example(first.message)}\"",
             first.log_id,
             group.first_seen,
             group.log_ids,

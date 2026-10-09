@@ -468,8 +468,10 @@ def tools(state: InvestigationState) -> dict:
         ledger.add(
             "HISTORICAL_INCIDENT",
             item.incident_id,
+            # the title and the symptoms only: the reference incident carries the full description, and the
+            # request to the Reasoning Agent must stay under the 8000 tokens of the free tier of Groq
             f"Incident {item.incident_id} of the same problem {context.problem_id}, {item.service}, detected "
-            f"{item.detected_at:%Y-%m-%d %H:%M} UTC: {item.title}. {item.description} Symptoms: {'; '.join(item.symptoms)}.",
+            f"{item.detected_at:%Y-%m-%d %H:%M} UTC: {item.title}. Symptoms: {'; '.join(item.symptoms)}.",
             item.incident_id,
             item.detected_at,
         )

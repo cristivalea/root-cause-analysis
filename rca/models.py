@@ -344,16 +344,20 @@ class Hypothesis(BaseModel):
 
 
 class DraftRCA(BaseModel):
-    """Answer of the RCA Reasoning Agent."""
+    """Answer of the RCA Reasoning Agent.
+
+    The short fields come before the hypotheses, which are long: a model writes in the order of the
+    schema, and an answer cut near its end then loses at most the end of a hypothesis, not the
+    required fields. The fields after the summary have defaults for the same reason."""
 
     incident_id: str
     investigation_summary: str
-    observed_patterns: list[str]
-    hypotheses: list[Hypothesis]
+    observed_patterns: list[str] = []
+    not_checked: list[str] = []
+    suggested_workaround: str | None = None
+    change_likely_required: bool = False
     single_hypothesis_reason: str | None = None  # required by the guardrail when there is one hypothesis
-    not_checked: list[str]
-    suggested_workaround: str | None
-    change_likely_required: bool
+    hypotheses: list[Hypothesis]
 
 
 class AssessedHypothesis(Hypothesis):
