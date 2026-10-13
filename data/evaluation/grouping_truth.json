@@ -1,0 +1,3502 @@
+[
+  {
+    "incident_id": "INC-2024-00034",
+    "problem_id": "PRB-2024-00009",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-00043",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2024-00074",
+    "problem_id": "PRB-2024-00009",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-00118",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-00126",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2024-00131",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2024-00144",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2024-00161",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2024-00162",
+    "problem_id": "PRB-2024-00067",
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2024-00166",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2024-00192",
+    "problem_id": "PRB-2024-00024",
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-00193",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2024-00196",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2024-00209",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2024-00210",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2024-00231",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2024-00244",
+    "problem_id": "PRB-2024-00044",
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2024-00249",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2024-00257",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2024-00271",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2024-00279",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2024-00319",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2024-00320",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2024-00332",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-00340",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2024-00358",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2024-00359",
+    "problem_id": "PRB-2024-00044",
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2024-00375",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2024-00380",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-00397",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2024-00406",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2024-00415",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2024-00437",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2024-00441",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2024-00450",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2024-00485",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2024-00493",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2024-00498",
+    "problem_id": "PRB-2024-00085",
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2024-00507",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-00520",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2024-00524",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2024-00537",
+    "problem_id": "PRB-2024-00067",
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2024-00538",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2024-00550",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2024-00563",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2024-00564",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2024-00572",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-00590",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2024-00594",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2024-00603",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2024-00616",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2024-00625",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2024-00633",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2024-00634",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2024-00677",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2024-00678",
+    "problem_id": "PRB-2024-00024",
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-00681",
+    "problem_id": "PRB-2024-00085",
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2024-00682",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2024-00686",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2024-00695",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2024-00716",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-00747",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-00769",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2024-00773",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-00782",
+    "problem_id": "PRB-2024-00139",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-00786",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2024-00804",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2024-00830",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2024-00831",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2024-00834",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2024-00839",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2024-00840",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-00848",
+    "problem_id": "PRB-2024-00158",
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2024-00874",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2024-00883",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2024-00884",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2024-00891",
+    "problem_id": "PRB-2024-00143",
+    "story_id": "STORY-004",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2024-00904",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-00909",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2024-00913",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-00935",
+    "problem_id": "PRB-2024-00131",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-00939",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2024-00957",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2024-00958",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2024-00961",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2024-00983",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2024-00992",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2024-00996",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2024-01001",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-01005",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2024-01014",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2024-01018",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2024-01022",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2024-01031",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-01032",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2024-01049",
+    "problem_id": "PRB-2024-00131",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-01062",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2024-01063",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2024-01079",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2024-01084",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-01088",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2024-01089",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-01092",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2024-01093",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2024-01097",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2024-01106",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2024-01114",
+    "problem_id": "PRB-2024-00139",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2024-01115",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2024-01119",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2024-01136",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2024-01145",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2024-01154",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2024-01171",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2024-01175",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2024-01193",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2024-01206",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2024-01207",
+    "problem_id": "PRB-2024-00150",
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2024-01210",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-01211",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2024-01228",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2024-01229",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2024-01232",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2024-01233",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2024-01245",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-01263",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2024-01267",
+    "problem_id": "PRB-2024-00158",
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2024-01268",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2024-01272",
+    "problem_id": "PRB-2024-00159",
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2024-01273",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2024-01276",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2024-01293",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2024-01294",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2024-01307",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2024-01311",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2024-01312",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2024-01313",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2024-01320",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2024-01328",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2024-01346",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2024-01363",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-01372",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2024-01373",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2024-01374",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2024-01381",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2024-01382",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2024-01383",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2024-01385",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2024-01390",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2024-01398",
+    "problem_id": "PRB-2024-00174",
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2024-01403",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2024-01442",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2024-01460",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2024-01486",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2024-01521",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2024-01560",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2024-01565",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2024-01569",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2024-01586",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2024-01595",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2024-01596",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2024-01600",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2025-00004",
+    "problem_id": "PRB-2025-00001",
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2025-00013",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00034",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00035",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-00043",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2025-00069",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2025-00070",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2025-00087",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00100",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2025-00104",
+    "problem_id": "PRB-2025-00010",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00105",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2025-00119",
+    "problem_id": "PRB-2025-00010",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00131",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-00135",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2025-00144",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2025-00148",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2025-00153",
+    "problem_id": "PRB-2024-00159",
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2025-00157",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2025-00158",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-00187",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2025-00196",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2025-00201",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2025-00214",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2025-00218",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2025-00227",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2025-00236",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2025-00240",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00249",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-00257",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2025-00262",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2025-00266",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2025-00271",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2025-00275",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2025-00284",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00297",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2025-00301",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2025-00306",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2025-00310",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2025-00311",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2025-00312",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2025-00319",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2025-00340",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2025-00349",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2025-00362",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2025-00363",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00367",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00368",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2025-00369",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2025-00371",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2025-00380",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2025-00389",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2025-00401",
+    "problem_id": "PRB-2025-00177",
+    "story_id": "STORY-002",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00410",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-00432",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2025-00433",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-00445",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2025-00459",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-00463",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2025-00472",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-00485",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2025-00493",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-00498",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00512",
+    "problem_id": "PRB-2025-00066",
+    "story_id": "STORY-006",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00515",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2025-00533",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00537",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-00548",
+    "problem_id": "PRB-2025-00066",
+    "story_id": "STORY-006",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00550",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2025-00551",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-00552",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-00555",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2025-00563",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-00564",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-00568",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2025-00572",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2025-00581",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2025-00582",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2025-00585",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-00612",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2025-00615",
+    "problem_id": "PRB-2025-00077",
+    "story_id": "STORY-010",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00616",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2025-00642",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00646",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2025-00647",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2025-00648",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2025-00664",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-00665",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2025-00668",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00690",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2025-00695",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2025-00703",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2025-00725",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-00726",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2025-00743",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2025-00744",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2025-00769",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-00773",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2025-00774",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2025-00800",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-00826",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2025-00834",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2025-00835",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-00836",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2025-00839",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2025-00840",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2025-00852",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-00856",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-00857",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2025-00858",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2025-00861",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-00887",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2025-00896",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2025-00926",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2025-00948",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-00953",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-00957",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2025-00979",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2025-00982",
+    "problem_id": "PRB-2025-00104",
+    "story_id": "STORY-005",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-00987",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2025-00988",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2025-01005",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2025-01009",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2025-01010",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01014",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2025-01015",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2025-01022",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-01040",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2025-01049",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2025-01066",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01075",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-01079",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2025-01097",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-01098",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2025-01101",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2025-01110",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2025-01132",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2025-01136",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-01140",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2025-01158",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-01167",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2025-01171",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_consumer"
+  },
+  {
+    "incident_id": "INC-2025-01175",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2025-01180",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2025-01189",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01215",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-01219",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2025-01228",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-01229",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-01230",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2025-01232",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2025-01233",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2025-01241",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2025-01245",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01267",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2025-01272",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2025-01280",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2025-01281",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2025-01289",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2025-01305",
+    "problem_id": "PRB-2025-00151",
+    "story_id": "STORY-008",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-01328",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2025-01329",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-01337",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2025-01342",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2025-01346",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2025-01347",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2025-01355",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2025-01356",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2025-01363",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2025-01398",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01399",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-01407",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2025-01442",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2025-01443",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-01460",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2025-01477",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2025-01490",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-01495",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2025-01496",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2025-01499",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2025-01503",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_rounding"
+  },
+  {
+    "incident_id": "INC-2025-01508",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2025-01516",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-01517",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2025-01525",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2025-01534",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2025-01569",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2025-01573",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2025-01574",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2025-01578",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2025-01581",
+    "problem_id": "PRB-2025-00193",
+    "story_id": "STORY-007",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2025-01582",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2025-01586",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2025-01591",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2025-01595",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2026-00012",
+    "problem_id": "PRB-2026-00008",
+    "story_id": "STORY-009",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00013",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2026-00014",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2026-00016",
+    "problem_id": "PRB-2026-00008",
+    "story_id": "STORY-009",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00021",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-00034",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2026-00048",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2026-00056",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_avatar"
+  },
+  {
+    "incident_id": "INC-2026-00061",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00062",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_unsub"
+  },
+  {
+    "incident_id": "INC-2026-00065",
+    "problem_id": "PRB-2026-00012",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00069",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2026-00074",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2026-00078",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2026-00091",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2026-00096",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-00097",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_cache_storm"
+  },
+  {
+    "incident_id": "INC-2026-00100",
+    "problem_id": "PRB-2026-00012",
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00101",
+    "problem_id": "PRB-2026-00113",
+    "story_id": "STORY-001",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00103",
+    "problem_id": "PRB-2026-00121",
+    "story_id": "STORY-003",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00104",
+    "problem_id": "PRB-2026-00066",
+    "story_id": "STORY-004",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00105",
+    "problem_id": "PRB-2026-00024",
+    "story_id": "STORY-005",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00106",
+    "problem_id": "PRB-2026-00099",
+    "story_id": "STORY-006",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00107",
+    "problem_id": "PRB-2026-00042",
+    "story_id": "STORY-007",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00108",
+    "problem_id": "PRB-2026-00051",
+    "story_id": "STORY-008",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00109",
+    "problem_id": "PRB-2026-00008",
+    "story_id": "STORY-009",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00110",
+    "problem_id": "PRB-2026-00077",
+    "story_id": "STORY-010",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00126",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2026-00131",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2026-00139",
+    "problem_id": "PRB-2026-00113",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00166",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2026-00167",
+    "problem_id": "PRB-2026-00113",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00170",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_webhook"
+  },
+  {
+    "incident_id": "INC-2026-00183",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2026-00184",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00187",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2026-00188",
+    "problem_id": "PRB-2026-00113",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00196",
+    "problem_id": "PRB-2026-00113",
+    "story_id": "STORY-001",
+    "story_role": "history",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00201",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2026-00214",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2026-00218",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_bank"
+  },
+  {
+    "incident_id": "INC-2026-00222",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2026-00223",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_leave"
+  },
+  {
+    "incident_id": "INC-2026-00224",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_lockout"
+  },
+  {
+    "incident_id": "INC-2026-00249",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2026-00253",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2026-00254",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2026-00257",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_5xx"
+  },
+  {
+    "incident_id": "INC-2026-00271",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2026-00284",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_session_drop"
+  },
+  {
+    "incident_id": "INC-2026-00285",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2026-00288",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2026-00289",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2026-00297",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00298",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2026-00314",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2026-00319",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2026-00323",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_recon"
+  },
+  {
+    "incident_id": "INC-2026-00332",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_recon"
+  },
+  {
+    "incident_id": "INC-2026-00333",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2026-00354",
+    "problem_id": "PRB-2026-00042",
+    "story_id": "STORY-007",
+    "story_role": "recurrence",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00367",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_personalisation"
+  },
+  {
+    "incident_id": "INC-2026-00368",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2026-00371",
+    "problem_id": null,
+    "story_id": "STORY-002",
+    "story_role": "distractor",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00372",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_release"
+  },
+  {
+    "incident_id": "INC-2026-00389",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-00393",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2026-00397",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2026-00402",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_waf"
+  },
+  {
+    "incident_id": "INC-2026-00410",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00411",
+    "problem_id": null,
+    "story_id": "STORY-002",
+    "story_role": "distractor",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00419",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2026-00441",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2026-00449",
+    "problem_id": "PRB-2026-00130",
+    "story_id": "STORY-012",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00459",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2026-00468",
+    "problem_id": "PRB-2026-00137",
+    "story_id": "STORY-011",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00472",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_report"
+  },
+  {
+    "incident_id": "INC-2026-00473",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2026-00480",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2026-00482",
+    "problem_id": "PRB-2026-00106",
+    "story_id": "STORY-002",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00489",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2026-00491",
+    "problem_id": "PRB-2026-00140",
+    "story_id": "STORY-013",
+    "story_role": "target",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00498",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2026-00507",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2026-00524",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-00577",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2026-00594",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2026-00598",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00603",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2026-00616",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2026-00620",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2026-00621",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00625",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2026-00629",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2026-00638",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2026-00642",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_ratelimit"
+  },
+  {
+    "incident_id": "INC-2026-00643",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_template"
+  },
+  {
+    "incident_id": "INC-2026-00673",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-00677",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_jwks"
+  },
+  {
+    "incident_id": "INC-2026-00678",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_search"
+  },
+  {
+    "incident_id": "INC-2026-00681",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_tokenisation"
+  },
+  {
+    "incident_id": "INC-2026-00699",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2026-00700",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00703",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_clearing"
+  },
+  {
+    "incident_id": "INC-2026-00708",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2026-00712",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00713",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_flag"
+  },
+  {
+    "incident_id": "INC-2026-00716",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_slow"
+  },
+  {
+    "incident_id": "INC-2026-00725",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_peak"
+  },
+  {
+    "incident_id": "INC-2026-00743",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fx"
+  },
+  {
+    "incident_id": "INC-2026-00760",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2026-00769",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_latency"
+  },
+  {
+    "incident_id": "INC-2026-00786",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2026-00791",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_sms"
+  },
+  {
+    "incident_id": "INC-2026-00839",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_pdf"
+  },
+  {
+    "incident_id": "INC-2026-00848",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_discovery"
+  },
+  {
+    "incident_id": "INC-2026-00857",
+    "problem_id": "PRB-2026-00106",
+    "story_id": "STORY-002",
+    "story_role": "recurrence",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00891",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2026-00900",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2026-00909",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2026-00926",
+    "problem_id": "PRB-2026-00099",
+    "story_id": "STORY-006",
+    "story_role": "recurrence",
+    "family": null
+  },
+  {
+    "incident_id": "INC-2026-00927",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00948",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_reset_mail"
+  },
+  {
+    "incident_id": "INC-2026-00949",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "payroll_tax"
+  },
+  {
+    "incident_id": "INC-2026-00970",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-00971",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_release"
+  },
+  {
+    "incident_id": "INC-2026-00987",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "up_release"
+  },
+  {
+    "incident_id": "INC-2026-00988",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_checkout_js"
+  },
+  {
+    "incident_id": "INC-2026-00992",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_stale"
+  },
+  {
+    "incident_id": "INC-2026-01001",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_query"
+  },
+  {
+    "incident_id": "INC-2026-01005",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "rep_export"
+  },
+  {
+    "incident_id": "INC-2026-01014",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_rebalance"
+  },
+  {
+    "incident_id": "INC-2026-01053",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  },
+  {
+    "incident_id": "INC-2026-01075",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "notif_push"
+  },
+  {
+    "incident_id": "INC-2026-01079",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-01080",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2026-01119",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_cart"
+  },
+  {
+    "incident_id": "INC-2026-01120",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_fraud"
+  },
+  {
+    "incident_id": "INC-2026-01132",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_tax"
+  },
+  {
+    "incident_id": "INC-2026-01162",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "gw_eviction"
+  },
+  {
+    "incident_id": "INC-2026-01175",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "portal_login_loop"
+  },
+  {
+    "incident_id": "INC-2026-01180",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "bill_dunning"
+  },
+  {
+    "incident_id": "INC-2026-01181",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "set_duplicate"
+  },
+  {
+    "incident_id": "INC-2026-01184",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "pay_acquirer"
+  },
+  {
+    "incident_id": "INC-2026-01189",
+    "problem_id": null,
+    "story_id": null,
+    "story_role": null,
+    "family": "auth_mfa"
+  }
+]

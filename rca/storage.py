@@ -9,7 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry
+from rca import migrations
+from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry, Problem, ProblemLink
 
 
 SCHEMAS = {
@@ -73,6 +74,110 @@ SCHEMAS = {
             payload TEXT NOT NULL
         )
     """,
+    # the incidents of a problem live only in problem_incidents, so there is one place to change them
+    "problems": """
+        CREATE TABLE IF NOT EXISTS problems (
+            problem_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            payload TEXT NOT NULL
+        )
+    """,
+    # incident_id is the key: an incident belongs to one problem at most
+    "problem_incidents": """
+        CREATE TABLE IF NOT EXISTS problem_incidents (
+            incident_id TEXT PRIMARY KEY,
+            problem_id TEXT NOT NULL,
+            linked_at TEXT NOT NULL,
+            linked_by TEXT NOT NULL
+        )
+    """,
+    # every change made to a problem, never updated or deleted (rca/problems.py); details is a JSON object
+    "problem_events": """
+        CREATE TABLE IF NOT EXISTS problem_events (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            problem_id TEXT NOT NULL,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            action TEXT NOT NULL,
+            incident_id TEXT,
+            reason TEXT,
+            rca_id TEXT,
+            details TEXT
+        )
+    """,
+    # suggestions the Problem Manager rejected (target: a problem or an incident), never proposed again
+    "rejected_suggestions": """
+        CREATE TABLE IF NOT EXISTS rejected_suggestions (
+            incident_id TEXT NOT NULL,
+            target TEXT NOT NULL,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            PRIMARY KEY (incident_id, target)
+        )
+    """,
+    # one row per RCA (rca/store.py): its problem and its current status; payload is the RCA model
+    "rcas": """
+        CREATE TABLE IF NOT EXISTS rcas (
+            rca_id TEXT PRIMARY KEY,
+            problem_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            payload TEXT NOT NULL
+        )
+    """,
+    # one row per run of the graph; once the run ends, the revision is never changed
+    "rca_revisions": """
+        CREATE TABLE IF NOT EXISTS rca_revisions (
+            revision_id TEXT PRIMARY KEY,
+            rca_id TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            run_status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            UNIQUE (rca_id, number)
+        )
+    """,
+    # every change of the status of an RCA, the decisions of the expert included; never updated or deleted
+    "rca_status_history": """
+        CREATE TABLE IF NOT EXISTS rca_status_history (
+            change_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rca_id TEXT NOT NULL,
+            revision_id TEXT,
+            from_status TEXT,
+            to_status TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            at TEXT NOT NULL,
+            comment TEXT,
+            decision TEXT,
+            details TEXT
+        )
+    """,
+    # the decision on each proposal of the Proposed Problem Records page (rca/suggestions.proposals): the key is
+    # the proposal, so a proposal is accepted or rejected once, and accepting it again returns the same problem
+    "proposal_decisions": """
+        CREATE TABLE IF NOT EXISTS proposal_decisions (
+            proposal_key TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            incident_ids TEXT NOT NULL,
+            problem_id TEXT,
+            decision TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            at TEXT NOT NULL,
+            reason TEXT
+        )
+    """,
+    # incidents the Problem Manager once marked as needing no problem. No longer read or written: every incident
+    # in no problem is proposed (rca/suggestions.py). The table and its rows are kept as history.
+    "dismissed_incidents": """
+        CREATE TABLE IF NOT EXISTS dismissed_incidents (
+            incident_id TEXT PRIMARY KEY,
+            at TEXT NOT NULL,
+            by_user TEXT NOT NULL,
+            reason TEXT NOT NULL
+        )
+    """,
 }
 
 
@@ -83,104 +188,186 @@ def _read_records(sources_dir: Path, filename: str, optional: bool = False) -> l
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+# The data the application reads but never changes: reloaded from data/sources whenever needed.
+SOURCE_TABLES = ("incidents", "cmdb_items", "cmdb_relationships", "changes", "incident_events", "logs")
+# The work done in the application: problems, their incidents and history, the decisions on the
+# suggestions and the RCAs with their revisions and history. A reload of the sources never empties them.
+# rca_records is the table of the RCAs saved before E3, kept unchanged by the migration (rca/migrations.py).
+APPLICATION_TABLES = ("problems", "problem_incidents", "problem_events", "rejected_suggestions",
+                      "dismissed_incidents", "proposal_decisions", "rcas", "rca_revisions", "rca_status_history",
+                      "rca_records")
+
+
 def initialize_database(connection: sqlite3.Connection) -> None:
+    """Create the missing tables and bring an older database up to date (rca/migrations.py)."""
     for schema in SCHEMAS.values():
         connection.execute(schema)
     connection.commit()
+    migrations.migrate(connection)
 
 
 def clear_sources(db_path: Path) -> None:
     """Empty the source tables, so a new load does not keep records that no longer exist.
-    The RCA records (rca_records) are not touched."""
+    The work done in the application (APPLICATION_TABLES) is not touched."""
     if not db_path.exists():
         return
     with closing(sqlite3.connect(db_path)) as connection:
         initialize_database(connection)
-        for table in SCHEMAS:
+        for table in SOURCE_TABLES:
             connection.execute(f"DELETE FROM {table}")
         connection.commit()
 
 
-def load_sources(db_path: Path, sources_dir: Path) -> None:
+def clear_application_state(db_path: Path) -> Path | None:
+    """Empty every application table, the RCAs included, so problems and RCAs always go away together
+    and no RCA is left without its problem. A copy of the whole file is written first; returns its
+    path. Used only by scripts/load_sources_sqlite.py --reset-app."""
+    if not db_path.exists():
+        return None
+    with closing(sqlite3.connect(db_path)) as connection:
+        initialize_database(connection)
+        copy = migrations.backup(connection, "before-reset-app")
+        existing = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        for table in APPLICATION_TABLES:
+            if table in existing:
+                connection.execute(f"DELETE FROM {table}")
+        connection.commit()
+    return copy
+
+
+def load_sources(db_path: Path, sources_dir: Path, reset: bool = False) -> bool:
+    """Load the source data, in one transaction. With reset, the source tables are emptied first.
+
+    The problems of data/sources/problems.json are the starting state of the application: they are
+    loaded only into a database that has no problem yet, each with a "created" event marked as
+    imported. A database with problems keeps its own, so a reload never undoes the work of the
+    Problem Manager. A load that would leave a problem with an incident that is no longer in the
+    sources is refused, and nothing is changed. Returns whether the problems were loaded.
+    """
     incidents = [Incident.model_validate(item) for item in _read_records(sources_dir, "incidents.json")]
     events = [IncidentEvent.model_validate(item) for item in _read_records(sources_dir, "incident_events.json", optional=True)]
     cmdb_items = [ConfigItem.model_validate(item) for item in _read_records(sources_dir, "cmdb_items.json")]
     relationships = [CIRelationship.model_validate(item) for item in _read_records(sources_dir, "cmdb_relationships.json")]
     changes = [Change.model_validate(item) for item in _read_records(sources_dir, "changes.json")]
     logs = [LogEntry.model_validate(item) for item in _read_records(sources_dir, "logs.json")]
+    problems = [Problem.model_validate(item) for item in _read_records(sources_dir, "problems.json", optional=True)]
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(db_path) as connection:
+    with closing(sqlite3.connect(db_path)) as connection:
         initialize_database(connection)
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            seeded = _load(connection, reset, incidents, events, cmdb_items, relationships, changes, logs, problems)
+            connection.commit()
+        except BaseException:
+            connection.rollback()
+            raise
+    return seeded
+
+
+def _load(connection: sqlite3.Connection, reset: bool, incidents: list[Incident], events: list[IncidentEvent],
+          cmdb_items: list[ConfigItem], relationships: list[CIRelationship], changes: list[Change],
+          logs: list[LogEntry], problems: list[Problem]) -> bool:
+    if reset:
+        for table in SOURCE_TABLES:
+            connection.execute(f"DELETE FROM {table}")
+    connection.executemany(
+        """INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(incident_id) DO UPDATE SET
+           service=excluded.service, business_service=excluded.business_service,
+           severity=excluded.severity, status=excluded.status,
+           environment=excluded.environment, detected_at=excluded.detected_at,
+           resolved_at=excluded.resolved_at, payload=excluded.payload""",
+        [
+            (
+                item.incident_id, item.service, item.business_service, item.severity,
+                item.status, item.environment, item.detected_at.isoformat(),
+                item.resolved_at.isoformat() if item.resolved_at else None,
+                json.dumps(item.model_dump(mode="json")),
+            )
+            for item in incidents
+        ],
+    )
+    connection.executemany(
+        """INSERT INTO incident_events VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(event_id) DO UPDATE SET
+           incident_id=excluded.incident_id, timestamp=excluded.timestamp,
+           action=excluded.action, payload=excluded.payload""",
+        [
+            (item.event_id, item.incident_id, item.timestamp.isoformat(), item.action,
+             json.dumps(item.model_dump(mode="json")))
+            for item in events
+        ],
+    )
+    connection.executemany(
+        """INSERT INTO cmdb_items VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(ci_id) DO UPDATE SET
+           service=excluded.service, type=excluded.type,
+           environment=excluded.environment, criticality=excluded.criticality,
+           payload=excluded.payload""",
+        [
+            (item.ci_id, item.service, item.type, item.environment, item.criticality,
+             json.dumps(item.model_dump(mode="json")))
+            for item in cmdb_items
+        ],
+    )
+    connection.executemany(
+        """INSERT INTO cmdb_relationships VALUES (?, ?, ?)
+           ON CONFLICT(source_ci, target_ci, relationship_type) DO NOTHING""",
+        [(item.source_ci, item.target_ci, item.relationship_type) for item in relationships],
+    )
+    connection.executemany(
+        """INSERT INTO changes VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(change_id) DO UPDATE SET
+           service=excluded.service, ci_id=excluded.ci_id,
+           implemented_at=excluded.implemented_at, type=excluded.type,
+           payload=excluded.payload""",
+        [
+            (item.change_id, item.service, item.ci_id, item.implemented_at.isoformat(),
+             item.type, json.dumps(item.model_dump(mode="json")))
+            for item in changes
+        ],
+    )
+    connection.executemany(
+        """INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(log_id) DO UPDATE SET
+           timestamp=excluded.timestamp, service=excluded.service,
+           level=excluded.level, host=excluded.host, payload=excluded.payload""",
+        [
+            (item.log_id, item.timestamp.isoformat(), item.service, item.level, item.host,
+             json.dumps(item.model_dump(mode="json")))
+            for item in logs
+        ],
+    )
+    seeded = connection.execute("SELECT COUNT(*) FROM problems").fetchone()[0] == 0
+    if seeded:
+        # plain INSERT: two problems of the source data with the same incident are an error, not a move
         connection.executemany(
-            """INSERT INTO incidents VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(incident_id) DO UPDATE SET
-               service=excluded.service, business_service=excluded.business_service,
-               severity=excluded.severity, status=excluded.status,
-               environment=excluded.environment, detected_at=excluded.detected_at,
-               resolved_at=excluded.resolved_at, payload=excluded.payload""",
+            "INSERT INTO problems VALUES (?, ?, ?, ?)",
             [
-                (
-                    item.incident_id, item.service, item.business_service, item.severity,
-                    item.status, item.environment, item.detected_at.isoformat(),
-                    item.resolved_at.isoformat() if item.resolved_at else None,
-                    json.dumps(item.model_dump(mode="json")),
-                )
-                for item in incidents
+                (item.problem_id, item.status, item.created_at.isoformat(),
+                 json.dumps(item.model_dump(mode="json", exclude={"incidents"})))
+                for item in problems
             ],
         )
         connection.executemany(
-            """INSERT INTO incident_events VALUES (?, ?, ?, ?, ?)
-               ON CONFLICT(event_id) DO UPDATE SET
-               incident_id=excluded.incident_id, timestamp=excluded.timestamp,
-               action=excluded.action, payload=excluded.payload""",
+            "INSERT INTO problem_incidents VALUES (?, ?, ?, ?)",
             [
-                (item.event_id, item.incident_id, item.timestamp.isoformat(), item.action,
-                 json.dumps(item.model_dump(mode="json")))
-                for item in events
+                (link.incident_id, item.problem_id, link.linked_at.isoformat(), link.linked_by)
+                for item in problems
+                for link in item.incidents
             ],
         )
-        connection.executemany(
-            """INSERT INTO cmdb_items VALUES (?, ?, ?, ?, ?, ?)
-               ON CONFLICT(ci_id) DO UPDATE SET
-               service=excluded.service, type=excluded.type,
-               environment=excluded.environment, criticality=excluded.criticality,
-               payload=excluded.payload""",
-            [
-                (item.ci_id, item.service, item.type, item.environment, item.criticality,
-                 json.dumps(item.model_dump(mode="json")))
-                for item in cmdb_items
-            ],
-        )
-        connection.executemany(
-            """INSERT INTO cmdb_relationships VALUES (?, ?, ?)
-               ON CONFLICT(source_ci, target_ci, relationship_type) DO NOTHING""",
-            [(item.source_ci, item.target_ci, item.relationship_type) for item in relationships],
-        )
-        connection.executemany(
-            """INSERT INTO changes VALUES (?, ?, ?, ?, ?, ?)
-               ON CONFLICT(change_id) DO UPDATE SET
-               service=excluded.service, ci_id=excluded.ci_id,
-               implemented_at=excluded.implemented_at, type=excluded.type,
-               payload=excluded.payload""",
-            [
-                (item.change_id, item.service, item.ci_id, item.implemented_at.isoformat(),
-                 item.type, json.dumps(item.model_dump(mode="json")))
-                for item in changes
-            ],
-        )
-        connection.executemany(
-            """INSERT INTO logs VALUES (?, ?, ?, ?, ?, ?)
-               ON CONFLICT(log_id) DO UPDATE SET
-               timestamp=excluded.timestamp, service=excluded.service,
-               level=excluded.level, host=excluded.host, payload=excluded.payload""",
-            [
-                (item.log_id, item.timestamp.isoformat(), item.service, item.level, item.host,
-                 json.dumps(item.model_dump(mode="json")))
-                for item in logs
-            ],
-        )
-        connection.commit()
+        migrations.add_imported_created_events(connection)
+    missing = [row[0] for row in connection.execute(
+        "SELECT incident_id FROM problem_incidents WHERE incident_id NOT IN (SELECT incident_id FROM incidents) "
+        "ORDER BY incident_id")]
+    if missing:
+        raise ValueError(
+            "The problems of the application use incidents that are not in the sources: "
+            f"{', '.join(missing[:10])}{' ...' if len(missing) > 10 else ''}. Nothing was loaded. "
+            "Use --reset-app to start the application data again (a copy of the database is kept).")
+    return seeded
 
 
 # --------------------------------------------------------------------------------------
@@ -244,12 +431,41 @@ def upsert_incident(db_path: Path, incident: Incident) -> None:
 
 
 def delete_incident(db_path: Path, incident_id: str) -> None:
-    """Remove an incident from the source database."""
+    """Remove an incident from the source database. An incident of a problem is kept: removing it
+    would leave the problem, its history and its RCAs pointing at nothing."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with closing(sqlite3.connect(db_path)) as connection:
         initialize_database(connection)
+        owner = connection.execute("SELECT problem_id FROM problem_incidents WHERE incident_id = ?",
+                                   (incident_id,)).fetchone()
+        if owner:
+            raise ValueError(f"{incident_id} is in {owner[0]}: an incident of a problem is never deleted.")
         connection.execute("DELETE FROM incidents WHERE incident_id = ?", (incident_id,))
         connection.commit()
+
+
+def get_problem(db_path: Path, problem_id: str) -> Problem | None:
+    """A problem with its incidents, in the order they happened."""
+    with closing(_connect_read_only(db_path)) as connection:
+        row = connection.execute("SELECT payload FROM problems WHERE problem_id = ?", [problem_id]).fetchone()
+        if row is None:
+            return None
+        links = connection.execute(
+            """SELECT link.incident_id, link.linked_at, link.linked_by FROM problem_incidents AS link
+               JOIN incidents ON incidents.incident_id = link.incident_id
+               WHERE link.problem_id = ? ORDER BY julianday(incidents.detected_at)""",
+            [problem_id],
+        ).fetchall()
+    incidents = [ProblemLink(incident_id=incident_id, linked_at=linked_at, linked_by=linked_by)
+                 for incident_id, linked_at, linked_by in links]
+    return Problem.model_validate({**json.loads(row[0]), "incidents": incidents})
+
+
+def get_problem_id_for_incident(db_path: Path, incident_id: str) -> str | None:
+    """The problem the incident is attached to, or None."""
+    with closing(_connect_read_only(db_path)) as connection:
+        row = connection.execute("SELECT problem_id FROM problem_incidents WHERE incident_id = ?", [incident_id]).fetchone()
+    return row[0] if row else None
 
 
 def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:
@@ -260,6 +476,12 @@ def get_incident_events(db_path: Path, incident_id: str) -> list[IncidentEvent]:
         [incident_id],
     )
     return [IncidentEvent.model_validate(item) for item in payloads]
+
+
+def list_services(db_path: Path) -> list[str]:
+    """Every service that has components in the CMDB, in alphabetical order."""
+    with closing(_connect_read_only(db_path)) as connection:
+        return [row[0] for row in connection.execute("SELECT DISTINCT service FROM cmdb_items ORDER BY service")]
 
 
 def get_config_items_for_service(db_path: Path, service: str) -> list[ConfigItem]:

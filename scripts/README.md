@@ -20,7 +20,17 @@ python scripts/build_mock_data.py --check    # only builds and validates
 python scripts/load_sources_sqlite.py --reset
 ```
 
-`--reset` empties the source tables before loading, so records that no longer exist are removed. The saved RCAs are kept.
+`--reset` empties the source tables (incidents, logs, changes, CMDB) before loading, so records that no
+longer exist are removed. The work done in the application (problems, their history, the RCAs) is kept,
+and a load that would leave a problem with an incident that no longer exists is refused.
+`--reset-app` also empties the problems, their history and the RCAs together, after a copy of the whole
+database is written to `data/backups/`, and loads the problems of the source data again.
+
+The sources include the problems (`data/sources/problems.json`, tables `problems` and `problem_incidents`):
+one open problem per story and one closed problem per past RCA. `data/evaluation/grouping_truth.json` says
+which problem or failure family every incident really belongs to, for scoring the grouping suggestions.
+Each story has its own random generator, so changing one story never changes the other stories or the
+background data.
 
 ## Ingest the project data
 

@@ -1,0 +1,33 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	start(start)
+	similar_incidents(similar_incidents)
+	investigation_planner(investigation_planner)
+	tools(tools)
+	historical_rca_agent(historical_rca_agent)
+	rca_reasoning_agent(rca_reasoning_agent)
+	guardrail(guardrail)
+	confidence(confidence)
+	save_rca(save_rca)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> start;
+	confidence --> save_rca;
+	guardrail -.-> confidence;
+	guardrail -.-> rca_reasoning_agent;
+	guardrail -.-> save_rca;
+	historical_rca_agent --> rca_reasoning_agent;
+	investigation_planner -.-> save_rca;
+	investigation_planner -.-> tools;
+	rca_reasoning_agent --> guardrail;
+	similar_incidents --> investigation_planner;
+	start --> similar_incidents;
+	tools --> historical_rca_agent;
+	save_rca --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

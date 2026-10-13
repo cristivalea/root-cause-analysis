@@ -1,0 +1,73 @@
+[
+  {
+    "story_id": "STORY-004",
+    "kind": "success",
+    "revision": 1,
+    "seconds": 36.1,
+    "error": null,
+    "rca_id": "RCA-2026-00003",
+    "status": "DRAFT",
+    "requests": 3,
+    "requests_by_agent": {
+      "investigation_planner": 1,
+      "historical_review": 1,
+      "rca_reasoning_agent": 1
+    },
+    "input_tokens": 6512,
+    "output_tokens": 4633,
+    "input_tokens_by_agent": {
+      "investigation_planner": 1172,
+      "historical_review": 1545,
+      "rca_reasoning_agent": 3795
+    },
+    "llm_seconds": 21.4,
+    "waited_seconds": 0,
+    "invalid_answers": 0,
+    "failed_requests": 0,
+    "reasoning_attempts": 1,
+    "guardrail_passed": true,
+    "hypotheses": 2,
+    "confidence": "MEDIUM",
+    "expected_citations": 4,
+    "in_ledger": 3,
+    "cited_by_main": 2,
+    "red_herrings_cited_by_main": []
+  },
+  {
+    "story_id": "STORY-004",
+    "kind": "success",
+    "revision": 2,
+    "seconds": 131.9,
+    "error": null,
+    "rca_id": "RCA-2026-00003",
+    "status": "DRAFT",
+    "requests": 4,
+    "requests_by_agent": {
+      "investigation_planner": 1,
+      "historical_review": 1,
+      "rca_reasoning_agent": 2
+    },
+    "input_tokens": 12473,
+    "output_tokens": 6913,
+    "input_tokens_by_agent": {
+      "investigation_planner": 1196,
+      "historical_review": 1757,
+      "rca_reasoning_agent": 9520
+    },
+    "llm_seconds": 119.2,
+    "waited_seconds": 0,
+    "invalid_answers": 0,
+    "failed_requests": 0,
+    "reasoning_attempts": 2,
+    "guardrail_passed": true,
+    "hypotheses": 2,
+    "confidence": "MEDIUM",
+    "expected_citations": 4,
+    "in_ledger": 3,
+    "cited_by_main": 0,
+    "red_herrings_cited_by_main": [],
+    "expert_expected": 1,
+    "expert_in_ledger": 1,
+    "expert_cited": 0
+  }
+]

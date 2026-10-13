@@ -6,6 +6,10 @@ requests==2.34.2
 groq==1.7.0
 langgraph==1.2.11
 pydantic==2.13.5
+# LangSmith tracing of the Groq calls (only active when LANGSMITH_TRACING=true)
+langsmith==0.12.4
+# Gemini and OpenRouter, reached through their OpenAI-compatible addresses (fallback models)
+openai==1.109.1
 
 # LangGraph Studio: the local server that shows the graph (langgraph dev)
 langgraph-cli[inmem]==0.4.31

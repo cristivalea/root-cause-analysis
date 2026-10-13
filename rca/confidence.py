@@ -10,6 +10,7 @@ tuned and defended. Points are counted once per kind of evidence:
 | A past RCA with the same cause on the same service                         | 2      |
 | A similar past incident                                                    | 1      |
 | A CMDB dependency that confirms the technical path                         | 1      |
+| The incident itself (its symptoms): what must be explained, not support     | 0      |
 
 Levels: 5 or more points from at least 3 kinds of evidence is HIGH; 5 or more from only 2
 kinds, or 3-4 points, is MEDIUM; 2 or less is LOW. Without log evidence the level cannot be
@@ -25,6 +26,7 @@ from datetime import datetime, timezone
 from rca.models import AssessedHypothesis, ConfidenceLevel, DraftRCA, Evidence, EvidenceType, Hypothesis
 
 POINTS: dict[EvidenceType, int] = {
+    "INCIDENT": 0,
     "LOG": 2,
     "CHANGE": 2,
     "HISTORICAL_RCA": 2,
@@ -32,6 +34,7 @@ POINTS: dict[EvidenceType, int] = {
     "CMDB": 1,
 }
 REASONS: dict[EvidenceType, str] = {
+    "INCIDENT": "The incident itself",
     "LOG": "Log evidence of the symptom",
     "CHANGE": "Change on the affected service or a direct dependency, before the first error",
     "HISTORICAL_RCA": "Past RCA with the same cause on the same service",
@@ -48,9 +51,14 @@ def _as_utc(value: datetime) -> datetime:
     return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
-def first_error_time(evidence: list[Evidence], detected_at: datetime) -> datetime:
-    """The earliest log evidence in the ledger, or the detection time when there is none."""
-    log_times = [_as_utc(item.timestamp) for item in evidence if item.type == "LOG" and item.timestamp]
+def first_error_time(evidence: list[Evidence], detected_at: datetime, services: list[str] | None = None) -> datetime:
+    """The earliest log evidence in the ledger, or the detection time when there is none.
+
+    services: the services of the problem. Only their logs count: an error on a dependency, earlier
+    than the first error of the problem, must not take its points from a change made before it.
+    A log evidence without a service (an older record) counts as one of the problem."""
+    log_times = [_as_utc(item.timestamp) for item in evidence if item.type == "LOG" and item.timestamp
+                 and (services is None or item.service is None or item.service in services)]
     return min(log_times, default=_as_utc(detected_at))
 
 
@@ -65,6 +73,8 @@ def assess_hypothesis(
     for evidence_id in hypothesis.supporting_evidence:
         item = evidence_by_id.get(evidence_id)
         if item is None:  # the guardrail already refuses unknown ids
+            continue
+        if item.type == "INCIDENT":  # the symptom to explain is neither a point nor a source
             continue
         if item.type == "CHANGE":
             if item.timestamp is None:
@@ -113,10 +123,11 @@ def assess_hypothesis(
     )
 
 
-def assess_draft(draft: DraftRCA, evidence: list[Evidence], detected_at: datetime) -> list[AssessedHypothesis]:
-    """All hypotheses with their confidence, the strongest first."""
+def assess_draft(draft: DraftRCA, evidence: list[Evidence], detected_at: datetime,
+                 services: list[str] | None = None) -> list[AssessedHypothesis]:
+    """All hypotheses with their confidence, the strongest first. services: those of the problem."""
     evidence_by_id = {item.evidence_id: item for item in evidence}
-    first_error = first_error_time(evidence, detected_at)
+    first_error = first_error_time(evidence, detected_at, services)
     assessed = [assess_hypothesis(hypothesis, evidence_by_id, first_error) for hypothesis in draft.hypotheses]
     return sorted(assessed, key=lambda item: (-BANDS.index(item.confidence), -item.confidence_points))
 

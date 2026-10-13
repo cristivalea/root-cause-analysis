@@ -5,8 +5,6 @@
 # the primary action, warnings and success states.
 #
 # Both a light and a dark variant are defined, so the user can switch in the app menu.
-# The older screens (rca/app.py, rca/expert_app.py) were written for a dark background;
-# run them with `--theme.base dark` while they still exist.
 
 [client]
 # No "Deploy" button: this is an internal tool, not a Streamlit demo. The menu stays,

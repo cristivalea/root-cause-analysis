@@ -121,7 +121,7 @@ def test_sample_rca_record_loads_and_its_citations_exist():
     evidence_ids = {evidence.evidence_id for evidence in record.evidence}
     for hypothesis in record.hypotheses:
         assert set(hypothesis.supporting_evidence + hypothesis.contradicting_evidence) <= evidence_ids
-    assert record.status == "PENDING_REVIEW"
+    assert record.status == "AWAITING_TECHNICAL_REVIEW"
     assert record.final_root_cause is None
 
 
@@ -141,7 +141,7 @@ def test_final_root_cause_cannot_be_set_before_approval():
 
 
 def test_rca_cannot_be_final_without_approval():
-    data = load_fixture("sample_rca_record.json") | {"status": "FINAL"}
+    data = load_fixture("sample_rca_record.json") | {"status": "VALIDATED"}
 
     with pytest.raises(ValidationError, match="needs an approval"):
         RCARecord.model_validate(data)
@@ -149,10 +149,10 @@ def test_rca_cannot_be_final_without_approval():
 
 def test_rca_can_be_final_after_approval():
     data = load_fixture("sample_rca_record.json") | {
-        "status": "FINAL",
+        "status": "VALIDATED",
         "review": APPROVAL.model_dump(),
         "final_root_cause": "Connection pool exhaustion caused by connections not released in v4.18.2.",
         "completed_at": "2026-09-14T11:00:00Z",
     }
 
-    assert RCARecord.model_validate(data).status == "FINAL"
+    assert RCARecord.model_validate(data).status == "VALIDATED"

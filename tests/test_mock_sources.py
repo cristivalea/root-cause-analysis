@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry
+from rca.models import Change, CIRelationship, ConfigItem, Incident, IncidentEvent, LogEntry, Problem
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = ROOT / "data" / "sources"
@@ -130,3 +130,34 @@ def test_past_rcas_are_older_than_their_incidents_and_have_the_diagram_sections(
             assert incidents[incident_id]["detected_at"] < completed.strip(" *"), path.stem
         for section in ("## Summary", "## Root Cause", "## Five Whys", "## Contributing Factors", "## Corrective Actions"):
             assert section in text, (path.stem, section)
+
+
+def test_every_story_is_one_open_problem_and_every_past_rca_one_closed_problem():
+    problems = [Problem.model_validate(item) for item in load_json("problems.json")]
+    incidents = {item["incident_id"]: item for item in load_json("incidents.json")}
+    answer_key = json.loads((EVALUATION / "answer_key.json").read_text(encoding="utf-8"))
+
+    owners = [link.incident_id for problem in problems for link in problem.incidents]
+    assert len(owners) == len(set(owners))  # an incident belongs to one problem at most
+    assert set(owners) <= set(incidents)
+
+    open_problems = {problem.problem_id: problem for problem in problems if problem.status == "Open"}
+    assert len(open_problems) == len(answer_key)
+    for story in answer_key.values():
+        problem = open_problems[story["problem_id"]]
+        assert [link.incident_id for link in problem.incidents] == story["problem_incidents"]
+        assert story["target_incident"] in story["problem_incidents"]
+        assert story["reference_incident"] == story["problem_incidents"][-1]
+        text = " ".join([problem.title, problem.description]).lower()
+        assert not [word for word in CAUSE_WORDS if word in text], story["story_id"]
+
+    for path in RCA_FOLDER.glob("*.md"):
+        linked = next(line for line in path.read_text(encoding="utf-8").splitlines() if line.startswith("**Linked Incidents:**"))
+        closed = [problem for problem in problems if problem.rca_id == path.stem]
+        assert len(closed) == 1 and closed[0].status == "Closed", path.stem
+        assert {link.incident_id for link in closed[0].incidents} == {item.strip(" *") for item in linked.split(":", 1)[1].split(",")}
+
+
+def test_at_least_four_stories_have_a_problem_with_several_incidents():
+    answer_key = json.loads((EVALUATION / "answer_key.json").read_text(encoding="utf-8"))
+    assert sum(len(story["problem_incidents"]) > 1 for story in answer_key.values()) >= 4

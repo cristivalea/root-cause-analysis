@@ -1,7 +1,7 @@
 {
   "rca_id": "RCA-2026-00137",
   "incident_id": "INC-2026-00482",
-  "status": "PENDING_REVIEW",
+  "status": "AWAITING_TECHNICAL_REVIEW",
   "owner": "Problem Manager",
   "created_at": "2026-09-14T10:00:00Z",
   "completed_at": null,

@@ -17,8 +17,16 @@ from rca.ui.strings import EN, t
 MAIN = str(Path(__file__).resolve().parents[1] / "rca" / "ui" / "main.py")
 
 
-def run_app() -> AppTest:
-    return AppTest.from_file(MAIN, default_timeout=60).run()
+def run_app(role: str = state.PROBLEM_MANAGER) -> AppTest:
+    """The application, signed in with the given role (tests/conftest.py signs every AppTest in)."""
+    app = AppTest.from_file(MAIN, default_timeout=60)
+    app.session_state[state.ROLE_KEY] = role
+    return app.run()
+
+
+def labels(app: AppTest) -> list[str]:
+    """The buttons of the page, without the sign-out button of the shell."""
+    return [button.label for button in app.button if not button.label.startswith("Deconectare")]
 
 
 # ---- The shell ----
@@ -33,9 +41,11 @@ def test_home_opens_without_errors():
 @pytest.mark.parametrize(
     "page, title_key",
     [
-        (navigation.START_RCA, "start_rca.title"),
+        (navigation.KPIS, "kpis.title"),
         (navigation.INVESTIGATION, "investigation.title"),
         (navigation.HISTORY, "history.title"),
+        (navigation.PROBLEMS, "problems.title"),
+        (navigation.PROPOSALS, "proposals.title"),
     ],
 )
 def test_every_page_of_the_problem_manager_opens(page, title_key):
@@ -46,23 +56,22 @@ def test_every_page_of_the_problem_manager_opens(page, title_key):
 
 
 def test_the_review_page_belongs_to_the_technical_expert():
-    """The page stays reachable by link in any role, and says whose screen it is."""
-    app = run_app()
+    """Since the sign-in, each role has its own pages: the Problem Manager has no review page."""
+    with pytest.raises(ValueError, match="Could not find a navigation page"):
+        run_app().switch_page(navigation.REVIEW)
+
+    app = run_app(state.TECHNICAL_EXPERT)
     app.switch_page(navigation.REVIEW).run()
-    assert any(t("review.wrong_role") in info.value for info in app.info)
-    assert any(button.label == t("review.switch_role") for button in app.button)
-
-
-def test_the_expert_gets_the_review_page_without_leaving_where_they_are():
-    app = run_app()
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
-    app.switch_page(navigation.REVIEW).run()
-    assert app.title[0].value == t("review.title")
-    assert not any(t("review.wrong_role") in info.value for info in app.info)
-
-    app.segmented_control[0].set_value(state.PROBLEM_MANAGER).run()
     assert not app.exception
-    assert app.title[0].value == t("review.title")  # the page stays open, the role changed
+    assert app.title[0].value == t("review.title")
+
+
+def test_the_role_comes_from_the_sign_in_and_cannot_be_changed_on_a_page():
+    for role in state.ROLES:
+        app = run_app(role)
+        assert not app.exception
+        assert not app.segmented_control  # no role selector any more
+        assert any(button.label == "Deconectare (tester)" for button in app.button)
 
 
 # ---- The design system ----
@@ -81,7 +90,7 @@ def test_severity_and_status_do_not_share_a_visual_language():
 
 def test_a_badge_never_breaks_on_a_value_the_interface_does_not_know_yet():
     assert badges.severity_chip("SEV-9") == ":gray-badge[SEV-9]"
-    assert "More details requested" in badges.rca_status_chip("MORE_DETAILS_REQUESTED")
+    assert "More details requested" in badges.rca_status_chip("REQUEST_MORE_DETAILS")
 
 
 def test_every_badge_carries_its_label_as_text():
@@ -97,22 +106,41 @@ def test_home_explains_the_four_steps_and_offers_one_way_to_start():
     texts = [item.value for item in app.markdown] + [item.value for item in app.caption]
     for step in ("home.step_1", "home.step_2", "home.step_3", "home.step_4"):
         assert any(t(f"{step}.title") in text for text in texts)
-    assert [button.label for button in app.button] == [t("home.cta")]
+    assert labels(app) == [t("home.cta")]
 
 
-def test_the_home_button_opens_the_incident_selection():
+def test_the_home_button_opens_the_problems_where_an_rca_starts():
     app = run_app()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == t("home.cta")).click().run()
     assert not app.exception
-    assert app.title[0].value == t("start_rca.title")
+    assert app.title[0].value == t("problems.title")
+
+
+def test_the_incidents_and_start_an_rca_pages_are_gone_from_the_navigation():
+    pages = Path(navigation.__file__).parent / "app_pages"
+    assert not hasattr(navigation, "INCIDENTS") and not hasattr(navigation, "START_RCA")
+    assert not (pages / "incidents.py").exists() and not (pages / "start_rca.py").exists()
+    for page in (navigation.HOME, navigation.PROBLEMS, navigation.PROPOSALS, navigation.INVESTIGATION,
+                 navigation.HISTORY, navigation.KPIS):
+        app = run_app()
+        app.switch_page(page).run()
+        assert not app.exception
+
+
+def test_the_kpi_page_shows_no_invented_number():
+    app = run_app()
+    app.switch_page(navigation.KPIS).run()
+    assert not app.exception
+    assert not app.metric and not app.dataframe
+    assert any(t("kpis.not_defined") in item.value for item in app.info)
 
 
 def test_only_the_expert_is_told_what_is_waiting_for_review():
     app = run_app()
     assert not any(t("home.expert.open_review") == button.label for button in app.button)
 
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
-    waiting = len(services.list_rcas(status="PENDING_REVIEW"))
+    app = run_app(state.TECHNICAL_EXPERT)
+    waiting = len(services.list_rcas(status="AWAITING_TECHNICAL_REVIEW"))
     labels = [button.label for button in app.button]
     if waiting:
         assert t("home.expert.open_review") in labels
@@ -120,10 +148,40 @@ def test_only_the_expert_is_told_what_is_waiting_for_review():
         assert any(t("home.expert.waiting_none") in item.value for item in app.markdown)
 
 
+def test_the_expert_is_notified_of_each_rca_waiting_and_of_a_revision_that_answers_a_request():
+    app = run_app(state.TECHNICAL_EXPERT)
+    waiting = services.list_rcas(status="AWAITING_TECHNICAL_REVIEW")
+
+    assert not app.exception
+    assert {button.key for button in app.button if button.key and button.key.startswith("notify-")} == {
+        f"notify-{record.rca_id}" for record in waiting}
+    answered = next(record for record in waiting if record.revision > 1)
+    assert any(t("home.expert.answers_request", revision=answered.revision) in item.value for item in app.markdown)
+
+
 def test_the_role_survives_moving_to_another_page():
     """Widget state is dropped between pages, so the role is kept under its own key."""
-    app = run_app()
-    app.segmented_control[0].set_value(state.TECHNICAL_EXPERT).run()
+    app = run_app(state.TECHNICAL_EXPERT)
     [button for button in app.button if button.label == t("home.expert.open_review")][0].click().run()
     assert app.title[0].value == t("review.title")
     assert app.session_state["role"] == state.TECHNICAL_EXPERT
+
+
+def test_a_server_running_older_code_says_so(monkeypatch):
+    from datetime import datetime
+
+    from rca.ui import code_check
+
+    monkeypatch.setattr(code_check, "changed_since_start", lambda: datetime(2026, 10, 13, 17, 39))
+    app = run_app()
+
+    assert any("Restart Streamlit" in item.value and "17:39" in item.value for item in app.warning)
+
+
+def test_a_server_running_the_current_code_says_nothing(monkeypatch):
+    from rca.ui import code_check
+
+    monkeypatch.setattr(code_check, "changed_since_start", lambda: None)
+    app = run_app()
+
+    assert not any("Restart Streamlit" in item.value for item in app.warning)

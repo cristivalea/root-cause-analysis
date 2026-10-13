@@ -1,3 +1,7 @@
+from pathlib import Path
+
+import pytest
+
 from rca.rag import _filter_by_distance, _historical_date_filter
 
 
@@ -18,3 +22,14 @@ def test_distance_filter_drops_weak_matches_and_preserves_result_shape():
     assert filtered["ids"] == [["strong"]]
     assert filtered["documents"] == [["useful"]]
     assert filtered["distances"] == [[0.2]]
+
+@pytest.mark.skipif(not (Path(__file__).resolve().parents[1] / "chroma_db").exists(), reason="run scripts/ingest_chroma.py first")
+def test_the_past_rcas_linking_an_incident_are_found_from_the_index():
+    from rca import rag
+
+    found = rag.rcas_linked_to(["INC-2025-00119", "INC-2099-00001"])
+
+    assert found["RCA-2025-00042"]["incidents"] == ["INC-2025-00119"]
+    assert found["RCA-2025-00042"]["service"] == "Payroll Service"
+    assert rag.rcas_linked_to(["INC-2025-00119"], before_timestamp=found["RCA-2025-00042"]["completion_date"]) == {}
+    assert rag.rcas_linked_to([]) == {}

@@ -71,9 +71,7 @@ ROLES: tuple[Role, ...] = (PROBLEM_MANAGER, TECHNICAL_EXPERT)
 ROLE_KEY = "role"
 TOKEN_KEY = "auth_token"
 USERNAME_KEY = "auth_username"
-SELECTED_INCIDENT_KEY = "selected_incident_id"
 ACTIVE_RCA_KEY = "active_rca_id"
-RUN_REQUEST_KEY = "investigation_requested"
 RUN_ERROR_KEY = "investigation_error"
 
 
@@ -112,13 +110,6 @@ def role_name(role: Role) -> str:
     """The name of a role as the user reads it."""
     return t(f"role.{role}")
 
-def selected_incident_id() -> str | None:
-    return st.session_state.get(SELECTED_INCIDENT_KEY)
-
-
-def select_incident(incident_id: str | None) -> None:
-    st.session_state[SELECTED_INCIDENT_KEY] = incident_id
-
 
 def active_rca_id() -> str | None:
     """The RCA the investigation and review screens are working on."""
@@ -127,16 +118,6 @@ def active_rca_id() -> str | None:
 
 def set_active_rca(rca_id: str | None) -> None:
     st.session_state[ACTIVE_RCA_KEY] = rca_id
-
-
-def request_investigation() -> None:
-    """Ask for an investigation to run. The investigation screen picks this up once."""
-    st.session_state[RUN_REQUEST_KEY] = True
-
-
-def take_investigation_request() -> bool:
-    """True once, for the screen that runs the investigation."""
-    return bool(st.session_state.pop(RUN_REQUEST_KEY, False))
 
 
 def investigation_error() -> str | None:

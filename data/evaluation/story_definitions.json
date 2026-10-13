@@ -7,6 +7,13 @@
     "service": "Payroll Service",
     "business_service": "Payroll & HR",
     "target_incident": "INC-2026-00101",
+    "problem_incidents": [
+      "INC-2026-00139",
+      "INC-2026-00167",
+      "INC-2026-00188",
+      "INC-2026-00196",
+      "INC-2026-00101"
+    ],
     "related_incidents": [
       "INC-2025-00104",
       "INC-2025-00119",
@@ -15,6 +22,7 @@
       "INC-2026-00188",
       "INC-2026-00196"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": true,
     "time_pattern": "Mondays between 06:00 and 08:30 UTC, during the weekly payroll batch",
     "has_historical_rca": true,
@@ -30,8 +38,15 @@
     "service": "Payment API",
     "business_service": "Online Payments",
     "target_incident": "INC-2026-00482",
+    "problem_incidents": [
+      "INC-2026-00482",
+      "INC-2026-00857"
+    ],
     "related_incidents": [
       "INC-2025-00401"
+    ],
+    "recurrence_incidents": [
+      "INC-2026-00857"
     ],
     "has_time_pattern": false,
     "time_pattern": null,
@@ -48,7 +63,11 @@
     "service": "Customer Portal",
     "business_service": "Customer Services",
     "target_incident": "INC-2026-00103",
+    "problem_incidents": [
+      "INC-2026-00103"
+    ],
     "related_incidents": [],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
@@ -62,9 +81,13 @@
     "service": "API Gateway",
     "business_service": "Digital Channels",
     "target_incident": "INC-2026-00104",
+    "problem_incidents": [
+      "INC-2026-00104"
+    ],
     "related_incidents": [
       "INC-2024-00891"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
@@ -80,9 +103,13 @@
     "service": "Settlement Service",
     "business_service": "Core Banking",
     "target_incident": "INC-2026-00105",
+    "problem_incidents": [
+      "INC-2026-00105"
+    ],
     "related_incidents": [
       "INC-2025-00982"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
@@ -94,13 +121,20 @@
     "story_id": "STORY-006",
     "title": "Month-end billing aggregation times out",
     "kind": "success",
-    "demo_purpose": "Second time pattern (last business day of the month) and the 'request more evidence' loop: the cause is a maintenance change 6 days before, found only with a wider window.",
+    "demo_purpose": "Second time pattern (last business day of the month, June and July): the cause is a maintenance change 6 days before the first failure, inside the change window of the problem.",
     "service": "Billing Service",
     "business_service": "Billing",
     "target_incident": "INC-2026-00106",
+    "problem_incidents": [
+      "INC-2026-00106",
+      "INC-2026-00926"
+    ],
     "related_incidents": [
       "INC-2025-00512",
       "INC-2025-00548"
+    ],
+    "recurrence_incidents": [
+      "INC-2026-00926"
     ],
     "has_time_pattern": true,
     "time_pattern": "Last business day of the month, 22:00-02:00 UTC, during the month-end aggregation",
@@ -117,8 +151,15 @@
     "service": "Notification Service",
     "business_service": "Notifications",
     "target_incident": "INC-2026-00107",
+    "problem_incidents": [
+      "INC-2026-00107",
+      "INC-2026-00354"
+    ],
     "related_incidents": [
       "INC-2025-01581"
+    ],
+    "recurrence_incidents": [
+      "INC-2026-00354"
     ],
     "has_time_pattern": false,
     "time_pattern": null,
@@ -135,9 +176,13 @@
     "service": "Auth Service",
     "business_service": "User Authentication",
     "target_incident": "INC-2026-00108",
+    "problem_incidents": [
+      "INC-2026-00108"
+    ],
     "related_incidents": [
       "INC-2025-01305"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
@@ -153,10 +198,16 @@
     "service": "Reporting Service",
     "business_service": "Reporting",
     "target_incident": "INC-2026-00109",
+    "problem_incidents": [
+      "INC-2026-00012",
+      "INC-2026-00016",
+      "INC-2026-00109"
+    ],
     "related_incidents": [
       "INC-2026-00012",
       "INC-2026-00016"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": true,
     "time_pattern": "Every night around 05:00 UTC, when the nightly report batch starts",
     "has_historical_rca": false,
@@ -170,9 +221,13 @@
     "service": "User Profile Service",
     "business_service": "Customer Services",
     "target_incident": "INC-2026-00110",
+    "problem_incidents": [
+      "INC-2026-00110"
+    ],
     "related_incidents": [
       "INC-2025-00615"
     ],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": true,
@@ -188,7 +243,11 @@
     "service": "Payment API",
     "business_service": "Online Payments",
     "target_incident": "INC-2026-00468",
+    "problem_incidents": [
+      "INC-2026-00468"
+    ],
     "related_incidents": [],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
@@ -202,7 +261,11 @@
     "service": "Customer Portal",
     "business_service": "Customer Services",
     "target_incident": "INC-2026-00449",
+    "problem_incidents": [
+      "INC-2026-00449"
+    ],
     "related_incidents": [],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,
@@ -216,7 +279,11 @@
     "service": "Auth Service",
     "business_service": "User Authentication",
     "target_incident": "INC-2026-00491",
+    "problem_incidents": [
+      "INC-2026-00491"
+    ],
     "related_incidents": [],
+    "recurrence_incidents": [],
     "has_time_pattern": false,
     "time_pattern": null,
     "has_historical_rca": false,

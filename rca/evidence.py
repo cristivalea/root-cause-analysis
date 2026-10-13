@@ -8,7 +8,7 @@ the descriptions they write, so a description must carry what the agent needs to
 order of events: the time, and how long before the detection it happened.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from rca.models import Change, Evidence, EvidenceType, LogGroup, ServiceDependencies
 
@@ -27,11 +27,16 @@ class EvidenceLedger:
         description: str,
         citation: str,
         timestamp: datetime | None = None,
+        related_ids: list[str] | None = None,
+        service: str | None = None,
+        tool_run: str | None = None,
     ) -> Evidence:
         """Record a fact and return it with its id.
 
         The same original record (same type and citation) is recorded only once, so it cannot
         count twice in the confidence calculation. Adding it again returns the existing evidence.
+        timestamp is when the fact happened, as the source says; collected_at, set here, is when the
+        investigation found it. tool_run is the ToolRun that found it.
         """
         for item in self._items:
             if item.type == evidence_type and item.citation == citation:
@@ -44,6 +49,10 @@ class EvidenceLedger:
             description=description,
             citation=citation,
             timestamp=timestamp,
+            related_ids=[item for item in related_ids or [] if item != citation],
+            service=service,
+            collected_at=datetime.now(timezone.utc),
+            tool_run=tool_run,
         )
         self._items.append(evidence)
         return evidence
@@ -62,47 +71,81 @@ class EvidenceLedger:
         return len(self._items)
 
 
-def relative_to_detection(moment: datetime, detected_at: datetime) -> str:
-    """For example "34 minutes before detection"."""
+def relative_to_detection(moment: datetime, detected_at: datetime, of: str = "detection") -> str:
+    """For example "34 minutes before detection", "5 hours after detection", "4 days before detection".
+    `of` names what the time is compared with, for example "the detection of INC-2026-00482"."""
     minutes = round((detected_at - moment).total_seconds() / 60)
-    return f"{minutes} minutes before detection" if minutes >= 0 else f"{-minutes} minutes after detection"
+    side = "before" if minutes >= 0 else "after"
+    minutes = abs(minutes)
+    if minutes < 120:
+        amount = f"{minutes} minutes"
+    elif minutes < 48 * 60:
+        amount = f"{round(minutes / 60)} hours"
+    else:
+        amount = f"{round(minutes / (24 * 60))} days"
+    return f"{amount} {side} {of}"
 
 
-def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime) -> None:
-    """One evidence per log group, cited by its first line."""
+MAX_EXAMPLE = 160  # characters of the example line: the whole line is in the logs, by its citation
+
+
+def _example(message: str) -> str:
+    return message if len(message) <= MAX_EXAMPLE else message[: MAX_EXAMPLE - 3].rstrip() + "..."
+
+
+def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection",
+                   dependency: bool = False, tool_run: str | None = None) -> list[Evidence]:
+    """One evidence per log group, cited by its first line; the other lines are kept as related ids.
+    dependency: the lines come from a service the problem depends on, which the description says.
+    Returns the evidence of the groups (an existing one when the group was already in the ledger)."""
+    added = []
     for group in groups:
         first = group.examples[0]
-        ledger.add(
+        where = f"On {group.service}, a dependency: " if dependency else ""
+        added.append(ledger.add(
             "LOG",
             ", ".join(group.hosts),
-            f"{group.count} {group.level} log line(s) of type {group.error_type} between "
-            f"{group.first_seen:%H:%M} and {group.last_seen:%H:%M} UTC, the first "
-            f"{relative_to_detection(group.first_seen, detected_at)}. Example: \"{first.message}\"",
+            f"{where}{group.count} {group.level} log line(s) of type {group.error_type} between "
+            f"{group.first_seen:%Y-%m-%d %H:%M} and {group.last_seen:%H:%M} UTC, the first "
+            f"{relative_to_detection(group.first_seen, detected_at, of)}. Example: \"{_example(first.message)}\"",
             first.log_id,
             group.first_seen,
-        )
+            group.log_ids,
+            group.service,
+            tool_run,
+        ))
+    return added
 
 
-def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime) -> None:
+def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime, of: str = "detection",
+                tool_run: str | None = None) -> list[Evidence]:
     """One evidence per change."""
+    added = []
     for change in changes:
-        ledger.add(
+        added.append(ledger.add(
             "CHANGE",
             change.change_id,
             f"{change.title} on {change.ci_id}: {change.description} Implemented at "
-            f"{change.implemented_at:%H:%M} UTC, {relative_to_detection(change.implemented_at, detected_at)}.",
+            f"{change.implemented_at:%Y-%m-%d %H:%M} UTC, {relative_to_detection(change.implemented_at, detected_at, of)}.",
             change.change_id,
             change.implemented_at,
-        )
+            tool_run=tool_run,
+        ))
+    return added
 
 
-def add_dependencies(ledger: EvidenceLedger, dependencies: ServiceDependencies) -> None:
-    """One evidence per direct dependency, cited by the component depended on."""
+def add_dependencies(ledger: EvidenceLedger, dependencies: ServiceDependencies,
+                     tool_run: str | None = None) -> list[Evidence]:
+    """One evidence per component depended on, cited by its CMDB id, naming every component of the
+    service that depends on it. One evidence per relationship would lose all but the first when two
+    components depend on the same one, because the ledger keeps one evidence per citation."""
+    added = []
+    by_target: dict[str, list] = {}
     for dependency in dependencies.dependencies:
-        ledger.add(
-            "CMDB",
-            "CMDB",
-            f"{dependency.component.name} ({dependency.component.ci_id}) {dependency.relationship_type} "
-            f"{dependency.depends_on.name} ({dependency.depends_on.ci_id}, {dependency.depends_on.type}).",
-            dependency.depends_on.ci_id,
-        )
+        by_target.setdefault(dependency.depends_on.ci_id, []).append(dependency)
+    for group in by_target.values():
+        target = group[0].depends_on
+        sources = " and ".join(f"{item.component.name} ({item.component.ci_id}) {item.relationship_type}" for item in group)
+        added.append(ledger.add("CMDB", "CMDB", f"{sources} {target.name} ({target.ci_id}, {target.type}).", target.ci_id,
+                                tool_run=tool_run))
+    return added

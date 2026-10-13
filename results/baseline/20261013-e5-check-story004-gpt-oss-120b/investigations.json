@@ -1,0 +1,2619 @@
+[
+  {
+    "story_id": "STORY-004",
+    "revision": 1,
+    "seconds": 36.1,
+    "record": {
+      "rca_id": "RCA-2026-00003",
+      "revision": 1,
+      "previous_revision_id": null,
+      "run_status": "COMPLETED",
+      "error": null,
+      "incident_id": "INC-2026-00104",
+      "status": "DRAFT",
+      "owner": "Baseline",
+      "created_at": "2026-10-13T13:35:56.472659Z",
+      "completed_at": "2026-10-13T13:36:32.487558Z",
+      "duration_seconds": 36.0,
+      "linked_incidents": [
+        "INC-2024-00891"
+      ],
+      "problem_id": "PRB-2026-00066",
+      "tool_runs": [
+        {
+          "run_id": "TR-01",
+          "tool": "search_similar_incidents",
+          "source": "historical_incidents",
+          "arguments": {
+            "incident_id": "INC-2026-00104",
+            "before": "2026-05-01T03:12:00+00:00"
+          },
+          "requested_by": "rule",
+          "reason": "rule: past incidents like the reference incident, older than its detection",
+          "status": "ok",
+          "result_count": 5,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:35:57.930347Z",
+          "finished_at": "2026-10-13T13:36:01.590563Z"
+        },
+        {
+          "run_id": "TR-02",
+          "tool": "find_dependencies",
+          "source": "cmdb",
+          "arguments": {
+            "service": "API Gateway"
+          },
+          "requested_by": "rule",
+          "reason": "rule: the incidents",
+          "status": "ok",
+          "result_count": 4,
+          "evidence_ids": [
+            "EV-005",
+            "EV-006",
+            "EV-007",
+            "EV-008",
+            "EV-009",
+            "EV-010",
+            "EV-011"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.590563Z",
+          "finished_at": "2026-10-13T13:36:01.594808Z"
+        },
+        {
+          "run_id": "TR-03",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "API Gateway",
+            "start": "2026-05-01T01:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 2,
+          "evidence_ids": [
+            "EV-002",
+            "EV-003"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.594808Z",
+          "finished_at": "2026-10-13T13:36:01.602807Z"
+        },
+        {
+          "run_id": "TR-04",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Auth Service",
+            "start": "2026-05-01T01:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.602807Z",
+          "finished_at": "2026-10-13T13:36:01.611119Z"
+        },
+        {
+          "run_id": "TR-05",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Kubernetes Platform",
+            "start": "2026-05-01T01:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.611119Z",
+          "finished_at": "2026-10-13T13:36:01.616668Z"
+        },
+        {
+          "run_id": "TR-06",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Payment API",
+            "start": "2026-05-01T01:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.616668Z",
+          "finished_at": "2026-10-13T13:36:01.622668Z"
+        },
+        {
+          "run_id": "TR-07",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "User Profile Service",
+            "start": "2026-05-01T01:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.622668Z",
+          "finished_at": "2026-10-13T13:36:01.628958Z"
+        },
+        {
+          "run_id": "TR-08",
+          "tool": "find_changes",
+          "source": "changes",
+          "arguments": {
+            "services": [
+              "API Gateway",
+              "Auth Service",
+              "Kubernetes Platform",
+              "Payment API",
+              "User Profile Service"
+            ],
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:35:00+00:00"
+          },
+          "requested_by": "rule",
+          "reason": "rule: rule: 7 days before the first incident to the resolution of the last one",
+          "status": "ok",
+          "result_count": 1,
+          "evidence_ids": [
+            "EV-004"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:01.628958Z",
+          "finished_at": "2026-10-13T13:36:01.630957Z"
+        }
+      ],
+      "historical_findings": [
+        {
+          "citation": "RCA-2024-00088",
+          "kind": "rca",
+          "reason": "Same service (API Gateway) and the symptoms directly match TLS handshake failures, certificate validation errors and partner API call failures.",
+          "similarities": [
+            "TLS handshake failures",
+            "Certificate validation errors",
+            "Partner API calls failing"
+          ],
+          "differences": [
+            "Root cause was certificate expiration",
+            "Remediation added automatic renewal with cert‑manager",
+            "Occurred during night after a missed manual renewal"
+          ],
+          "remediation": "Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731).",
+          "outcome": "The renewed certificate restored connections and the automated renewal prevented future expirations.",
+          "came_back_after": true
+        },
+        {
+          "citation": "INC-2024-00891",
+          "kind": "incident",
+          "reason": "Same service and reported handshake failures and partner API call failures, matching the current symptoms.",
+          "similarities": [
+            "TLS handshake failures",
+            "Certificate validation errors",
+            "Partner API calls failing"
+          ],
+          "differences": [
+            "Remediation was only a manual certificate install",
+            "No automation of renewal was added",
+            "Incident record, not a full RCA analysis"
+          ],
+          "remediation": "Installed a renewed certificate by hand.",
+          "outcome": "Handshake failures were resolved after the manual certificate installation.",
+          "came_back_after": false
+        }
+      ],
+      "guidance": null,
+      "request_key": null,
+      "context": {
+        "problem_id": "PRB-2026-00066",
+        "incident_ids": [
+          "INC-2026-00104"
+        ],
+        "reference_incident_id": "INC-2026-00104",
+        "services": [
+          "API Gateway"
+        ],
+        "related_services": [
+          "Auth Service",
+          "Kubernetes Platform",
+          "Payment API",
+          "User Profile Service"
+        ],
+        "log_windows": [
+          {
+            "start": "2026-05-01T01:12:00Z",
+            "end": "2026-05-01T04:12:00Z",
+            "incident_id": "INC-2026-00104"
+          }
+        ],
+        "change_window": {
+          "start": "2026-04-24T03:12:00Z",
+          "end": "2026-05-01T04:35:00Z",
+          "incident_id": null
+        },
+        "title": "API gateway certificate check error on edge nodes",
+        "guide": null,
+        "notes": null,
+        "instructions": null,
+        "expert_request": null,
+        "previous_conclusions": [],
+        "guidance": null,
+        "sources": {
+          "incidents": "problem PRB-2026-00066",
+          "reference_incident": "rule: the most recent incident",
+          "services": "the incidents",
+          "related_services": "CMDB: the services the incident services depend on",
+          "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+          "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+        }
+      },
+      "plan": {
+        "service": "API Gateway",
+        "related_services": [
+          "Auth Service",
+          "Kubernetes Platform",
+          "Payment API",
+          "User Profile Service"
+        ],
+        "window_start": "2026-04-24T03:12:00Z",
+        "window_end": "2026-05-01T04:35:00Z",
+        "sources": [
+          "logs",
+          "changes",
+          "cmdb",
+          "historical_rcas",
+          "historical_incidents"
+        ],
+        "search_queries": [
+          "TLS handshake failures on API gateway edge nodes",
+          "Certificate validation errors reported by mobile apps",
+          "Partner API calls failing due to certificate check errors",
+          "Public API connections failing with SSL validation problems",
+          "Edge node SSL certificate expiration causing service outage"
+        ],
+        "rationale": "The queries address the TLS handshake and certificate validation symptoms described in the incident and cover the public API connectivity failures. All relevant services are already included in the default search windows, so no additional service searches are required.",
+        "extra_searches": [],
+        "refused_searches": []
+      },
+      "evidence": [
+        {
+          "evidence_id": "EV-001",
+          "type": "INCIDENT",
+          "source": "INC-2026-00104",
+          "description": "The incident under investigation, INC-2026-00104 on API Gateway (SEV-1), detected 2026-05-01 03:12 UTC: API gateway certificate check error on edge nodes. Mobile apps and partners could not connect to the public API. Clients reported certificate validation errors from the edge nodes. Symptoms: TLS handshake failures; Certificate validation errors in mobile apps; Partner API calls failing.",
+          "citation": "INC-2026-00104",
+          "timestamp": "2026-05-01T03:12:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:35:57.930347Z",
+          "tool_run": null
+        },
+        {
+          "evidence_id": "EV-002",
+          "type": "LOG",
+          "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+          "description": "26 ERROR log line(s) of type TlsHandshakeFailed between 2026-05-01 03:00 and 04:11 UTC, the first 12 minutes before detection. Example: \"SSL_do_handshake() failed (SSL: error:0A000415:SSL routines::sslv3 alert certificate expired) while SSL handshaking\"",
+          "citation": "LOG-GW-20260501-02",
+          "timestamp": "2026-05-01T03:00:05Z",
+          "related_ids": [
+            "LOG-GW-20260501-05",
+            "LOG-GW-20260501-06",
+            "LOG-GW-20260501-11",
+            "LOG-GW-20260501-14",
+            "LOG-GW-20260501-16",
+            "LOG-GW-20260501-17",
+            "LOG-GW-20260501-19",
+            "LOG-GW-20260501-20",
+            "LOG-GW-20260501-21",
+            "LOG-GW-20260501-24",
+            "LOG-GW-20260501-25",
+            "LOG-GW-20260501-28",
+            "LOG-GW-20260501-33",
+            "LOG-GW-20260501-35",
+            "LOG-GW-20260501-36",
+            "LOG-GW-20260501-37",
+            "LOG-GW-20260501-38",
+            "LOG-GW-20260501-39",
+            "LOG-GW-20260501-40",
+            "LOG-GW-20260501-41",
+            "LOG-GW-20260501-42",
+            "LOG-GW-20260501-45",
+            "LOG-GW-20260501-46",
+            "LOG-GW-20260501-49",
+            "LOG-GW-20260501-50"
+          ],
+          "service": "API Gateway",
+          "collected_at": "2026-10-13T13:36:01.602807Z",
+          "tool_run": "TR-03"
+        },
+        {
+          "evidence_id": "EV-003",
+          "type": "LOG",
+          "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+          "description": "24 ERROR log line(s) of type CertificateExpired between 2026-05-01 03:00 and 04:10 UTC, the first 12 minutes before detection. Example: \"Serving certificate *.api.example-bank.com expired at 2026-05-01T03:00:00Z\"",
+          "citation": "LOG-GW-20260501-01",
+          "timestamp": "2026-05-01T03:00:02Z",
+          "related_ids": [
+            "LOG-GW-20260501-03",
+            "LOG-GW-20260501-04",
+            "LOG-GW-20260501-07",
+            "LOG-GW-20260501-08",
+            "LOG-GW-20260501-09",
+            "LOG-GW-20260501-10",
+            "LOG-GW-20260501-12",
+            "LOG-GW-20260501-13",
+            "LOG-GW-20260501-15",
+            "LOG-GW-20260501-18",
+            "LOG-GW-20260501-22",
+            "LOG-GW-20260501-23",
+            "LOG-GW-20260501-26",
+            "LOG-GW-20260501-27",
+            "LOG-GW-20260501-29",
+            "LOG-GW-20260501-30",
+            "LOG-GW-20260501-31",
+            "LOG-GW-20260501-32",
+            "LOG-GW-20260501-34",
+            "LOG-GW-20260501-43",
+            "LOG-GW-20260501-44",
+            "LOG-GW-20260501-47",
+            "LOG-GW-20260501-48"
+          ],
+          "service": "API Gateway",
+          "collected_at": "2026-10-13T13:36:01.602807Z",
+          "tool_run": "TR-03"
+        },
+        {
+          "evidence_id": "EV-004",
+          "type": "CHANGE",
+          "source": "CHG-2026-00468",
+          "description": "Monthly OS patching of edge proxy nodes on CI-GW-EDGE-NODES: Rolling kernel and OpenSSL patches, nodes drained one by one. Implemented at 2026-04-30 22:00 UTC, 5 hours before detection.",
+          "citation": "CHG-2026-00468",
+          "timestamp": "2026-04-30T22:00:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-005",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to auth-service (CI-AUTH-APP, application).",
+          "citation": "CI-AUTH-APP",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-006",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on cert-manager (CI-CERT-MANAGER, application).",
+          "citation": "CI-CERT-MANAGER",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-007",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) hosted_on edge-proxy-nodes (CI-GW-EDGE-NODES, host).",
+          "citation": "CI-GW-EDGE-NODES",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-008",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on gateway-rate-limiter (CI-GW-RATE-LIMITER, cache).",
+          "citation": "CI-GW-RATE-LIMITER",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-009",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on edge-waf-policy (CI-GW-WAF, gateway).",
+          "citation": "CI-GW-WAF",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-010",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to payment-api (CI-PAYMENT-API, application).",
+          "citation": "CI-PAYMENT-API",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-011",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to user-profile-service (CI-USER-PROFILE-APP, application).",
+          "citation": "CI-USER-PROFILE-APP",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:01.630957Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-012",
+          "type": "HISTORICAL_RCA",
+          "source": "RCA-2024-00088",
+          "description": "Past RCA RCA-2024-00088 for API Gateway, completed 2024-10-02. Summary: The wildcard TLS certificate of the edge proxy nodes expired during the night and all clients failed the TLS handshake with the public API.\nRoot Cause: The wildcard certificate was renewed by hand once a year. The reminder was sent to a former team member and the renewal was missed.\nCorrective Actions: Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731). Judged relevant because: Same service (API Gateway) and the symptoms directly match TLS handshake failures, certificate validation errors and partner API call failures. Alike: TLS handshake failures; Certificate validation errors; Partner API calls failing. Different: Root cause was certificate expiration; Remediation added automatic renewal with cert‑manager; Occurred during night after a missed manual renewal. Done then: Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731). Outcome: The renewed certificate restored connections and the automated renewal prevented future expirations. The problem came back after this RCA: it was completed 2024-10-02, before the first incident of this problem (2026-05-01), so its corrective action did not prevent it.",
+          "citation": "RCA-2024-00088",
+          "timestamp": "2024-10-02T10:00:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:15.598238Z",
+          "tool_run": null
+        },
+        {
+          "evidence_id": "EV-013",
+          "type": "HISTORICAL_INCIDENT",
+          "source": "INC-2024-00891",
+          "description": "Past API Gateway incident INC-2024-00891, detected 2024-09-18: Gateway clients report handshake failures. Clients could not open secure connections to the public API for about ninety minutes during the night. Symptoms: TLS handshake failures; Partner API calls failing. What was done then: Installed a renewed certificate by hand. Judged relevant because: Same service and reported handshake failures and partner API call failures, matching the current symptoms. Alike: TLS handshake failures; Certificate validation errors; Partner API calls failing. Different: Remediation was only a manual certificate install; No automation of renewal was added; Incident record, not a full RCA analysis. Done then: Installed a renewed certificate by hand. Outcome: Handshake failures were resolved after the manual certificate installation.",
+          "citation": "INC-2024-00891",
+          "timestamp": "2024-09-18T03:10:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:15.598238Z",
+          "tool_run": null
+        }
+      ],
+      "timeline": [
+        {
+          "at": "2026-04-30T22:00:00Z",
+          "evidence_id": "EV-004",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00468",
+          "what": "Monthly OS patching of edge proxy nodes on CI-GW-EDGE-NODES: Rolling kernel and OpenSSL patches, nodes drained one by one",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:01.630957Z"
+        },
+        {
+          "at": "2026-05-01T03:00:02Z",
+          "evidence_id": "EV-003",
+          "type": "LOG",
+          "citation": "LOG-GW-20260501-01",
+          "what": "24 ERROR log line(s) of type CertificateExpired between 2026-05-01 03:00 and 04:10 UTC, the first 12 minutes before detection",
+          "marker": "first error",
+          "collected_at": "2026-10-13T13:36:01.602807Z"
+        },
+        {
+          "at": "2026-05-01T03:00:05Z",
+          "evidence_id": "EV-002",
+          "type": "LOG",
+          "citation": "LOG-GW-20260501-02",
+          "what": "26 ERROR log line(s) of type TlsHandshakeFailed between 2026-05-01 03:00 and 04:11 UTC, the first 12 minutes before detection",
+          "marker": null,
+          "collected_at": "2026-10-13T13:36:01.602807Z"
+        },
+        {
+          "at": "2026-05-01T03:12:00Z",
+          "evidence_id": "EV-001",
+          "type": "INCIDENT",
+          "citation": "INC-2026-00104",
+          "what": "The incident under investigation, INC-2026-00104 on API Gateway (SEV-1), detected 2026-05-01 03:12 UTC: API gateway certificate check error on edge nodes",
+          "marker": "incident detected",
+          "collected_at": "2026-10-13T13:35:57.930347Z"
+        }
+      ],
+      "trace": [
+        {
+          "name": "build_context",
+          "summary": "1 incident(s) of PRB-2026-00066 on API Gateway; logs around every incident, changes from 2026-04-24. No guide, notes or requests.",
+          "started_at": "2026-10-13T13:35:56.466435Z",
+          "finished_at": "2026-10-13T13:35:56.480016Z",
+          "details": {
+            "problem_id": "PRB-2026-00066",
+            "incidents": [
+              "INC-2026-00104"
+            ],
+            "services": [
+              "API Gateway"
+            ],
+            "given": [],
+            "revision": "RCA-2026-00003-R1"
+          }
+        },
+        {
+          "name": "investigation_planner",
+          "summary": "5 search queries.",
+          "started_at": "2026-10-13T13:35:56.480016Z",
+          "finished_at": "2026-10-13T13:35:57.928341Z",
+          "details": {
+            "attempts": [
+              {
+                "attempt": 1,
+                "problems": []
+              }
+            ],
+            "search_queries": [
+              "TLS handshake failures on API gateway edge nodes",
+              "Certificate validation errors reported by mobile apps",
+              "Partner API calls failing due to certificate check errors",
+              "Public API connections failing with SSL validation problems",
+              "Edge node SSL certificate expiration causing service outage"
+            ],
+            "rationale": "The queries address the TLS handshake and certificate validation symptoms described in the incident and cover the public API connectivity failures. All relevant services are already included in the default search windows, so no additional service searches are required.",
+            "extra_searches": [],
+            "refused_searches": [],
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 1172,
+                "output_tokens": 465,
+                "latency_seconds": 1.45,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "gather_evidence",
+          "summary": "8 tool run(s), 8 ok. Logs: 2 ERROR/WARN pattern(s) around 1 incident(s), 0 on the services it depends on. Changes: 1 (CHG-2026-00468). CMDB: 7 component(s) depended on. Similar past incidents: 5.",
+          "started_at": "2026-10-13T13:35:57.930347Z",
+          "finished_at": "2026-10-13T13:36:01.630957Z",
+          "details": {
+            "evidence": 11,
+            "services": [
+              "API Gateway",
+              "Auth Service",
+              "Kubernetes Platform",
+              "Payment API",
+              "User Profile Service"
+            ],
+            "log_windows": [
+              {
+                "start": "2026-05-01T01:12:00+00:00",
+                "end": "2026-05-01T04:12:00+00:00",
+                "incident_id": "INC-2026-00104"
+              }
+            ],
+            "change_window": {
+              "start": "2026-04-24T03:12:00+00:00",
+              "end": "2026-05-01T04:35:00+00:00",
+              "incident_id": null
+            },
+            "found": {
+              "logs": [
+                "LOG-GW-20260501-02",
+                "LOG-GW-20260501-01"
+              ],
+              "dependency_logs": [],
+              "changes": [
+                "CHG-2026-00468"
+              ],
+              "cmdb": [
+                "CI-AUTH-APP",
+                "CI-CERT-MANAGER",
+                "CI-GW-EDGE-NODES",
+                "CI-GW-RATE-LIMITER",
+                "CI-GW-WAF",
+                "CI-PAYMENT-API",
+                "CI-USER-PROFILE-APP"
+              ],
+              "problem_incidents": [],
+              "similar_incidents": [
+                "INC-2024-00891",
+                "INC-2025-00987",
+                "INC-2024-01273",
+                "INC-2025-00568",
+                "INC-2025-00926"
+              ]
+            },
+            "tool_runs": [
+              {
+                "run_id": "TR-01",
+                "tool": "search_similar_incidents",
+                "source": "historical_incidents",
+                "arguments": {
+                  "incident_id": "INC-2026-00104",
+                  "before": "2026-05-01T03:12:00+00:00"
+                },
+                "requested_by": "rule",
+                "reason": "rule: past incidents like the reference incident, older than its detection",
+                "status": "ok",
+                "result_count": 5,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:35:57.930347Z",
+                "finished_at": "2026-10-13T13:36:01.590563Z"
+              },
+              {
+                "run_id": "TR-02",
+                "tool": "find_dependencies",
+                "source": "cmdb",
+                "arguments": {
+                  "service": "API Gateway"
+                },
+                "requested_by": "rule",
+                "reason": "rule: the incidents",
+                "status": "ok",
+                "result_count": 4,
+                "evidence_ids": [
+                  "EV-005",
+                  "EV-006",
+                  "EV-007",
+                  "EV-008",
+                  "EV-009",
+                  "EV-010",
+                  "EV-011"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.590563Z",
+                "finished_at": "2026-10-13T13:36:01.594808Z"
+              },
+              {
+                "run_id": "TR-03",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "API Gateway",
+                  "start": "2026-05-01T01:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 2,
+                "evidence_ids": [
+                  "EV-002",
+                  "EV-003"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.594808Z",
+                "finished_at": "2026-10-13T13:36:01.602807Z"
+              },
+              {
+                "run_id": "TR-04",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Auth Service",
+                  "start": "2026-05-01T01:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.602807Z",
+                "finished_at": "2026-10-13T13:36:01.611119Z"
+              },
+              {
+                "run_id": "TR-05",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Kubernetes Platform",
+                  "start": "2026-05-01T01:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.611119Z",
+                "finished_at": "2026-10-13T13:36:01.616668Z"
+              },
+              {
+                "run_id": "TR-06",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Payment API",
+                  "start": "2026-05-01T01:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.616668Z",
+                "finished_at": "2026-10-13T13:36:01.622668Z"
+              },
+              {
+                "run_id": "TR-07",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "User Profile Service",
+                  "start": "2026-05-01T01:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 2 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.622668Z",
+                "finished_at": "2026-10-13T13:36:01.628958Z"
+              },
+              {
+                "run_id": "TR-08",
+                "tool": "find_changes",
+                "source": "changes",
+                "arguments": {
+                  "services": [
+                    "API Gateway",
+                    "Auth Service",
+                    "Kubernetes Platform",
+                    "Payment API",
+                    "User Profile Service"
+                  ],
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:35:00+00:00"
+                },
+                "requested_by": "rule",
+                "reason": "rule: rule: 7 days before the first incident to the resolution of the last one",
+                "status": "ok",
+                "result_count": 1,
+                "evidence_ids": [
+                  "EV-004"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:01.628958Z",
+                "finished_at": "2026-10-13T13:36:01.630957Z"
+              }
+            ]
+          }
+        },
+        {
+          "name": "build_timeline",
+          "summary": "4 moment(s) on the timeline. First error 2026-05-01 03:00 UTC (LOG-GW-20260501-01). Changes before it: CHG-2026-00468.",
+          "started_at": "2026-10-13T13:36:01.633957Z",
+          "finished_at": "2026-10-13T13:36:01.633957Z",
+          "details": {
+            "moments": 4,
+            "first_error": "LOG-GW-20260501-01",
+            "changes_before": [
+              "CHG-2026-00468"
+            ]
+          }
+        },
+        {
+          "name": "historical_review",
+          "summary": "Kept RCA-2024-00088, INC-2024-00891. Dropped RCA-2024-00374, RCA-2025-00114, RCA-2024-00280, RCA-2024-00299, INC-2025-00987, INC-2024-01273, INC-2025-00568, INC-2025-00926. The problem came back after RCA-2024-00088: its corrective action did not prevent it.",
+          "started_at": "2026-10-13T13:36:01.635460Z",
+          "finished_at": "2026-10-13T13:36:15.599243Z",
+          "details": {
+            "kept": [
+              {
+                "id": "RCA-2024-00088",
+                "reason": "Same service (API Gateway) and the symptoms directly match TLS handshake failures, certificate validation errors and partner API call failures.",
+                "came_back_after": true
+              },
+              {
+                "id": "INC-2024-00891",
+                "reason": "Same service and reported handshake failures and partner API call failures, matching the current symptoms.",
+                "came_back_after": false
+              }
+            ],
+            "dropped": [
+              {
+                "id": "RCA-2024-00374",
+                "reason": "Another service (Payroll Service): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2025-00114",
+                "reason": "Another service (Payment API): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2024-00280",
+                "reason": "Another service (Payment API): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2024-00299",
+                "reason": "Another service (Payment API): past records of other services are never evidence."
+              },
+              {
+                "id": "INC-2025-00987",
+                "reason": "Issue concerns connection‑refused errors due to routing to stopped instances, not TLS or certificate problems."
+              },
+              {
+                "id": "INC-2024-01273",
+                "reason": "Describes connection‑refused errors from stopped instances, unrelated to TLS handshake or certificate validation."
+              },
+              {
+                "id": "INC-2025-00568",
+                "reason": "Focuses on stale endpoint routing and connection refusals, not on TLS or certificate issues."
+              },
+              {
+                "id": "INC-2025-00926",
+                "reason": "Reports connection‑refused errors caused by stopped instances, which does not match the TLS handshake/certificate symptoms."
+              }
+            ],
+            "attempts": [
+              {
+                "attempt": 1,
+                "problems": []
+              }
+            ],
+            "findings": [
+              {
+                "citation": "RCA-2024-00088",
+                "kind": "rca",
+                "reason": "Same service (API Gateway) and the symptoms directly match TLS handshake failures, certificate validation errors and partner API call failures.",
+                "similarities": [
+                  "TLS handshake failures",
+                  "Certificate validation errors",
+                  "Partner API calls failing"
+                ],
+                "differences": [
+                  "Root cause was certificate expiration",
+                  "Remediation added automatic renewal with cert‑manager",
+                  "Occurred during night after a missed manual renewal"
+                ],
+                "remediation": "Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731).",
+                "outcome": "The renewed certificate restored connections and the automated renewal prevented future expirations.",
+                "came_back_after": true
+              },
+              {
+                "citation": "INC-2024-00891",
+                "kind": "incident",
+                "reason": "Same service and reported handshake failures and partner API call failures, matching the current symptoms.",
+                "similarities": [
+                  "TLS handshake failures",
+                  "Certificate validation errors",
+                  "Partner API calls failing"
+                ],
+                "differences": [
+                  "Remediation was only a manual certificate install",
+                  "No automation of renewal was added",
+                  "Incident record, not a full RCA analysis"
+                ],
+                "remediation": "Installed a renewed certificate by hand.",
+                "outcome": "Handshake failures were resolved after the manual certificate installation.",
+                "came_back_after": false
+              }
+            ],
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 1545,
+                "output_tokens": 1263,
+                "latency_seconds": 3.12,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "rca_reasoning_agent",
+          "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+          "started_at": "2026-10-13T13:36:15.601747Z",
+          "finished_at": "2026-10-13T13:36:32.479951Z",
+          "details": {
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 3795,
+                "output_tokens": 2905,
+                "latency_seconds": 16.88,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ],
+            "input_shortened": []
+          }
+        },
+        {
+          "name": "guardrail",
+          "summary": "Draft accepted on attempt 1: the schema is valid and all 5 cited evidence ids exist.",
+          "started_at": "2026-10-13T13:36:32.481977Z",
+          "finished_at": "2026-10-13T13:36:32.482976Z",
+          "details": {
+            "attempt": 1,
+            "warnings": []
+          }
+        },
+        {
+          "name": "confidence",
+          "summary": "HYP-001: MEDIUM (3 points). HYP-002: LOW (4 points).",
+          "started_at": "2026-10-13T13:36:32.484978Z",
+          "finished_at": "2026-10-13T13:36:32.484978Z",
+          "details": {}
+        }
+      ],
+      "investigation_summary": "TLS handshake failures on the public API were caused by certificate validation errors on edge proxy nodes. Logs show the wildcard certificate expired at 03:00 UTC and TLS handshakes failed immediately. A recent OS/OpenSSL patch on the edge nodes preceded the incident, and the gateway depends on cert‑manager for automatic renewal, which apparently did not occur.",
+      "observed_patterns": [
+        "Certificate expiration log (EV-003) and TLS handshake failure log (EV-002) start at the same timestamp 03:00 UTC, five hours after the OS/OpenSSL patch (EV-004).",
+        "Historical incidents (EV-012, EV-013) with identical symptoms were caused by certificate expiration.",
+        "The gateway depends on cert‑manager (EV-006) for certificate renewal, yet the certificate expired."
+      ],
+      "hypotheses": [
+        {
+          "hypothesis_id": "HYP-001",
+          "candidate_root_cause": "The wildcard TLS certificate used by the edge proxy nodes expired at 2026-05-01 03:00, and automatic renewal by cert‑manager did not occur.",
+          "reasons": [
+            "EV-003 shows the certificate expired exactly at 03:00, matching the start of errors.",
+            "EV-002 records TLS handshake failures caused by an expired certificate.",
+            "EV-006 indicates the gateway relies on cert‑manager for renewal, which apparently failed."
+          ],
+          "supporting_evidence": [
+            "EV-003",
+            "EV-002",
+            "EV-006",
+            "EV-001"
+          ],
+          "contradicting_evidence": [],
+          "recommended_validation": [
+            "Check cert‑manager logs for renewal attempts around the expiration time.",
+            "Verify the certificate's NotAfter date in the edge node keystore.",
+            "Query the PKI/ACME system for pending renewal jobs for the wildcard certificate."
+          ],
+          "missing_evidence": [
+            "cert‑manager renewal job logs",
+            "Configuration of cert‑manager renewal schedule",
+            "Monitoring alerts for certificate expiry"
+          ],
+          "why_chain": [
+            {
+              "why": "Why were clients experiencing TLS handshake failures?",
+              "because": "Because the edge nodes presented an expired certificate.",
+              "evidence": [
+                "EV-002",
+                "EV-003"
+              ]
+            },
+            {
+              "why": "Why was the certificate expired?",
+              "because": "Because its validity period ended at 2026-05-01 03:00.",
+              "evidence": [
+                "EV-003"
+              ]
+            },
+            {
+              "why": "Why was the certificate not renewed before expiration?",
+              "because": "Because cert‑manager did not issue a new certificate in time.",
+              "evidence": [
+                "EV-006"
+              ]
+            },
+            {
+              "why": "Why did cert‑manager fail to issue a new certificate?",
+              "because": "[No evidence in the ledger]",
+              "evidence": []
+            },
+            {
+              "why": "Why was there no alert about the impending expiry?",
+              "because": "[No evidence in the ledger]",
+              "evidence": []
+            }
+          ],
+          "factors": [
+            {
+              "category": "Configuration",
+              "factor": "Certificate renewal schedule missing or failed",
+              "evidence": [
+                "EV-006"
+              ]
+            },
+            {
+              "category": "Dependencies",
+              "factor": "Reliance on cert‑manager for automatic renewal",
+              "evidence": [
+                "EV-006"
+              ]
+            },
+            {
+              "category": "Process",
+              "factor": "Lack of monitoring/alert for certificate expiry",
+              "evidence": []
+            }
+          ],
+          "confidence": "MEDIUM",
+          "confidence_points": 3,
+          "confidence_reasons": [
+            "Log evidence of the symptom (+2).",
+            "CMDB dependency confirms the technical path (+1).",
+            "3 points: MEDIUM."
+          ]
+        },
+        {
+          "hypothesis_id": "HYP-002",
+          "candidate_root_cause": "The OS and OpenSSL patches applied on 2026-04-30 introduced a regression that caused the edge proxy nodes to reject certificates, leading to TLS handshake failures.",
+          "reasons": [
+            "EV-004 records a rolling kernel and OpenSSL patch applied before the incident.",
+            "EV-002 shows TLS handshake failures began shortly after the patch.",
+            "The timing suggests a possible regression introduced by the patch."
+          ],
+          "supporting_evidence": [
+            "EV-004",
+            "EV-002",
+            "EV-001"
+          ],
+          "contradicting_evidence": [
+            "EV-003"
+          ],
+          "recommended_validation": [
+            "Review OpenSSL release notes for the patched version for known certificate validation regressions.",
+            "Test TLS handshakes with a known valid certificate on a patched edge node.",
+            "Compare OpenSSL configuration and version before and after the patch."
+          ],
+          "missing_evidence": [
+            "Exact OpenSSL version before and after the patch",
+            "Results of handshake tests with valid certificates on patched nodes",
+            "Impact analysis documentation for the OS/OpenSSL patch"
+          ],
+          "why_chain": [],
+          "factors": [
+            {
+              "category": "Change / Release",
+              "factor": "Rolling kernel and OpenSSL patches applied to edge nodes",
+              "evidence": [
+                "EV-004"
+              ]
+            },
+            {
+              "category": "Configuration",
+              "factor": "Potential OpenSSL configuration change causing stricter validation",
+              "evidence": []
+            },
+            {
+              "category": "Process",
+              "factor": "Insufficient regression testing of OpenSSL patches",
+              "evidence": []
+            }
+          ],
+          "confidence": "LOW",
+          "confidence_points": 4,
+          "confidence_reasons": [
+            "Log evidence of the symptom (+2).",
+            "Change on the affected service or a direct dependency, before the first error (+2).",
+            "4 points: MEDIUM.",
+            "Contradicting evidence EV-003 lowers the level by one band: LOW."
+          ]
+        }
+      ],
+      "single_hypothesis_reason": null,
+      "not_checked": [
+        "cert‑manager renewal job logs around the expiration time",
+        "Exact NotAfter date of the wildcard certificate in the edge node keystore",
+        "OpenSSL version and configuration before and after the April 30 patch",
+        "Monitoring alerts or lack thereof for certificate expiry"
+      ],
+      "weakly_supported": false,
+      "suggested_workaround": "Manually install a renewed wildcard TLS certificate on the edge proxy nodes to restore API connectivity while the automated renewal issue is investigated.",
+      "change_likely_required": true,
+      "review": null,
+      "final_root_cause": null,
+      "review_rounds": 0
+    }
+  },
+  {
+    "story_id": "STORY-004",
+    "revision": 2,
+    "seconds": 131.9,
+    "record": {
+      "rca_id": "RCA-2026-00003",
+      "revision": 2,
+      "previous_revision_id": "RCA-2026-00003-R1",
+      "run_status": "COMPLETED",
+      "error": null,
+      "incident_id": "INC-2026-00104",
+      "status": "DRAFT",
+      "owner": "Baseline",
+      "created_at": "2026-10-13T13:36:32.532618Z",
+      "completed_at": "2026-10-13T13:38:44.418242Z",
+      "duration_seconds": 131.9,
+      "linked_incidents": [
+        "INC-2024-00891"
+      ],
+      "problem_id": "PRB-2026-00066",
+      "tool_runs": [
+        {
+          "run_id": "TR-01",
+          "tool": "search_similar_incidents",
+          "source": "historical_incidents",
+          "arguments": {
+            "incident_id": "INC-2026-00104",
+            "before": "2026-05-01T03:12:00+00:00"
+          },
+          "requested_by": "rule",
+          "reason": "rule: past incidents like the reference incident, older than its detection",
+          "status": "ok",
+          "result_count": 5,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:44.676565Z",
+          "finished_at": "2026-10-13T13:36:46.796821Z"
+        },
+        {
+          "run_id": "TR-02",
+          "tool": "find_dependencies",
+          "source": "cmdb",
+          "arguments": {
+            "service": "API Gateway"
+          },
+          "requested_by": "rule",
+          "reason": "rule: the incidents",
+          "status": "ok",
+          "result_count": 4,
+          "evidence_ids": [
+            "EV-015",
+            "EV-016",
+            "EV-017",
+            "EV-018",
+            "EV-019",
+            "EV-020",
+            "EV-021"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.796821Z",
+          "finished_at": "2026-10-13T13:36:46.796821Z"
+        },
+        {
+          "run_id": "TR-03",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "API Gateway",
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 3,
+          "evidence_ids": [
+            "EV-002",
+            "EV-003",
+            "EV-004"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.796821Z",
+          "finished_at": "2026-10-13T13:36:46.809055Z"
+        },
+        {
+          "run_id": "TR-04",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Auth Service",
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.809055Z",
+          "finished_at": "2026-10-13T13:36:46.816294Z"
+        },
+        {
+          "run_id": "TR-05",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Kubernetes Platform",
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 1,
+          "evidence_ids": [
+            "EV-005"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.816294Z",
+          "finished_at": "2026-10-13T13:36:46.823880Z"
+        },
+        {
+          "run_id": "TR-06",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "Payment API",
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.823880Z",
+          "finished_at": "2026-10-13T13:36:46.830611Z"
+        },
+        {
+          "run_id": "TR-07",
+          "tool": "find_logs",
+          "source": "logs",
+          "arguments": {
+            "service": "User Profile Service",
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:12:00+00:00",
+            "incident_id": "INC-2026-00104"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "status": "ok",
+          "result_count": 0,
+          "evidence_ids": [],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.830611Z",
+          "finished_at": "2026-10-13T13:36:46.836619Z"
+        },
+        {
+          "run_id": "TR-08",
+          "tool": "find_changes",
+          "source": "changes",
+          "arguments": {
+            "services": [
+              "API Gateway",
+              "Auth Service",
+              "Kubernetes Platform",
+              "Payment API",
+              "User Profile Service"
+            ],
+            "start": "2026-04-01T03:12:00+00:00",
+            "end": "2026-05-01T04:35:00+00:00"
+          },
+          "requested_by": "rule",
+          "reason": "rule: Problem Manager and Technical Expert: 30 days before the first incident to the resolution of the last one",
+          "status": "ok",
+          "result_count": 9,
+          "evidence_ids": [
+            "EV-006",
+            "EV-007",
+            "EV-008",
+            "EV-009",
+            "EV-010",
+            "EV-011",
+            "EV-012",
+            "EV-013",
+            "EV-014"
+          ],
+          "error": null,
+          "started_at": "2026-10-13T13:36:46.836619Z",
+          "finished_at": "2026-10-13T13:36:46.839132Z"
+        }
+      ],
+      "historical_findings": [
+        {
+          "citation": "RCA-2024-00088",
+          "kind": "rca",
+          "reason": "Matches same service and symptoms (TLS handshake failures, certificate validation errors on edge nodes).",
+          "similarities": [
+            "TLS handshake failures\",\"Certificate validation errors\",\"Edge node certificate issue"
+          ],
+          "differences": [
+            "Root cause was missed manual renewal vs unknown trigger\",\"Remediation involved manual install then automation\",\"Occurred during night expiration rather than recent change"
+          ],
+          "remediation": "Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731).",
+          "outcome": "Issue resolved after renewal and automation prevented future expirations.",
+          "came_back_after": true
+        },
+        {
+          "citation": "INC-2024-00891",
+          "kind": "incident",
+          "reason": "Incident for same service reporting identical TLS handshake failures and partner API call failures on edge nodes.",
+          "similarities": [
+            "TLS handshake failures\",\"Partner API calls failing\",\"Edge node impact"
+          ],
+          "differences": [
+            "Only incident report, no root cause analysis\",\"Remediation was manual certificate install only\",\"No mention of automation or broader configuration changes"
+          ],
+          "remediation": "Installed a renewed certificate by hand.",
+          "outcome": "Handshake failures cleared after certificate renewal.",
+          "came_back_after": false
+        }
+      ],
+      "guidance": null,
+      "request_key": null,
+      "context": {
+        "problem_id": "PRB-2026-00066",
+        "incident_ids": [
+          "INC-2026-00104"
+        ],
+        "reference_incident_id": "INC-2026-00104",
+        "services": [
+          "API Gateway"
+        ],
+        "related_services": [
+          "Auth Service",
+          "Kubernetes Platform",
+          "Payment API",
+          "User Profile Service"
+        ],
+        "log_windows": [
+          {
+            "start": "2026-04-24T03:12:00Z",
+            "end": "2026-05-01T04:12:00Z",
+            "incident_id": "INC-2026-00104"
+          }
+        ],
+        "change_window": {
+          "start": "2026-04-01T03:12:00Z",
+          "end": "2026-05-01T04:35:00Z",
+          "incident_id": null
+        },
+        "title": "API gateway certificate check error on edge nodes",
+        "guide": null,
+        "notes": null,
+        "instructions": null,
+        "expert_request": "Check the changes of the last 30 days and the certificate renewal logs of the last week.",
+        "previous_conclusions": [],
+        "guidance": {
+          "notes": null,
+          "instructions": null,
+          "extra_services": [],
+          "change_window_days": 30,
+          "log_hours_before": 168
+        },
+        "sources": {
+          "incidents": "problem PRB-2026-00066",
+          "reference_incident": "rule: the most recent incident",
+          "services": "the incidents",
+          "related_services": "CMDB: the services the incident services depend on",
+          "log_windows": "Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+          "change_window": "Problem Manager and Technical Expert: 30 days before the first incident to the resolution of the last one",
+          "expert_request": "Technical Expert, review of the previous revision"
+        }
+      },
+      "plan": {
+        "service": "API Gateway",
+        "related_services": [
+          "Auth Service",
+          "Kubernetes Platform",
+          "Payment API",
+          "User Profile Service"
+        ],
+        "window_start": "2026-04-01T03:12:00Z",
+        "window_end": "2026-05-01T04:35:00Z",
+        "sources": [
+          "logs",
+          "changes",
+          "cmdb",
+          "historical_rcas",
+          "historical_incidents"
+        ],
+        "search_queries": [
+          "TLS handshake failures on API gateway edge nodes",
+          "Certificate validation errors reported by mobile apps",
+          "Partner API calls failing due to certificate errors",
+          "Edge node certificate expiration or renewal issues",
+          "Recent changes to API gateway configuration or TLS settings"
+        ],
+        "rationale": "The queries address all reported symptoms—TLS handshake failures, certificate validation errors, and partner call failures—and also look for recent configuration or TLS changes that could cause them. They satisfy the technical expert's request to review changes from the past 30 days and certificate renewal logs from the last week, which are already covered by the existing search windows.",
+        "extra_searches": [],
+        "refused_searches": []
+      },
+      "evidence": [
+        {
+          "evidence_id": "EV-001",
+          "type": "INCIDENT",
+          "source": "INC-2026-00104",
+          "description": "The incident under investigation, INC-2026-00104 on API Gateway (SEV-1), detected 2026-05-01 03:12 UTC: API gateway certificate check error on edge nodes. Mobile apps and partners could not connect to the public API. Clients reported certificate validation errors from the edge nodes. Symptoms: TLS handshake failures; Certificate validation errors in mobile apps; Partner API calls failing.",
+          "citation": "INC-2026-00104",
+          "timestamp": "2026-05-01T03:12:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:44.676565Z",
+          "tool_run": null
+        },
+        {
+          "evidence_id": "EV-002",
+          "type": "LOG",
+          "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+          "description": "26 ERROR log line(s) of type TlsHandshakeFailed between 2026-05-01 03:00 and 04:11 UTC, the first 12 minutes before detection. Example: \"SSL_do_handshake() failed (SSL: error:0A000415:SSL routines::sslv3 alert certificate expired) while SSL handshaking\"",
+          "citation": "LOG-GW-20260501-02",
+          "timestamp": "2026-05-01T03:00:05Z",
+          "related_ids": [
+            "LOG-GW-20260501-05",
+            "LOG-GW-20260501-06",
+            "LOG-GW-20260501-11",
+            "LOG-GW-20260501-14",
+            "LOG-GW-20260501-16",
+            "LOG-GW-20260501-17",
+            "LOG-GW-20260501-19",
+            "LOG-GW-20260501-20",
+            "LOG-GW-20260501-21",
+            "LOG-GW-20260501-24",
+            "LOG-GW-20260501-25",
+            "LOG-GW-20260501-28",
+            "LOG-GW-20260501-33",
+            "LOG-GW-20260501-35",
+            "LOG-GW-20260501-36",
+            "LOG-GW-20260501-37",
+            "LOG-GW-20260501-38",
+            "LOG-GW-20260501-39",
+            "LOG-GW-20260501-40",
+            "LOG-GW-20260501-41",
+            "LOG-GW-20260501-42",
+            "LOG-GW-20260501-45",
+            "LOG-GW-20260501-46",
+            "LOG-GW-20260501-49",
+            "LOG-GW-20260501-50"
+          ],
+          "service": "API Gateway",
+          "collected_at": "2026-10-13T13:36:46.809055Z",
+          "tool_run": "TR-03"
+        },
+        {
+          "evidence_id": "EV-003",
+          "type": "LOG",
+          "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+          "description": "24 ERROR log line(s) of type CertificateExpired between 2026-05-01 03:00 and 04:10 UTC, the first 12 minutes before detection. Example: \"Serving certificate *.api.example-bank.com expired at 2026-05-01T03:00:00Z\"",
+          "citation": "LOG-GW-20260501-01",
+          "timestamp": "2026-05-01T03:00:02Z",
+          "related_ids": [
+            "LOG-GW-20260501-03",
+            "LOG-GW-20260501-04",
+            "LOG-GW-20260501-07",
+            "LOG-GW-20260501-08",
+            "LOG-GW-20260501-09",
+            "LOG-GW-20260501-10",
+            "LOG-GW-20260501-12",
+            "LOG-GW-20260501-13",
+            "LOG-GW-20260501-15",
+            "LOG-GW-20260501-18",
+            "LOG-GW-20260501-22",
+            "LOG-GW-20260501-23",
+            "LOG-GW-20260501-26",
+            "LOG-GW-20260501-27",
+            "LOG-GW-20260501-29",
+            "LOG-GW-20260501-30",
+            "LOG-GW-20260501-31",
+            "LOG-GW-20260501-32",
+            "LOG-GW-20260501-34",
+            "LOG-GW-20260501-43",
+            "LOG-GW-20260501-44",
+            "LOG-GW-20260501-47",
+            "LOG-GW-20260501-48"
+          ],
+          "service": "API Gateway",
+          "collected_at": "2026-10-13T13:36:46.809055Z",
+          "tool_run": "TR-03"
+        },
+        {
+          "evidence_id": "EV-004",
+          "type": "LOG",
+          "source": "edge-proxy-prod-01",
+          "description": "6 WARN log line(s) of type CertificateExpirySoon between 2026-04-25 19:00 and 08:25 UTC, the first 5 days before detection. Example: \"Certificate *.api.example-bank.com expires in 6 days (not after 2026-05-01T03:00:00Z)\"",
+          "citation": "LOG-GW-20260425-01",
+          "timestamp": "2026-04-25T19:00:11Z",
+          "related_ids": [
+            "LOG-GW-20260426-01",
+            "LOG-GW-20260426-02",
+            "LOG-GW-20260427-01",
+            "LOG-GW-20260428-01",
+            "LOG-GW-20260429-01"
+          ],
+          "service": "API Gateway",
+          "collected_at": "2026-10-13T13:36:46.809055Z",
+          "tool_run": "TR-03"
+        },
+        {
+          "evidence_id": "EV-005",
+          "type": "LOG",
+          "source": "cert-manager-7c9d",
+          "description": "On Kubernetes Platform, a dependency: 8 WARN log line(s) of type CertificateRenewalFailed between 2026-04-25 14:39 and 04:37 UTC, the first 6 days before detection. Example: \"Failed to present DNS-01 challenge for *.api.example-bank.com: 403 Forbidden from DNS provider API; retrying in 24h\"",
+          "citation": "LOG-K8S-20260425-01",
+          "timestamp": "2026-04-25T14:39:44Z",
+          "related_ids": [
+            "LOG-K8S-20260426-01",
+            "LOG-K8S-20260427-01",
+            "LOG-K8S-20260427-02",
+            "LOG-K8S-20260428-01",
+            "LOG-K8S-20260428-02",
+            "LOG-K8S-20260429-01",
+            "LOG-K8S-20260429-02"
+          ],
+          "service": "Kubernetes Platform",
+          "collected_at": "2026-10-13T13:36:46.823880Z",
+          "tool_run": "TR-05"
+        },
+        {
+          "evidence_id": "EV-006",
+          "type": "CHANGE",
+          "source": "CHG-2026-00402",
+          "description": "Enable new WAF rule set in blocking mode on CI-GW-WAF: Move the latest WAF rules from detection to blocking mode. Implemented at 2026-04-02 08:20 UTC, 29 days before detection.",
+          "citation": "CHG-2026-00402",
+          "timestamp": "2026-04-02T08:20:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.838622Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-007",
+          "type": "CHANGE",
+          "source": "CHG-2026-00403",
+          "description": "Update WAF managed rule set on CI-GW-WAF: Vendor managed rule set update in detection mode first. Implemented at 2026-04-02 14:30 UTC, 29 days before detection.",
+          "citation": "CHG-2026-00403",
+          "timestamp": "2026-04-02T14:30:10Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-008",
+          "type": "CHANGE",
+          "source": "CHG-2026-00407",
+          "description": "Deploy Payment API v4.16.2 on CI-PAYMENT-API: Scheduled release: bug fixes and merchant reporting improvements. Implemented at 2026-04-03 20:30 UTC, 27 days before detection.",
+          "citation": "CHG-2026-00407",
+          "timestamp": "2026-04-03T20:30:49Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-009",
+          "type": "CHANGE",
+          "source": "CHG-2026-00412",
+          "description": "Deploy auth-service Helm chart 5.2.0 on CI-AUTH-APP: Chart upgrade: the standard resource profile 'small' is applied to all IAM workloads. Implemented at 2026-04-04 09:40 UTC, 27 days before detection.",
+          "citation": "CHG-2026-00412",
+          "timestamp": "2026-04-04T09:40:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-010",
+          "type": "CHANGE",
+          "source": "CHG-2026-00414",
+          "description": "Emergency: set auth-service memory limit to 1Gi on CI-AUTH-APP: Restore the previous memory limit. Implemented at 2026-04-04 12:50 UTC, 27 days before detection.",
+          "citation": "CHG-2026-00414",
+          "timestamp": "2026-04-04T12:50:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-011",
+          "type": "CHANGE",
+          "source": "CHG-2026-00361",
+          "description": "Rotate DNS provider API credentials on CI-CERT-MANAGER: Yearly rotation of the API token used by platform automation to manage DNS records. Implemented at 2026-04-06 10:00 UTC, 25 days before detection.",
+          "citation": "CHG-2026-00361",
+          "timestamp": "2026-04-06T10:00:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-012",
+          "type": "CHANGE",
+          "source": "CHG-2026-00463",
+          "description": "Update API gateway routing configuration on CI-API-GATEWAY: Add routes for new partner endpoints; no change to existing routes. Implemented at 2026-04-16 21:45 UTC, 14 days before detection.",
+          "citation": "CHG-2026-00463",
+          "timestamp": "2026-04-16T21:45:12Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-013",
+          "type": "CHANGE",
+          "source": "CHG-2026-00489",
+          "description": "Deploy Auth Service v7.13.0 on CI-AUTH-APP: Scheduled release: login page fixes and dependency updates. Implemented at 2026-04-22 19:00 UTC, 8 days before detection.",
+          "citation": "CHG-2026-00489",
+          "timestamp": "2026-04-22T19:00:29Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-014",
+          "type": "CHANGE",
+          "source": "CHG-2026-00468",
+          "description": "Monthly OS patching of edge proxy nodes on CI-GW-EDGE-NODES: Rolling kernel and OpenSSL patches, nodes drained one by one. Implemented at 2026-04-30 22:00 UTC, 5 hours before detection.",
+          "citation": "CHG-2026-00468",
+          "timestamp": "2026-04-30T22:00:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-08"
+        },
+        {
+          "evidence_id": "EV-015",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to auth-service (CI-AUTH-APP, application).",
+          "citation": "CI-AUTH-APP",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-016",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on cert-manager (CI-CERT-MANAGER, application).",
+          "citation": "CI-CERT-MANAGER",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-017",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) hosted_on edge-proxy-nodes (CI-GW-EDGE-NODES, host).",
+          "citation": "CI-GW-EDGE-NODES",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-018",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on gateway-rate-limiter (CI-GW-RATE-LIMITER, cache).",
+          "citation": "CI-GW-RATE-LIMITER",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-019",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) depends_on edge-waf-policy (CI-GW-WAF, gateway).",
+          "citation": "CI-GW-WAF",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-020",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to payment-api (CI-PAYMENT-API, application).",
+          "citation": "CI-PAYMENT-API",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-021",
+          "type": "CMDB",
+          "source": "CMDB",
+          "description": "public-api-gateway (CI-API-GATEWAY) connects_to user-profile-service (CI-USER-PROFILE-APP, application).",
+          "citation": "CI-USER-PROFILE-APP",
+          "timestamp": null,
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:36:46.839132Z",
+          "tool_run": "TR-02"
+        },
+        {
+          "evidence_id": "EV-022",
+          "type": "HISTORICAL_RCA",
+          "source": "RCA-2024-00088",
+          "description": "Past RCA RCA-2024-00088 for API Gateway, completed 2024-10-02. Summary: The wildcard TLS certificate of the edge proxy nodes expired during the night and all clients failed the TLS handshake with the public API.\nRoot Cause: The wildcard certificate was renewed by hand once a year. The reminder was sent to a former team member and the renewal was missed.\nCorrective Actions: Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731). Judged relevant because: Matches same service and symptoms (TLS handshake failures, certificate validation errors on edge nodes). Alike: TLS handshake failures\",\"Certificate validation errors\",\"Edge node certificate issue. Different: Root cause was missed manual renewal vs unknown trigger\",\"Remediation involved manual install then automation\",\"Occurred during night expiration rather than recent change. Done then: Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731). Outcome: Issue resolved after renewal and automation prevented future expirations. The problem came back after this RCA: it was completed 2024-10-02, before the first incident of this problem (2026-05-01), so its corrective action did not prevent it.",
+          "citation": "RCA-2024-00088",
+          "timestamp": "2024-10-02T10:00:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:37:03.876285Z",
+          "tool_run": null
+        },
+        {
+          "evidence_id": "EV-023",
+          "type": "HISTORICAL_INCIDENT",
+          "source": "INC-2024-00891",
+          "description": "Past API Gateway incident INC-2024-00891, detected 2024-09-18: Gateway clients report handshake failures. Clients could not open secure connections to the public API for about ninety minutes during the night. Symptoms: TLS handshake failures; Partner API calls failing. What was done then: Installed a renewed certificate by hand. Judged relevant because: Incident for same service reporting identical TLS handshake failures and partner API call failures on edge nodes. Alike: TLS handshake failures\",\"Partner API calls failing\",\"Edge node impact. Different: Only incident report, no root cause analysis\",\"Remediation was manual certificate install only\",\"No mention of automation or broader configuration changes. Done then: Installed a renewed certificate by hand. Outcome: Handshake failures cleared after certificate renewal.",
+          "citation": "INC-2024-00891",
+          "timestamp": "2024-09-18T03:10:00Z",
+          "related_ids": [],
+          "service": null,
+          "collected_at": "2026-10-13T13:37:03.876285Z",
+          "tool_run": null
+        }
+      ],
+      "timeline": [
+        {
+          "at": "2026-04-02T08:20:00Z",
+          "evidence_id": "EV-006",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00402",
+          "what": "Enable new WAF rule set in blocking mode on CI-GW-WAF: Move the latest WAF rules from detection to blocking mode",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.838622Z"
+        },
+        {
+          "at": "2026-04-02T14:30:10Z",
+          "evidence_id": "EV-007",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00403",
+          "what": "Update WAF managed rule set on CI-GW-WAF: Vendor managed rule set update in detection mode first",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-03T20:30:49Z",
+          "evidence_id": "EV-008",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00407",
+          "what": "Deploy Payment API v4.16.2 on CI-PAYMENT-API: Scheduled release: bug fixes and merchant reporting improvements",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-04T09:40:00Z",
+          "evidence_id": "EV-009",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00412",
+          "what": "Deploy auth-service Helm chart 5.2.0 on CI-AUTH-APP: Chart upgrade: the standard resource profile 'small' is applied to all IAM workloads",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-04T12:50:00Z",
+          "evidence_id": "EV-010",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00414",
+          "what": "Emergency: set auth-service memory limit to 1Gi on CI-AUTH-APP: Restore the previous memory limit",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-06T10:00:00Z",
+          "evidence_id": "EV-011",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00361",
+          "what": "Rotate DNS provider API credentials on CI-CERT-MANAGER: Yearly rotation of the API token used by platform automation to manage DNS records",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-16T21:45:12Z",
+          "evidence_id": "EV-012",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00463",
+          "what": "Update API gateway routing configuration on CI-API-GATEWAY: Add routes for new partner endpoints; no change to existing routes",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-22T19:00:29Z",
+          "evidence_id": "EV-013",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00489",
+          "what": "Deploy Auth Service v7.13.0 on CI-AUTH-APP: Scheduled release: login page fixes and dependency updates",
+          "marker": "before the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-04-25T14:39:44Z",
+          "evidence_id": "EV-005",
+          "type": "LOG",
+          "citation": "LOG-K8S-20260425-01",
+          "what": "On Kubernetes Platform, a dependency: 8 WARN log line(s) of type CertificateRenewalFailed between 2026-04-25 14:39 and 04:37 UTC, the first 6 days before det...",
+          "marker": null,
+          "collected_at": "2026-10-13T13:36:46.823880Z"
+        },
+        {
+          "at": "2026-04-25T19:00:11Z",
+          "evidence_id": "EV-004",
+          "type": "LOG",
+          "citation": "LOG-GW-20260425-01",
+          "what": "6 WARN log line(s) of type CertificateExpirySoon between 2026-04-25 19:00 and 08:25 UTC, the first 5 days before detection",
+          "marker": "first error",
+          "collected_at": "2026-10-13T13:36:46.809055Z"
+        },
+        {
+          "at": "2026-04-30T22:00:00Z",
+          "evidence_id": "EV-014",
+          "type": "CHANGE",
+          "citation": "CHG-2026-00468",
+          "what": "Monthly OS patching of edge proxy nodes on CI-GW-EDGE-NODES: Rolling kernel and OpenSSL patches, nodes drained one by one",
+          "marker": "after the first error",
+          "collected_at": "2026-10-13T13:36:46.839132Z"
+        },
+        {
+          "at": "2026-05-01T03:00:02Z",
+          "evidence_id": "EV-003",
+          "type": "LOG",
+          "citation": "LOG-GW-20260501-01",
+          "what": "24 ERROR log line(s) of type CertificateExpired between 2026-05-01 03:00 and 04:10 UTC, the first 12 minutes before detection",
+          "marker": null,
+          "collected_at": "2026-10-13T13:36:46.809055Z"
+        },
+        {
+          "at": "2026-05-01T03:00:05Z",
+          "evidence_id": "EV-002",
+          "type": "LOG",
+          "citation": "LOG-GW-20260501-02",
+          "what": "26 ERROR log line(s) of type TlsHandshakeFailed between 2026-05-01 03:00 and 04:11 UTC, the first 12 minutes before detection",
+          "marker": null,
+          "collected_at": "2026-10-13T13:36:46.809055Z"
+        },
+        {
+          "at": "2026-05-01T03:12:00Z",
+          "evidence_id": "EV-001",
+          "type": "INCIDENT",
+          "citation": "INC-2026-00104",
+          "what": "The incident under investigation, INC-2026-00104 on API Gateway (SEV-1), detected 2026-05-01 03:12 UTC: API gateway certificate check error on edge nodes",
+          "marker": "incident detected",
+          "collected_at": "2026-10-13T13:36:44.676565Z"
+        }
+      ],
+      "trace": [
+        {
+          "name": "build_context",
+          "summary": "1 incident(s) of PRB-2026-00066 on API Gateway; logs around every incident, changes from 2026-04-01. Given to the agents: expert request.",
+          "started_at": "2026-10-13T13:36:32.526996Z",
+          "finished_at": "2026-10-13T13:36:32.549461Z",
+          "details": {
+            "problem_id": "PRB-2026-00066",
+            "incidents": [
+              "INC-2026-00104"
+            ],
+            "services": [
+              "API Gateway"
+            ],
+            "given": [
+              "expert request"
+            ],
+            "revision": "RCA-2026-00003-R2"
+          }
+        },
+        {
+          "name": "investigation_planner",
+          "summary": "5 search queries.",
+          "started_at": "2026-10-13T13:36:32.550461Z",
+          "finished_at": "2026-10-13T13:36:44.674554Z",
+          "details": {
+            "attempts": [
+              {
+                "attempt": 1,
+                "problems": []
+              }
+            ],
+            "search_queries": [
+              "TLS handshake failures on API gateway edge nodes",
+              "Certificate validation errors reported by mobile apps",
+              "Partner API calls failing due to certificate errors",
+              "Edge node certificate expiration or renewal issues",
+              "Recent changes to API gateway configuration or TLS settings"
+            ],
+            "rationale": "The queries address all reported symptoms—TLS handshake failures, certificate validation errors, and partner call failures—and also look for recent configuration or TLS changes that could cause them. They satisfy the technical expert's request to review changes from the past 30 days and certificate renewal logs from the last week, which are already covered by the existing search windows.",
+            "extra_searches": [],
+            "refused_searches": [],
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 1196,
+                "output_tokens": 541,
+                "latency_seconds": 12.11,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "gather_evidence",
+          "summary": "8 tool run(s), 8 ok. Logs: 3 ERROR/WARN pattern(s) around 1 incident(s), 1 on the services it depends on. Changes: 9 (CHG-2026-00402, CHG-2026-00403, CHG-2026-00407, CHG-2026-00412, CHG-2026-00414, CHG-2026-00361, CHG-2026-00463, CHG-2026-00489, CHG-2026-00468). CMDB: 7 component(s) depended on. Similar past incidents: 5.",
+          "started_at": "2026-10-13T13:36:44.676565Z",
+          "finished_at": "2026-10-13T13:36:46.839132Z",
+          "details": {
+            "evidence": 21,
+            "services": [
+              "API Gateway",
+              "Auth Service",
+              "Kubernetes Platform",
+              "Payment API",
+              "User Profile Service"
+            ],
+            "log_windows": [
+              {
+                "start": "2026-04-24T03:12:00+00:00",
+                "end": "2026-05-01T04:12:00+00:00",
+                "incident_id": "INC-2026-00104"
+              }
+            ],
+            "change_window": {
+              "start": "2026-04-01T03:12:00+00:00",
+              "end": "2026-05-01T04:35:00+00:00",
+              "incident_id": null
+            },
+            "found": {
+              "logs": [
+                "LOG-GW-20260501-02",
+                "LOG-GW-20260501-01",
+                "LOG-GW-20260425-01"
+              ],
+              "dependency_logs": [
+                "LOG-K8S-20260425-01"
+              ],
+              "changes": [
+                "CHG-2026-00402",
+                "CHG-2026-00403",
+                "CHG-2026-00407",
+                "CHG-2026-00412",
+                "CHG-2026-00414",
+                "CHG-2026-00361",
+                "CHG-2026-00463",
+                "CHG-2026-00489",
+                "CHG-2026-00468"
+              ],
+              "cmdb": [
+                "CI-AUTH-APP",
+                "CI-CERT-MANAGER",
+                "CI-GW-EDGE-NODES",
+                "CI-GW-RATE-LIMITER",
+                "CI-GW-WAF",
+                "CI-PAYMENT-API",
+                "CI-USER-PROFILE-APP"
+              ],
+              "problem_incidents": [],
+              "similar_incidents": [
+                "INC-2024-00891",
+                "INC-2025-00987",
+                "INC-2024-01273",
+                "INC-2025-00568",
+                "INC-2025-00926"
+              ]
+            },
+            "tool_runs": [
+              {
+                "run_id": "TR-01",
+                "tool": "search_similar_incidents",
+                "source": "historical_incidents",
+                "arguments": {
+                  "incident_id": "INC-2026-00104",
+                  "before": "2026-05-01T03:12:00+00:00"
+                },
+                "requested_by": "rule",
+                "reason": "rule: past incidents like the reference incident, older than its detection",
+                "status": "ok",
+                "result_count": 5,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:44.676565Z",
+                "finished_at": "2026-10-13T13:36:46.796821Z"
+              },
+              {
+                "run_id": "TR-02",
+                "tool": "find_dependencies",
+                "source": "cmdb",
+                "arguments": {
+                  "service": "API Gateway"
+                },
+                "requested_by": "rule",
+                "reason": "rule: the incidents",
+                "status": "ok",
+                "result_count": 4,
+                "evidence_ids": [
+                  "EV-015",
+                  "EV-016",
+                  "EV-017",
+                  "EV-018",
+                  "EV-019",
+                  "EV-020",
+                  "EV-021"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.796821Z",
+                "finished_at": "2026-10-13T13:36:46.796821Z"
+              },
+              {
+                "run_id": "TR-03",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "API Gateway",
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 3,
+                "evidence_ids": [
+                  "EV-002",
+                  "EV-003",
+                  "EV-004"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.796821Z",
+                "finished_at": "2026-10-13T13:36:46.809055Z"
+              },
+              {
+                "run_id": "TR-04",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Auth Service",
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.809055Z",
+                "finished_at": "2026-10-13T13:36:46.816294Z"
+              },
+              {
+                "run_id": "TR-05",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Kubernetes Platform",
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 1,
+                "evidence_ids": [
+                  "EV-005"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.816294Z",
+                "finished_at": "2026-10-13T13:36:46.823880Z"
+              },
+              {
+                "run_id": "TR-06",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "Payment API",
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.823880Z",
+                "finished_at": "2026-10-13T13:36:46.830611Z"
+              },
+              {
+                "run_id": "TR-07",
+                "tool": "find_logs",
+                "source": "logs",
+                "arguments": {
+                  "service": "User Profile Service",
+                  "start": "2026-04-24T03:12:00+00:00",
+                  "end": "2026-05-01T04:12:00+00:00",
+                  "incident_id": "INC-2026-00104"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 168 hours before to 1 hour after the detection of every incident",
+                "status": "ok",
+                "result_count": 0,
+                "evidence_ids": [],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.830611Z",
+                "finished_at": "2026-10-13T13:36:46.836619Z"
+              },
+              {
+                "run_id": "TR-08",
+                "tool": "find_changes",
+                "source": "changes",
+                "arguments": {
+                  "services": [
+                    "API Gateway",
+                    "Auth Service",
+                    "Kubernetes Platform",
+                    "Payment API",
+                    "User Profile Service"
+                  ],
+                  "start": "2026-04-01T03:12:00+00:00",
+                  "end": "2026-05-01T04:35:00+00:00"
+                },
+                "requested_by": "rule",
+                "reason": "rule: Problem Manager and Technical Expert: 30 days before the first incident to the resolution of the last one",
+                "status": "ok",
+                "result_count": 9,
+                "evidence_ids": [
+                  "EV-006",
+                  "EV-007",
+                  "EV-008",
+                  "EV-009",
+                  "EV-010",
+                  "EV-011",
+                  "EV-012",
+                  "EV-013",
+                  "EV-014"
+                ],
+                "error": null,
+                "started_at": "2026-10-13T13:36:46.836619Z",
+                "finished_at": "2026-10-13T13:36:46.839132Z"
+              }
+            ]
+          }
+        },
+        {
+          "name": "build_timeline",
+          "summary": "14 moment(s) on the timeline. First error 2026-04-25 19:00 UTC (LOG-GW-20260425-01). Changes before it: CHG-2026-00402, CHG-2026-00403, CHG-2026-00407, CHG-2026-00412, CHG-2026-00414, CHG-2026-00361, CHG-2026-00463, CHG-2026-00489.",
+          "started_at": "2026-10-13T13:36:46.842249Z",
+          "finished_at": "2026-10-13T13:36:46.842249Z",
+          "details": {
+            "moments": 14,
+            "first_error": "LOG-GW-20260425-01",
+            "changes_before": [
+              "CHG-2026-00402",
+              "CHG-2026-00403",
+              "CHG-2026-00407",
+              "CHG-2026-00412",
+              "CHG-2026-00414",
+              "CHG-2026-00361",
+              "CHG-2026-00463",
+              "CHG-2026-00489"
+            ]
+          }
+        },
+        {
+          "name": "historical_review",
+          "summary": "Kept RCA-2024-00088, INC-2024-00891. Dropped RCA-2024-00374, RCA-2024-00299, RCA-2025-00114, RCA-2024-00151, INC-2025-00987, INC-2024-01273, INC-2025-00568, INC-2025-00926. The problem came back after RCA-2024-00088: its corrective action did not prevent it.",
+          "started_at": "2026-10-13T13:36:46.842249Z",
+          "finished_at": "2026-10-13T13:37:03.876285Z",
+          "details": {
+            "kept": [
+              {
+                "id": "RCA-2024-00088",
+                "reason": "Matches same service and symptoms (TLS handshake failures, certificate validation errors on edge nodes).",
+                "came_back_after": true
+              },
+              {
+                "id": "INC-2024-00891",
+                "reason": "Incident for same service reporting identical TLS handshake failures and partner API call failures on edge nodes.",
+                "came_back_after": false
+              }
+            ],
+            "dropped": [
+              {
+                "id": "RCA-2024-00374",
+                "reason": "Another service (Payroll Service): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2024-00299",
+                "reason": "Another service (Payment API): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2025-00114",
+                "reason": "Another service (Payment API): past records of other services are never evidence."
+              },
+              {
+                "id": "RCA-2024-00151",
+                "reason": "Same service but problem concerns WAF rule blocking unrelated to TLS certificates or handshake failures."
+              },
+              {
+                "id": "INC-2025-00987",
+                "reason": "Describes connection refused errors due to stopped instances, not TLS or certificate issues."
+              },
+              {
+                "id": "INC-2024-01273",
+                "reason": "Describes connection refused errors from stopped instances, unrelated to certificate problems."
+              },
+              {
+                "id": "INC-2025-00568",
+                "reason": "Describes connection refused errors from stopped instances, unrelated to TLS handshake failures."
+              },
+              {
+                "id": "INC-2025-00926",
+                "reason": "Describes connection refused errors from stopped instances, not related to certificate validation errors."
+              }
+            ],
+            "attempts": [
+              {
+                "attempt": 1,
+                "problems": []
+              }
+            ],
+            "findings": [
+              {
+                "citation": "RCA-2024-00088",
+                "kind": "rca",
+                "reason": "Matches same service and symptoms (TLS handshake failures, certificate validation errors on edge nodes).",
+                "similarities": [
+                  "TLS handshake failures\",\"Certificate validation errors\",\"Edge node certificate issue"
+                ],
+                "differences": [
+                  "Root cause was missed manual renewal vs unknown trigger\",\"Remediation involved manual install then automation\",\"Occurred during night expiration rather than recent change"
+                ],
+                "remediation": "Installed a renewed certificate and moved the edge certificates to automatic renewal with cert-manager (CHG-2024-00731).",
+                "outcome": "Issue resolved after renewal and automation prevented future expirations.",
+                "came_back_after": true
+              },
+              {
+                "citation": "INC-2024-00891",
+                "kind": "incident",
+                "reason": "Incident for same service reporting identical TLS handshake failures and partner API call failures on edge nodes.",
+                "similarities": [
+                  "TLS handshake failures\",\"Partner API calls failing\",\"Edge node impact"
+                ],
+                "differences": [
+                  "Only incident report, no root cause analysis\",\"Remediation was manual certificate install only\",\"No mention of automation or broader configuration changes"
+                ],
+                "remediation": "Installed a renewed certificate by hand.",
+                "outcome": "Handshake failures cleared after certificate renewal.",
+                "came_back_after": false
+              }
+            ],
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 1757,
+                "output_tokens": 889,
+                "latency_seconds": 6.59,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "rca_reasoning_agent",
+          "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+          "started_at": "2026-10-13T13:37:03.878283Z",
+          "finished_at": "2026-10-13T13:38:00.502914Z",
+          "details": {
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 4732,
+                "output_tokens": 2431,
+                "latency_seconds": 56.61,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ],
+            "input_shortened": [
+              "The evidence descriptions the agent read were shortened to 400 characters to fit the request limit of the model; the evidence itself is unchanged."
+            ]
+          }
+        },
+        {
+          "name": "guardrail",
+          "summary": "Draft refused on attempt 1; asking again with the problems.",
+          "started_at": "2026-10-13T13:38:00.502914Z",
+          "finished_at": "2026-10-13T13:38:00.502914Z",
+          "details": {
+            "attempt": 1,
+            "problems": [
+              "HYP-002 cites EV-014 as supporting evidence, a change made after the first error: it cannot have caused it; move it to contradicting_evidence or remove it"
+            ]
+          }
+        },
+        {
+          "name": "rca_reasoning_agent",
+          "summary": "Attempt 2: 2 hypothesis(es) proposed.",
+          "started_at": "2026-10-13T13:38:00.513329Z",
+          "finished_at": "2026-10-13T13:38:44.413195Z",
+          "details": {
+            "models": [
+              "groq:openai/gpt-oss-120b"
+            ],
+            "llm_calls": [
+              {
+                "model": "groq:openai/gpt-oss-120b",
+                "input_tokens": 4788,
+                "output_tokens": 3052,
+                "latency_seconds": 43.91,
+                "waited_seconds": 0,
+                "outcome": "valid"
+              }
+            ],
+            "input_shortened": [
+              "The evidence descriptions the agent read were shortened to 400 characters to fit the request limit of the model; the evidence itself is unchanged."
+            ]
+          }
+        },
+        {
+          "name": "guardrail",
+          "summary": "Draft accepted on attempt 2: the schema is valid and all 10 cited evidence ids exist.",
+          "started_at": "2026-10-13T13:38:44.414198Z",
+          "finished_at": "2026-10-13T13:38:44.414198Z",
+          "details": {
+            "attempt": 2,
+            "warnings": [
+              "HYP-001 names EV-011 in its text without citing it."
+            ]
+          }
+        },
+        {
+          "name": "confidence",
+          "summary": "HYP-002: MEDIUM (5 points). HYP-001: LOW (3 points).",
+          "started_at": "2026-10-13T13:38:44.417241Z",
+          "finished_at": "2026-10-13T13:38:44.417241Z",
+          "details": {}
+        }
+      ],
+      "investigation_summary": "API gateway edge nodes began rejecting TLS handshakes on 2026-05-01 due to an expired wildcard certificate. Logs show certificate expiry warnings days earlier and a failed automated renewal attempt. Several unrelated configuration changes occurred before the incident, but the evidence points to the certificate renewal failure as the primary trigger, with a possible contributing role of recent WAF rule changes.",
+      "observed_patterns": [
+        "Certificate expiry warning logged 5 days before incident (EV-004)",
+        "Automated renewal attempt failed with DNS‑01 challenge error (EV-005)",
+        "Wildcard certificate expired exactly at 2026-05-01T03:00:00Z (EV-003)",
+        "TLS handshake failures started immediately after expiry (EV-002)",
+        "Multiple unrelated changes were made in the weeks before the incident but did not correlate with the timing of the errors"
+      ],
+      "hypotheses": [
+        {
+          "hypothesis_id": "HYP-002",
+          "candidate_root_cause": "Recent WAF rule set changes introduced stricter TLS inspection that blocked traffic with certificates nearing expiry, contributing to the observed handshake failures.",
+          "reasons": [
+            "WAF rule set was moved to blocking mode shortly before the incident (EV-006)",
+            "A second WAF rule update occurred in detection mode (EV-007)",
+            "Gateway depends on the edge‑WAF policy (EV-019)",
+            "Certificate expiry warnings appeared days before the failure (EV-004)"
+          ],
+          "supporting_evidence": [
+            "EV-006",
+            "EV-007",
+            "EV-019",
+            "EV-004"
+          ],
+          "contradicting_evidence": [
+            "EV-005",
+            "EV-022"
+          ],
+          "recommended_validation": [
+            "Review the WAF rule definitions for TLS inspection behavior",
+            "Test TLS handshakes against a non‑expired certificate with the new WAF rules applied",
+            "Correlate WAF logs with the timing of handshake failures"
+          ],
+          "missing_evidence": [
+            "WAF audit logs showing blocked TLS sessions",
+            "Exact version of the WAF rule set after the change",
+            "Metrics of TLS handshake success rates before and after the WAF update"
+          ],
+          "why_chain": [],
+          "factors": [
+            {
+              "category": "Change / Release",
+              "factor": "Enable new WAF rule set in blocking mode",
+              "evidence": [
+                "EV-006"
+              ]
+            },
+            {
+              "category": "Configuration",
+              "factor": "WAF policy applied to the API gateway",
+              "evidence": [
+                "EV-019"
+              ]
+            },
+            {
+              "category": "Monitoring",
+              "factor": "Early certificate expiry warnings indicated a potential issue",
+              "evidence": [
+                "EV-004"
+              ]
+            }
+          ],
+          "confidence": "MEDIUM",
+          "confidence_points": 5,
+          "confidence_reasons": [
+            "Log evidence of the symptom (+2).",
+            "Change on the affected service or a direct dependency, before the first error (+2).",
+            "CMDB dependency confirms the technical path (+1).",
+            "5 points from 3 different sources: HIGH.",
+            "Contradicting evidence EV-005, EV-022 lowers the level by one band: MEDIUM."
+          ]
+        },
+        {
+          "hypothesis_id": "HYP-001",
+          "candidate_root_cause": "The automated certificate renewal process failed due to a DNS‑01 challenge error, causing the wildcard TLS certificate to expire and leading to handshake failures.",
+          "reasons": [
+            "Renewal failed with a 403 from the DNS provider (EV-005)",
+            "The certificate expired at 03:00 UTC on 2026‑05‑01 (EV-003)",
+            "TLS handshakes then failed across clients (EV-002)"
+          ],
+          "supporting_evidence": [
+            "EV-005",
+            "EV-003",
+            "EV-002",
+            "EV-004",
+            "EV-016"
+          ],
+          "contradicting_evidence": [
+            "EV-014"
+          ],
+          "recommended_validation": [
+            "Check cert‑manager logs for the exact error and timestamps",
+            "Verify the DNS provider API token used at the time of renewal (EV-011)",
+            "Inspect the DNS‑01 challenge records for correctness"
+          ],
+          "missing_evidence": [
+            "Full cert‑manager audit log around 2026‑04‑25 to 2026‑05‑01",
+            "Network trace of DNS challenge attempts",
+            "Confirmation of DNS API token validity during the renewal attempt"
+          ],
+          "why_chain": [
+            {
+              "why": "Why were TLS handshakes failing?",
+              "because": "Because the presented wildcard certificate was expired.",
+              "evidence": [
+                "EV-003",
+                "EV-002"
+              ]
+            },
+            {
+              "why": "Why was the certificate expired?",
+              "because": "Because the automated renewal process did not obtain a new certificate.",
+              "evidence": [
+                "EV-005"
+              ]
+            },
+            {
+              "why": "Why did the renewal process fail?",
+              "because": "Because the DNS‑01 challenge received a 403 Forbidden response from the DNS provider.",
+              "evidence": [
+                "EV-005"
+              ]
+            },
+            {
+              "why": "Why did the DNS challenge receive a 403?",
+              "because": "Possibly the DNS provider API credentials had been rotated and were no longer valid.",
+              "evidence": [
+                "EV-011"
+              ]
+            },
+            {
+              "why": "Why were the credentials invalid?",
+              "because": "The root cause cannot be confirmed without further credential audit.",
+              "evidence": []
+            }
+          ],
+          "factors": [
+            {
+              "category": "Change / Release",
+              "factor": "Rotation of DNS provider API credentials (potentially invalidating automation)",
+              "evidence": [
+                "EV-011"
+              ]
+            },
+            {
+              "category": "Configuration",
+              "factor": "DNS‑01 challenge failure due to 403 response",
+              "evidence": [
+                "EV-005"
+              ]
+            },
+            {
+              "category": "Dependencies",
+              "factor": "API gateway depends on cert‑manager for its TLS certificate",
+              "evidence": [
+                "EV-016"
+              ]
+            }
+          ],
+          "confidence": "LOW",
+          "confidence_points": 3,
+          "confidence_reasons": [
+            "Log evidence of the symptom (+2).",
+            "CMDB dependency confirms the technical path (+1).",
+            "3 points: MEDIUM.",
+            "Contradicting evidence EV-014 lowers the level by one band: LOW."
+          ]
+        }
+      ],
+      "single_hypothesis_reason": null,
+      "not_checked": [
+        "Detailed logs of the cert‑manager renewal controller beyond the failure event",
+        "Exact OpenSSL version on edge‑proxy nodes before and after the OS patch (EV-014)",
+        "Full rule set of the WAF changes (EV-006, EV-007) to see if TLS inspection was altered",
+        "Metrics from DNS provider API calls during the renewal window"
+      ],
+      "weakly_supported": false,
+      "suggested_workaround": "Manually install a renewed wildcard certificate on the edge‑proxy nodes and restart the gateway services while the automated renewal process is investigated.",
+      "change_likely_required": true,
+      "review": null,
+      "final_root_cause": null,
+      "review_rounds": 1
+    }
+  }
+]

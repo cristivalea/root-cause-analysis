@@ -12,10 +12,12 @@ from rca.ui import state, theme
 from rca.ui.strings import t
 
 HOME = "app_pages/home.py"
-START_RCA = "app_pages/start_rca.py"
 INVESTIGATION = "app_pages/investigation.py"
 REVIEW = "app_pages/review.py"
 HISTORY = "app_pages/history.py"
+PROBLEMS = "app_pages/problems.py"
+PROPOSALS = "app_pages/proposals.py"
+KPIS = "app_pages/kpis.py"
 
 
 # def build_pages(role: state.Role) -> list[st.Page]:
@@ -54,12 +56,8 @@ def build_pages(role: state.Role) -> list[st.Page]:
     if role == state.PROBLEM_MANAGER:
         return [
             home,
-            st.Page(
-                START_RCA,
-                title=t("nav.start_rca"),
-                icon=theme.ICONS["start_rca"],
-                url_path="start-rca",
-            ),
+            st.Page(PROBLEMS, title=t("nav.problems"), icon=theme.ICONS["problems"], url_path="problems"),
+            st.Page(PROPOSALS, title=t("nav.proposals"), icon=theme.ICONS["proposals"], url_path="proposed-problems"),
             st.Page(
                 INVESTIGATION,
                 title=t("nav.investigation"),
@@ -72,6 +70,7 @@ def build_pages(role: state.Role) -> list[st.Page]:
                 icon=theme.ICONS["history"],
                 url_path="rca-history",
             ),
+            st.Page(KPIS, title=t("nav.kpis"), icon=theme.ICONS["kpis"], url_path="kpis"),
         ]
 
     return [

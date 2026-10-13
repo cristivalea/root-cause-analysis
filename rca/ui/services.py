@@ -182,7 +182,7 @@ from collections.abc import Callable
 import requests
 import streamlit as st
 
-from rca.models import Incident, InvestigationStep, RCARecord, RCAStatus
+from rca.models import RCA, Incident, InvestigationStep, Problem, ProblemEvent, RCARecord, RCAStatus, RCAStatusChange
 
 INCIDENT_CACHE_SECONDS = 300
 API_BASE_URL = os.getenv("API_URL", "http://127.0.0.1:8000")
@@ -259,6 +259,15 @@ def services() -> list[str]:
     return sorted({incident.service for incident in list_incidents()})
 
 
+def cmdb_services() -> list[str]:
+    """Every service of the CMDB: the ones the Problem Manager may add to an investigation."""
+    try:
+        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/services", headers=_auth_headers(), timeout=10))
+        return list(resp.json())
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
 # @st.cache_data(ttl=INCIDENT_CACHE_SECONDS, show_spinner=False)
 def teams_for_service(service: str) -> list[str]:
     try:
@@ -302,7 +311,20 @@ def get_rca(rca_id: str) -> RCARecord | None:
 
 
 def rcas_for_incident(incident_id: str) -> list[RCARecord]:
-    return [record for record in list_rcas() if record.incident_id == incident_id]
+    """The RCAs whose problem holds the incident (the latest revision of each), the most recent first."""
+    return [record for record in list_rcas()
+            if incident_id == record.incident_id or (record.context and incident_id in record.context.incident_ids)]
+
+
+def list_rca_summaries() -> list[RCA]:
+    """Every RCA, the most recent first: its problem, title, status, revisions and dates."""
+    return [RCA.model_validate(item) for item in _get("/api/v1/rcas/summaries")]
+
+
+def rca_history(rca_id: str) -> dict:
+    """The RCA (models.RCA) and every change of its status, the decisions of the expert included."""
+    data = _get(f"/api/v1/rcas/{rca_id}/history")
+    return {"rca": RCA.model_validate(data["rca"]), "history": [RCAStatusChange.model_validate(item) for item in data["history"]]}
 
 
 def submit_for_review(rca_id: str) -> RCARecord:
@@ -320,6 +342,7 @@ def apply_review(
     comment: str,
     hypothesis_id: str | None = None,
     requested_checks: list[str] | None = None,
+    guidance: dict | None = None,
 ) -> RCARecord:
     payload = {
         "reviewer": reviewer,
@@ -327,6 +350,7 @@ def apply_review(
         "comment": comment,
         "hypothesis_id": hypothesis_id,
         "requested_checks": requested_checks,
+        "guidance": guidance,
     }
     try:
         resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/rcas/{rca_id}/review", headers=_auth_headers(), json=payload, timeout=10))
@@ -336,8 +360,12 @@ def apply_review(
 
 
 def list_case(case_id: str) -> list[RCARecord]:
+    """Every revision of an RCA, the first one first; empty when there is no such RCA."""
     try:
-        resp = _check_response(requests.get(f"{API_BASE_URL}/api/v1/cases/{case_id}", headers=_auth_headers(), timeout=10))
+        resp = requests.get(f"{API_BASE_URL}/api/v1/cases/{case_id}", headers=_auth_headers(), timeout=10)
+        if resp.status_code == 404:
+            return []
+        _check_response(resp)
         return [RCARecord.model_validate(item) for item in resp.json()]
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
@@ -351,29 +379,146 @@ def list_cases() -> list[list[RCARecord]]:
         raise ServiceError(str(exc)) from exc
 
 
-def link_to_case(previous_rca_id: str, new_rca_id: str) -> RCARecord:
-    payload = {"previous_rca_id": previous_rca_id, "new_rca_id": new_rca_id}
-    try:
-        resp = _check_response(requests.post(f"{API_BASE_URL}/api/v1/cases/link", headers=_auth_headers(), json=payload, timeout=10))
-        return RCARecord.model_validate(resp.json())
-    except Exception as exc:
-        raise ServiceError(str(exc)) from exc
-
-
 # --------------------------------------------------------------------------------------
 # The investigation
 # --------------------------------------------------------------------------------------
 
-def start_investigation(
-    incident_id: str,
-    owner: str,
-    on_step: Callable[[InvestigationStep], None] | None = None,
-) -> RCARecord:
-    payload = {"incident_id": incident_id, "owner": owner}
+
+def start_rca(problem_id: str, guidance: dict | None = None, request_key: str | None = None) -> RCARecord:
+    """Start RCA on a problem: the RCA is saved at once and investigated in the background."""
+    return RCARecord.model_validate(_post(f"/api/v1/problems/{problem_id}/rcas",
+                                          {"guidance": guidance, "request_key": request_key}))
+
+
+def start_next_revision(rca_id: str, guidance: dict | None = None, request_key: str | None = None) -> RCARecord:
+    """The next revision of an RCA sent back for more details, or whose last run failed."""
+    return RCARecord.model_validate(_post(f"/api/v1/rcas/{rca_id}/revisions",
+                                          {"guidance": guidance, "request_key": request_key}))
+
+# --------------------------------------------------------------------------------------
+# Problems and grouping suggestions (Problem Manager)
+# --------------------------------------------------------------------------------------
+
+
+def user_message(error: Exception) -> str:
+    """The message of a refused operation as the Problem Manager reads it, without the HTTP prefix."""
+    text = str(error)
+    return text.split("): ", 1)[1] if text.startswith("API Error (") and "): " in text else text
+
+
+def _get(path: str, timeout: int = 15):
     try:
-        resp = _check_response(
-            requests.post(f"{API_BASE_URL}/api/v1/investigations/start", headers=_auth_headers(), json=payload, timeout=180)
-        )
-        return RCARecord.model_validate(resp.json())
+        return _check_response(requests.get(f"{API_BASE_URL}{path}", headers=_auth_headers(), timeout=timeout)).json()
+    except ServiceError:
+        raise
     except Exception as exc:
         raise ServiceError(str(exc)) from exc
+
+
+def _post(path: str, payload: dict, timeout: int = 15):
+    try:
+        return _check_response(requests.post(f"{API_BASE_URL}{path}", headers=_auth_headers(), json=payload,
+                                             timeout=timeout)).json()
+    except ServiceError:
+        raise
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
+def _put(path: str, payload: dict, timeout: int = 15):
+    try:
+        return _check_response(requests.put(f"{API_BASE_URL}{path}", headers=_auth_headers(), json=payload,
+                                            timeout=timeout)).json()
+    except ServiceError:
+        raise
+    except Exception as exc:
+        raise ServiceError(str(exc)) from exc
+
+
+def _problem_result(data: dict) -> tuple[Problem, list[str]]:
+    return Problem.model_validate(data["problem"]), list(data.get("warnings", []))
+
+
+def list_problems(status: str | None = None) -> list[Problem]:
+    query = f"?status_filter={status}" if status else ""
+    return [Problem.model_validate(item) for item in _get(f"/api/v1/problems{query}")]
+
+
+def get_problem(problem_id: str) -> dict | None:
+    """The problem, its history and its RCAs, or None when it does not exist."""
+    try:
+        data = _get(f"/api/v1/problems/{problem_id}")
+    except ServiceError as error:
+        if "(404)" in str(error):
+            return None
+        raise
+    return {
+        "problem": Problem.model_validate(data["problem"]),
+        "events": [ProblemEvent.model_validate(item) for item in data["events"]],
+        "rcas": [RCARecord.model_validate(item) for item in data["rcas"]],
+    }
+
+
+def create_problem(incident_ids: list[str], title: str | None = None, reason: str | None = None) -> tuple[Problem, list[str]]:
+    return _problem_result(_post("/api/v1/problems", {"incident_ids": incident_ids, "title": title, "reason": reason}))
+
+
+def attach_incident(problem_id: str, incident_id: str, reason: str | None = None) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/incidents",
+                                 {"incident_id": incident_id, "reason": reason}))
+
+
+def problem_candidates(problem_id: str) -> list[dict]:
+    """The incidents that may be added to the problem, the most alike first, with their similarity."""
+    return _get(f"/api/v1/problems/{problem_id}/candidates", timeout=60)
+
+
+def set_guidance(problem_id: str, guidance: dict | None) -> tuple[Problem, list[str]]:
+    """Save the guidance for the investigation of the problem (models.InvestigationGuidance as a dict)."""
+    return _problem_result(_put(f"/api/v1/problems/{problem_id}/guidance", {"guidance": guidance}))
+
+
+def detach_incident(problem_id: str, incident_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/incidents/{incident_id}/remove", {"reason": reason}))
+
+
+def close_problem(problem_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/close", {"reason": reason}))
+
+
+def reopen_problem(problem_id: str, reason: str) -> tuple[Problem, list[str]]:
+    return _problem_result(_post(f"/api/v1/problems/{problem_id}/reopen", {"reason": reason}))
+
+
+def unassigned_incidents() -> list[Incident]:
+    return [Incident.model_validate(item) for item in _get("/api/v1/incidents/unassigned")]
+
+
+def suggestions() -> dict[str, dict | None]:
+    """The grouping suggestion of every incident in no problem (kind, problem_id, incident_ids, reasons)."""
+    return _get("/api/v1/incidents/unassigned/suggestions", timeout=60)
+
+
+def list_proposals() -> list[dict]:
+    """The Proposed Problem Records (rca/suggestions.Proposal as dicts): groups, incidents for an open problem,
+    single major incidents, each with its score, reasons and evidence."""
+    return _get("/api/v1/proposals", timeout=60)
+
+
+def _proposal(proposal: dict, **extra) -> dict:
+    return {**{key: proposal[key] for key in ("key", "kind", "incident_ids", "problem_id")}, **extra}
+
+
+def accept_proposal(proposal: dict, title: str | None = None, reason: str | None = None) -> tuple[Problem, list[str], bool]:
+    """Create the problem of a proposal (or add its incident). Returns the problem, the warnings, and whether this
+    request made it (False: an earlier accept of the same proposal already did)."""
+    data = _post("/api/v1/proposals/accept", _proposal(proposal, title=title, reason=reason))
+    return Problem.model_validate(data["problem"]), list(data.get("warnings", [])), bool(data.get("created", True))
+
+
+def reject_proposal(proposal: dict, reason: str | None = None) -> None:
+    _post("/api/v1/proposals/reject", _proposal(proposal, reason=reason))
+
+
+def reject_suggestion(incident_id: str, targets: list[str]) -> None:
+    _post(f"/api/v1/incidents/{incident_id}/reject-suggestion", {"targets": targets})

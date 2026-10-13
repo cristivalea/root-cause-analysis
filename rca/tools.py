@@ -75,6 +75,7 @@ def find_logs(
             last_seen=lines[-1].timestamp,
             hosts=sorted({line.host for line in lines}),
             examples=lines[:MAX_LOG_EXAMPLES],
+            log_ids=[line.log_id for line in lines],
         )
         for (level, error_type), lines in grouped.items()
     ]

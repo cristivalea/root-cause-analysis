@@ -1,0 +1,2532 @@
+[
+  {
+    "rca_id": "RCA-2026-00001",
+    "incident_id": "INC-2026-00101",
+    "status": "DRAFT",
+    "owner": "RAGAS evaluation",
+    "created_at": "2026-10-08T13:03:22.149889Z",
+    "case_id": null,
+    "cycle": 1,
+    "parent_rca_id": null,
+    "completed_at": null,
+    "duration_seconds": 43.6,
+    "linked_incidents": [
+      "INC-2025-00119",
+      "INC-2025-00104",
+      "INC-2025-00157",
+      "INC-2024-01145",
+      "INC-2026-00472"
+    ],
+    "problem_id": "PRB-2026-00113",
+    "context": {
+      "problem_id": "PRB-2026-00113",
+      "incident_ids": [
+        "INC-2026-00139",
+        "INC-2026-00167",
+        "INC-2026-00188",
+        "INC-2026-00196",
+        "INC-2026-00101"
+      ],
+      "reference_incident_id": "INC-2026-00101",
+      "services": [
+        "Payroll Service"
+      ],
+      "related_services": [
+        "External Vendors",
+        "Kubernetes Platform"
+      ],
+      "log_windows": [
+        {
+          "start": "2026-03-16T04:48:00Z",
+          "end": "2026-03-16T07:48:00Z",
+          "incident_id": "INC-2026-00139"
+        },
+        {
+          "start": "2026-04-27T04:35:00Z",
+          "end": "2026-04-27T07:35:00Z",
+          "incident_id": "INC-2026-00167"
+        },
+        {
+          "start": "2026-05-25T04:41:00Z",
+          "end": "2026-05-25T07:41:00Z",
+          "incident_id": "INC-2026-00188"
+        },
+        {
+          "start": "2026-06-29T04:44:00Z",
+          "end": "2026-06-29T07:44:00Z",
+          "incident_id": "INC-2026-00196"
+        },
+        {
+          "start": "2026-07-27T04:40:00Z",
+          "end": "2026-07-27T07:40:00Z",
+          "incident_id": "INC-2026-00101"
+        }
+      ],
+      "change_window": {
+        "start": "2026-03-09T06:48:00Z",
+        "end": "2026-07-27T08:15:00Z",
+        "incident_id": null
+      },
+      "sources": {
+        "incidents": "problem PRB-2026-00113",
+        "reference_incident": "rule: the most recent incident",
+        "services": "the incidents",
+        "related_services": "CMDB: the services the incident services depend on",
+        "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+        "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+      }
+    },
+    "plan": {
+      "service": "Payroll Service",
+      "related_services": [
+        "External Vendors",
+        "Kubernetes Platform"
+      ],
+      "window_start": "2026-03-09T06:48:00Z",
+      "window_end": "2026-07-27T08:15:00Z",
+      "sources": [
+        "logs",
+        "changes",
+        "cmdb",
+        "historical_rcas",
+        "historical_incidents"
+      ],
+      "search_queries": [
+        "Employee portal slow or timeouts during payroll batch processing",
+        "Payroll batch job exceeds SLA and causes HTTP 504 gateway timeouts",
+        "Database connection acquisition latency during payroll run",
+        "Payslip pages take longer than ten seconds to load on Monday mornings",
+        "Payroll reports delayed and backlog during monthly payroll generation"
+      ],
+      "rationale": "The queries target the key symptoms observed: portal slowness and timeouts, HTTP 504 errors linked to batch processing, database connection latency, prolonged payslip page load times, and delayed payroll report generation. These cover the recurring patterns across the incidents and help locate similar past events for root‑cause analysis."
+    },
+    "evidence": [
+      {
+        "evidence_id": "EV-001",
+        "type": "LOG",
+        "source": "payroll-app-prod-01",
+        "description": "5 ERROR log line(s) of type ConnectionTimeout between 2026-03-16 06:40 and 07:10 UTC, the first 8 minutes before the detection of INC-2026-00139. Example: \"HikariPool-payroll - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAYROLL-20260316-03",
+        "timestamp": "2026-03-16T06:40:00Z"
+      },
+      {
+        "evidence_id": "EV-002",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "2 WARN log line(s) of type WorkerPoolScaleUp between 2026-03-16 06:05 and 06:10 UTC, the first 43 minutes before the detection of INC-2026-00139. Example: \"Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260316-01",
+        "timestamp": "2026-03-16T06:05:00Z"
+      },
+      {
+        "evidence_id": "EV-003",
+        "type": "LOG",
+        "source": "payroll-app-prod-01, payroll-worker-prod-02",
+        "description": "9 ERROR log line(s) of type ConnectionTimeout between 2026-04-27 06:28 and 07:25 UTC, the first 7 minutes before the detection of INC-2026-00167. Example: \"HikariPool-payroll - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAYROLL-20260427-04",
+        "timestamp": "2026-04-27T06:28:00Z"
+      },
+      {
+        "evidence_id": "EV-004",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "3 WARN log line(s) of type WorkerPoolScaleUp between 2026-04-27 06:04 and 06:13 UTC, the first 31 minutes before the detection of INC-2026-00167. Example: \"Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260427-01",
+        "timestamp": "2026-04-27T06:04:00Z"
+      },
+      {
+        "evidence_id": "EV-005",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01, payroll-worker-prod-02",
+        "description": "8 ERROR log line(s) of type ConnectionTimeout between 2026-05-25 06:33 and 07:20 UTC, the first 8 minutes before the detection of INC-2026-00188. Example: \"HikariPool-payroll - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAYROLL-20260525-04",
+        "timestamp": "2026-05-25T06:33:00Z"
+      },
+      {
+        "evidence_id": "EV-006",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "3 WARN log line(s) of type WorkerPoolScaleUp between 2026-05-25 06:05 and 06:10 UTC, the first 36 minutes before the detection of INC-2026-00188. Example: \"Autoscaler raised payroll worker threads from 16 to 48 (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260525-01",
+        "timestamp": "2026-05-25T06:05:00Z"
+      },
+      {
+        "evidence_id": "EV-007",
+        "type": "LOG",
+        "source": "payroll-app-prod-01, payroll-worker-prod-02",
+        "description": "12 ERROR log line(s) of type ConnectionTimeout between 2026-06-29 06:30 and 07:38 UTC, the first 14 minutes before the detection of INC-2026-00196. Example: \"HikariPool-payroll - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAYROLL-20260629-04",
+        "timestamp": "2026-06-29T06:30:00Z"
+      },
+      {
+        "evidence_id": "EV-008",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "3 WARN log line(s) of type WorkerPoolScaleUp between 2026-06-29 06:05 and 06:17 UTC, the first 39 minutes before the detection of INC-2026-00196. Example: \"Autoscaler raised payroll worker threads from 32 to 64 (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260629-01",
+        "timestamp": "2026-06-29T06:05:00Z"
+      },
+      {
+        "evidence_id": "EV-009",
+        "type": "LOG",
+        "source": "payroll-app-prod-01, payroll-worker-prod-01, payroll-worker-prod-02",
+        "description": "26 ERROR log line(s) of type ConnectionTimeout between 2026-07-27 06:26 and 07:33 UTC, the first 14 minutes before the detection of INC-2026-00101. Example: \"Could not open JDBC connection for payslip query: HikariPool-payroll timed out after 30000ms\"",
+        "citation": "LOG-PAYROLL-20260727-08",
+        "timestamp": "2026-07-27T06:26:12Z"
+      },
+      {
+        "evidence_id": "EV-010",
+        "type": "LOG",
+        "source": "payroll-app-prod-01",
+        "description": "13 ERROR log line(s) of type GatewayTimeout between 2026-07-27 06:38 and 07:38 UTC, the first 1 minutes before the detection of INC-2026-00101. Example: \"GET /api/payslips/current returned 504 after 60000ms\"",
+        "citation": "LOG-PAYROLL-20260727-24",
+        "timestamp": "2026-07-27T06:38:40Z"
+      },
+      {
+        "evidence_id": "EV-011",
+        "type": "LOG",
+        "source": "payroll-app-prod-01, payroll-worker-prod-02",
+        "description": "10 ERROR log line(s) of type TooManyConnections between 2026-07-27 06:31 and 07:32 UTC, the first 9 minutes before the detection of INC-2026-00101. Example: \"FATAL: remaining connection slots are reserved for non-replication superuser connections\"",
+        "citation": "LOG-PAYROLL-20260727-15",
+        "timestamp": "2026-07-27T06:31:05Z"
+      },
+      {
+        "evidence_id": "EV-012",
+        "type": "LOG",
+        "source": "payroll-app-prod-01",
+        "description": "6 WARN log line(s) of type ConnectionPoolPressure between 2026-07-27 06:18 and 06:36 UTC, the first 22 minutes before the detection of INC-2026-00101. Example: \"payroll-postgresql connections in use 176 of 200 (88%)\"",
+        "citation": "LOG-PAYROLL-20260727-06",
+        "timestamp": "2026-07-27T06:18:30Z"
+      },
+      {
+        "evidence_id": "EV-013",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "4 WARN log line(s) of type WorkerPoolScaleUp between 2026-07-27 06:04 and 06:15 UTC, the first 36 minutes before the detection of INC-2026-00101. Example: \"Autoscaler raised payroll worker threads from 16 to 32 (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260727-02",
+        "timestamp": "2026-07-27T06:04:10Z"
+      },
+      {
+        "evidence_id": "EV-014",
+        "type": "LOG",
+        "source": "payroll-worker-prod-01",
+        "description": "1 WARN log line(s) of type WorkerPoolAtMaximum between 2026-07-27 06:21 and 06:21 UTC, the first 18 minutes before the detection of INC-2026-00101. Example: \"Payroll worker pool at its maximum: 96 threads, one database connection each (policy payroll-workers-hpa, max 96)\"",
+        "citation": "LOG-PAYROLL-20260727-07",
+        "timestamp": "2026-07-27T06:21:40Z"
+      },
+      {
+        "evidence_id": "EV-015",
+        "type": "CHANGE",
+        "source": "CHG-2026-00262",
+        "description": "Enable autoscaling for payroll batch workers on CI-PAYROLL-WORKER: Replace the fixed worker count with autoscaling (min 16, max 96 threads) to shorten the Monday run. Implemented at 2026-03-11 18:00 UTC, 5 days before the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00262",
+        "timestamp": "2026-03-11T18:00:00Z"
+      },
+      {
+        "evidence_id": "EV-016",
+        "type": "CHANGE",
+        "source": "CHG-2026-00361",
+        "description": "Rotate DNS provider API credentials on CI-CERT-MANAGER: Yearly rotation of the API token used by platform automation to manage DNS records. Implemented at 2026-04-06 10:00 UTC, 21 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00361",
+        "timestamp": "2026-04-06T10:00:00Z"
+      },
+      {
+        "evidence_id": "EV-017",
+        "type": "CHANGE",
+        "source": "CHG-2026-00520",
+        "description": "Deploy Payroll Service v2.10.2 on CI-PAYROLL-APP: Scheduled release: payslip layout and self-service fixes. Implemented at 2026-04-29 20:30 UTC, 45 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00520",
+        "timestamp": "2026-04-29T20:30:29Z"
+      },
+      {
+        "evidence_id": "EV-018",
+        "type": "CHANGE",
+        "source": "CHG-2026-00598",
+        "description": "Load new tax withholding tables on CI-PAYROLL-APP: Load the withholding tables published by the tax authority. Implemented at 2026-05-17 17:04 UTC, 62 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00598",
+        "timestamp": "2026-05-17T17:04:00Z"
+      },
+      {
+        "evidence_id": "EV-019",
+        "type": "CHANGE",
+        "source": "CHG-2026-00708",
+        "description": "Deploy Payroll Service v2.11.3 on CI-PAYROLL-APP: Scheduled release: payslip layout and self-service fixes. Implemented at 2026-06-11 19:30 UTC, 88 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00708",
+        "timestamp": "2026-06-11T19:30:25Z"
+      },
+      {
+        "evidence_id": "EV-020",
+        "type": "CHANGE",
+        "source": "CHG-2026-00821",
+        "description": "Monthly node image upgrade on k8s-prod-cluster on CI-K8S-PROD: Rolling replacement of worker nodes with the patched image. Implemented at 2026-07-07 15:30 UTC, 113 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00821",
+        "timestamp": "2026-07-07T15:30:40Z"
+      },
+      {
+        "evidence_id": "EV-021",
+        "type": "CHANGE",
+        "source": "CHG-2026-00953",
+        "description": "Load July tax withholding tables on CI-PAYROLL-APP: Load the withholding tables published by the tax authority for July. Implemented at 2026-07-24 16:00 UTC, 130 days after the first incident of the problem (INC-2026-00139).",
+        "citation": "CHG-2026-00953",
+        "timestamp": "2026-07-24T16:00:00Z"
+      },
+      {
+        "evidence_id": "EV-022",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "payroll-portal-api (CI-PAYROLL-APP) depends_on and payroll-batch-workers (CI-PAYROLL-WORKER) depends_on payroll-postgresql (CI-PAYROLL-DB, database).",
+        "citation": "CI-PAYROLL-DB",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-023",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "payroll-batch-workers (CI-PAYROLL-WORKER) connects_to bank-transfer-sftp (CI-BANK-SFTP, storage).",
+        "citation": "CI-BANK-SFTP",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-024",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "payroll-batch-workers (CI-PAYROLL-WORKER) hosted_on k8s-prod-cluster (CI-K8S-PROD, host).",
+        "citation": "CI-K8S-PROD",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-025",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00139",
+        "description": "Incident INC-2026-00139 of the same problem PRB-2026-00113, Payroll Service, detected 2026-03-16 06:48 UTC: Payslip pages slow on Monday morning. Payslip pages took more than ten seconds to open for about half an hour on Monday morning. Symptoms: Slow payslip pages.",
+        "citation": "INC-2026-00139",
+        "timestamp": "2026-03-16T06:48:00Z"
+      },
+      {
+        "evidence_id": "EV-026",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00167",
+        "description": "Incident INC-2026-00167 of the same problem PRB-2026-00113, Payroll Service, detected 2026-04-27 06:35 UTC: Employee portal timeouts during payroll processing. The employee portal returned timeouts while payroll processing was running. Symptoms: Portal request timeouts; Payroll batch running late.",
+        "citation": "INC-2026-00167",
+        "timestamp": "2026-04-27T06:35:00Z"
+      },
+      {
+        "evidence_id": "EV-027",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00188",
+        "description": "Incident INC-2026-00188 of the same problem PRB-2026-00113, Payroll Service, detected 2026-05-25 06:41 UTC: Salary calculation run late on Monday. The Monday salary calculation finished 70 minutes late and the portal was slow while it ran. Symptoms: Payroll batch job exceeded SLA; Portal request timeouts.",
+        "citation": "INC-2026-00188",
+        "timestamp": "2026-05-25T06:41:00Z"
+      },
+      {
+        "evidence_id": "EV-028",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00196",
+        "description": "Incident INC-2026-00196 of the same problem PRB-2026-00113, Payroll Service, detected 2026-06-29 06:44 UTC: Employee portal unavailable during salary run. Employees could not open the portal for over an hour during the Monday salary run. Symptoms: HTTP 504 gateway timeout; Database connection acquisition latency.",
+        "citation": "INC-2026-00196",
+        "timestamp": "2026-06-29T06:44:00Z"
+      },
+      {
+        "evidence_id": "EV-029",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2025-00042",
+        "description": "Past RCA RCA-2025-00042 for Payroll Service, completed 2025-02-14. Summary: The weekly payroll calculation batch did not finish within its window and the employee self-service portal returned HTTP 504 timeouts during the Monday morning peak.\nRoot Cause: The batch worker pool scaled up to 64 concurrent threads and used almost all of the PostgreSQL connections (max_connections=100) shared with the portal API, so both the batch and the portal waited for connections. Judged relevant because: Same service and describes portal HTTP 504 timeouts during payroll batch.",
+        "citation": "RCA-2025-00042",
+        "timestamp": "2025-02-14T11:00:00Z"
+      },
+      {
+        "evidence_id": "EV-030",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00119",
+        "description": "Past Payroll Service incident INC-2025-00119, detected 2025-01-20: Payroll batch delays employee portal requests. The weekly payroll calculation did not finish within its window and the employee self-service portal returned timeouts during the morning peak. Symptoms: HTTP 504 gateway timeout on the employee portal; Payroll batch job exceeded SLA. Judged similar because: Same service and describes portal timeouts during payroll batch.",
+        "citation": "INC-2025-00119",
+        "timestamp": "2025-01-20T06:30:00Z"
+      },
+      {
+        "evidence_id": "EV-031",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00104",
+        "description": "Past Payroll Service incident INC-2025-00104, detected 2025-01-06: Employee portal slow during Monday payroll run. Employees reported slow payslip pages on Monday morning while the weekly payroll batch was running. Symptoms: Slow payslip pages; Portal request timeouts. Judged similar because: Same service and describes portal slowness during payroll run.",
+        "citation": "INC-2025-00104",
+        "timestamp": "2025-01-06T06:42:00Z"
+      },
+      {
+        "evidence_id": "EV-032",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00157",
+        "description": "Past Payroll Service incident INC-2025-00157, detected 2025-02-05: Payroll reports not ready in the morning. The monthly payroll report generation ran well behind schedule. Monitoring raised the alert before customers called. Symptoms: Database query latency increase. Judged similar because: Same service and describes payroll report delay due to DB latency.",
+        "citation": "INC-2025-00157",
+        "timestamp": "2025-02-05T01:11:00Z"
+      },
+      {
+        "evidence_id": "EV-033",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-01145",
+        "description": "Past Payroll Service incident INC-2024-01145, detected 2024-09-18: Payroll reports not ready in the morning. The monthly payroll report generation ran well behind schedule. Monitoring raised the alert before customers called. Symptoms: Report generation backlog; Database query latency increase. Judged similar because: Same service and describes payroll report delay due to DB latency.",
+        "citation": "INC-2024-01145",
+        "timestamp": "2024-09-18T02:53:00Z"
+      },
+      {
+        "evidence_id": "EV-034",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00472",
+        "description": "Past Payroll Service incident INC-2026-00472, detected 2026-04-18: Payroll reports not ready in the morning. The monthly payroll report generation ran well behind schedule. First reports came from customers. Symptoms: Report generation backlog; Database query latency increase. Judged similar because: Same service and describes payroll report delay due to DB latency.",
+        "citation": "INC-2026-00472",
+        "timestamp": "2026-04-18T03:45:00Z"
+      }
+    ],
+    "trace": [
+      {
+        "name": "similar_incidents",
+        "summary": "Found 5 past incident(s) that look similar: INC-2025-00119, INC-2025-00104, INC-2025-00157, INC-2024-01145, INC-2026-00472.",
+        "started_at": "2026-10-08T13:03:22.150888Z",
+        "finished_at": "2026-10-08T13:03:25.085059Z",
+        "details": {
+          "found": [
+            "INC-2025-00119",
+            "INC-2025-00104",
+            "INC-2025-00157",
+            "INC-2024-01145",
+            "INC-2026-00472"
+          ]
+        }
+      },
+      {
+        "name": "investigation_planner",
+        "summary": "Plan: Payroll Service, 2026-03-09 06:48 to 2026-07-27 08:15 UTC, sources: logs, changes, cmdb, historical_rcas, historical_incidents.",
+        "started_at": "2026-10-08T13:03:25.087312Z",
+        "finished_at": "2026-10-08T13:03:26.612451Z",
+        "details": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "problems": []
+            }
+          ],
+          "search_queries": [
+            "Employee portal slow or timeouts during payroll batch processing",
+            "Payroll batch job exceeds SLA and causes HTTP 504 gateway timeouts",
+            "Database connection acquisition latency during payroll run",
+            "Payslip pages take longer than ten seconds to load on Monday mornings",
+            "Payroll reports delayed and backlog during monthly payroll generation"
+          ],
+          "rationale": "The queries target the key symptoms observed: portal slowness and timeouts, HTTP 504 errors linked to batch processing, database connection latency, prolonged payslip page load times, and delayed payroll report generation. These cover the recurring patterns across the incidents and help locate similar past events for root‑cause analysis."
+        }
+      },
+      {
+        "name": "tools",
+        "summary": "Logs: 14 ERROR/WARN pattern(s) around 5 incident(s). Changes: 7 from 2026-03-09 to 2026-07-27 (CHG-2026-00262, CHG-2026-00361, CHG-2026-00520, CHG-2026-00598, CHG-2026-00708, CHG-2026-00821, CHG-2026-00953). CMDB: 3 component(s) depended on. Other incidents of the problem: INC-2026-00139, INC-2026-00167, INC-2026-00188, INC-2026-00196.",
+        "started_at": "2026-10-08T13:03:26.617057Z",
+        "finished_at": "2026-10-08T13:03:26.692805Z",
+        "details": {
+          "evidence": 28,
+          "services": [
+            "Payroll Service",
+            "External Vendors",
+            "Kubernetes Platform"
+          ],
+          "log_windows": [
+            {
+              "start": "2026-03-16T04:48:00+00:00",
+              "end": "2026-03-16T07:48:00+00:00",
+              "incident_id": "INC-2026-00139"
+            },
+            {
+              "start": "2026-04-27T04:35:00+00:00",
+              "end": "2026-04-27T07:35:00+00:00",
+              "incident_id": "INC-2026-00167"
+            },
+            {
+              "start": "2026-05-25T04:41:00+00:00",
+              "end": "2026-05-25T07:41:00+00:00",
+              "incident_id": "INC-2026-00188"
+            },
+            {
+              "start": "2026-06-29T04:44:00+00:00",
+              "end": "2026-06-29T07:44:00+00:00",
+              "incident_id": "INC-2026-00196"
+            },
+            {
+              "start": "2026-07-27T04:40:00+00:00",
+              "end": "2026-07-27T07:40:00+00:00",
+              "incident_id": "INC-2026-00101"
+            }
+          ],
+          "change_window": {
+            "start": "2026-03-09T06:48:00+00:00",
+            "end": "2026-07-27T08:15:00+00:00",
+            "incident_id": null
+          },
+          "found": {
+            "logs": [
+              "LOG-PAYROLL-20260316-03",
+              "LOG-PAYROLL-20260316-01",
+              "LOG-PAYROLL-20260427-04",
+              "LOG-PAYROLL-20260427-01",
+              "LOG-PAYROLL-20260525-04",
+              "LOG-PAYROLL-20260525-01",
+              "LOG-PAYROLL-20260629-04",
+              "LOG-PAYROLL-20260629-01",
+              "LOG-PAYROLL-20260727-08",
+              "LOG-PAYROLL-20260727-24",
+              "LOG-PAYROLL-20260727-15",
+              "LOG-PAYROLL-20260727-06",
+              "LOG-PAYROLL-20260727-02",
+              "LOG-PAYROLL-20260727-07"
+            ],
+            "changes": [
+              "CHG-2026-00262",
+              "CHG-2026-00361",
+              "CHG-2026-00520",
+              "CHG-2026-00598",
+              "CHG-2026-00708",
+              "CHG-2026-00821",
+              "CHG-2026-00953"
+            ],
+            "cmdb": [
+              "CI-PAYROLL-DB",
+              "CI-BANK-SFTP",
+              "CI-K8S-PROD"
+            ],
+            "problem_incidents": [
+              "INC-2026-00139",
+              "INC-2026-00167",
+              "INC-2026-00188",
+              "INC-2026-00196"
+            ]
+          }
+        }
+      },
+      {
+        "name": "historical_rca_agent",
+        "summary": "Kept RCA-2025-00042, INC-2025-00119, INC-2025-00104, INC-2025-00157, INC-2024-01145, INC-2026-00472. Dropped RCA-2025-00114, RCA-2024-00374, RCA-2025-00230, RCA-2024-00280.",
+        "started_at": "2026-10-08T13:03:26.696971Z",
+        "finished_at": "2026-10-08T13:03:39.493896Z",
+        "details": {
+          "kept": [
+            {
+              "id": "RCA-2025-00042",
+              "reason": "Same service and describes portal HTTP 504 timeouts during payroll batch."
+            },
+            {
+              "id": "INC-2025-00119",
+              "reason": "Same service and describes portal timeouts during payroll batch."
+            },
+            {
+              "id": "INC-2025-00104",
+              "reason": "Same service and describes portal slowness during payroll run."
+            },
+            {
+              "id": "INC-2025-00157",
+              "reason": "Same service and describes payroll report delay due to DB latency."
+            },
+            {
+              "id": "INC-2024-01145",
+              "reason": "Same service and describes payroll report delay due to DB latency."
+            },
+            {
+              "id": "INC-2026-00472",
+              "reason": "Same service and describes payroll report delay due to DB latency."
+            }
+          ],
+          "dropped": [
+            {
+              "id": "RCA-2025-00114",
+              "reason": "Different service (Payment API)."
+            },
+            {
+              "id": "RCA-2024-00374",
+              "reason": "Same service but symptom is SSH key expiry, not portal or batch latency."
+            },
+            {
+              "id": "RCA-2025-00230",
+              "reason": "Different service (Billing Service)."
+            },
+            {
+              "id": "RCA-2024-00280",
+              "reason": "Different service (Payment API)."
+            }
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+        "started_at": "2026-10-08T13:03:39.497942Z",
+        "finished_at": "2026-10-08T13:04:05.726434Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft accepted on attempt 1: the schema is valid and all 16 cited evidence ids exist.",
+        "started_at": "2026-10-08T13:04:05.730013Z",
+        "finished_at": "2026-10-08T13:04:05.730013Z",
+        "details": {
+          "attempt": 1
+        }
+      },
+      {
+        "name": "confidence",
+        "summary": "HYP-001: HIGH (7 points). HYP-002: HIGH (5 points).",
+        "started_at": "2026-10-08T13:04:05.735719Z",
+        "finished_at": "2026-10-08T13:04:05.736715Z",
+        "details": {}
+      }
+    ],
+    "investigation_summary": "Multiple Monday‑morning incidents of payroll service slowdowns and timeouts correlate with connection timeouts, worker pool scaling, and database connection exhaustion. The pattern matches a historical RCA where autoscaling of batch workers exhausted PostgreSQL connections shared with the portal API.",
+    "observed_patterns": [
+      "ConnectionTimeout errors appear 5–14 minutes before incident detection",
+      "WorkerPoolScaleUp warnings precede incidents by 30–40 minutes",
+      "ConnectionPoolPressure and TooManyConnections logs coincide with incidents",
+      "Incidents occur during payroll batch run on Monday mornings",
+      "Portal API returns 504 GatewayTimeout and database connection acquisition latency"
+    ],
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "candidate_root_cause": "Autoscaling of payroll workers to maximum threads caused database connection exhaustion, leading to connection timeouts and portal timeouts.",
+        "reasons": [
+          "Autoscaling change (EV-015) enabled max 96 threads",
+          "WorkerPoolScaleUp warnings (EV-002, EV-004, EV-006, EV-008, EV-013, EV-014) show scaling to max",
+          "ConnectionTimeout logs (EV-001, EV-003, EV-005, EV-007, EV-009) indicate DB connection failures",
+          "TooManyConnections (EV-011) and ConnectionPoolPressure (EV-012) confirm DB exhaustion",
+          "Historical RCA (EV-029) attributes similar incidents to worker pool scaling"
+        ],
+        "supporting_evidence": [
+          "EV-015",
+          "EV-002",
+          "EV-004",
+          "EV-006",
+          "EV-008",
+          "EV-013",
+          "EV-014",
+          "EV-001",
+          "EV-003",
+          "EV-005",
+          "EV-007",
+          "EV-009",
+          "EV-011",
+          "EV-012",
+          "EV-029",
+          "EV-022"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Verify current worker thread count during incidents",
+          "Check PostgreSQL max_connections and current usage",
+          "Confirm that each worker thread uses one DB connection",
+          "Inspect autoscaling policy limits and actual scaling behavior",
+          "Review DB logs for connection exhaustion events"
+        ],
+        "confidence": "HIGH",
+        "confidence_points": 7,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Change on the affected service or a direct dependency, before the first error (+2).",
+          "Past RCA with the same cause on the same service (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "7 points from 4 different sources: HIGH."
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "candidate_root_cause": "PostgreSQL max_connections setting is too low for the combined load of payroll batch workers and portal API, causing connection exhaustion regardless of autoscaling.",
+        "reasons": [
+          "TooManyConnections (EV-011) and ConnectionPoolPressure (EV-012) indicate hitting connection limits",
+          "ConnectionTimeout logs (EV-001, EV-003, EV-005, EV-007, EV-009) show DB unavailability",
+          "Historical RCA (EV-029) notes max_connections=100 was insufficient",
+          "WorkerPoolScaleUp warnings (EV-002, EV-004, EV-006, EV-008, EV-013, EV-014) increase load on DB"
+        ],
+        "supporting_evidence": [
+          "EV-011",
+          "EV-012",
+          "EV-029",
+          "EV-022",
+          "EV-002",
+          "EV-004",
+          "EV-006",
+          "EV-008",
+          "EV-013",
+          "EV-014",
+          "EV-001",
+          "EV-003",
+          "EV-005",
+          "EV-007",
+          "EV-009"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Retrieve PostgreSQL max_connections setting",
+          "Measure actual DB connection usage during incidents",
+          "Compare total worker threads to max_connections",
+          "Simulate increased load to test threshold",
+          "Consider increasing max_connections or reducing worker threads"
+        ],
+        "confidence": "HIGH",
+        "confidence_points": 5,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Past RCA with the same cause on the same service (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "5 points from 3 different sources: HIGH."
+        ]
+      }
+    ],
+    "single_hypothesis_reason": null,
+    "not_checked": [
+      "Actual PostgreSQL max_connections value",
+      "Worker thread to DB connection mapping",
+      "Historical autoscaling configuration details",
+      "Network latency metrics",
+      "Full database query performance metrics"
+    ],
+    "weakly_supported": false,
+    "suggested_workaround": "Temporarily reduce payroll worker pool maximum threads to 64 or lower during payroll batch runs to relieve database connection pressure.",
+    "change_likely_required": true,
+    "review": null,
+    "final_root_cause": null
+  },
+  {
+    "rca_id": "RCA-2026-00002",
+    "incident_id": "INC-2026-00857",
+    "status": "DRAFT",
+    "owner": "RAGAS evaluation",
+    "created_at": "2026-10-08T13:04:05.810831Z",
+    "case_id": null,
+    "cycle": 1,
+    "parent_rca_id": null,
+    "completed_at": null,
+    "duration_seconds": 112.3,
+    "linked_incidents": [
+      "INC-2024-00034",
+      "INC-2024-00074",
+      "INC-2024-00380",
+      "INC-2025-00401",
+      "INC-2024-01586"
+    ],
+    "problem_id": "PRB-2026-00106",
+    "context": {
+      "problem_id": "PRB-2026-00106",
+      "incident_ids": [
+        "INC-2026-00482",
+        "INC-2026-00857"
+      ],
+      "reference_incident_id": "INC-2026-00857",
+      "services": [
+        "Payment API"
+      ],
+      "related_services": [],
+      "log_windows": [
+        {
+          "start": "2026-07-14T12:32:00Z",
+          "end": "2026-07-14T15:32:00Z",
+          "incident_id": "INC-2026-00482"
+        },
+        {
+          "start": "2026-07-15T07:48:00Z",
+          "end": "2026-07-15T10:48:00Z",
+          "incident_id": "INC-2026-00857"
+        }
+      ],
+      "change_window": {
+        "start": "2026-07-07T14:32:00Z",
+        "end": "2026-07-15T10:31:00Z",
+        "incident_id": null
+      },
+      "sources": {
+        "incidents": "problem PRB-2026-00106",
+        "reference_incident": "rule: the most recent incident",
+        "services": "the incidents",
+        "related_services": "CMDB: the services the incident services depend on",
+        "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+        "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+      }
+    },
+    "plan": {
+      "service": "Payment API",
+      "related_services": [],
+      "window_start": "2026-07-07T14:32:00Z",
+      "window_end": "2026-07-15T10:48:00Z",
+      "sources": [
+        "logs",
+        "changes",
+        "cmdb",
+        "historical_rcas",
+        "historical_incidents"
+      ],
+      "search_queries": [
+        "Payment API returns HTTP 500 errors during card payment attempts",
+        "Card payment requests experience database connection timeouts and high latency",
+        "Checkout process shows gateway timeouts and increased abandonment during busy hours",
+        "Payment API circuit breaker opens and causes server errors during peak traffic"
+      ],
+      "rationale": "These queries target the main symptoms seen in the incidents: HTTP 500 responses, database connection timeouts, latency over five seconds, gateway timeouts, checkout abandonment, and circuit breaker activity. By searching for these patterns in past incidents and RCAs, we can identify similar failure modes and potential common causes."
+    },
+    "evidence": [
+      {
+        "evidence_id": "EV-001",
+        "type": "LOG",
+        "source": "payment-api-prod-01, payment-api-prod-02, payment-api-prod-03, payment-api-prod-04",
+        "description": "24 ERROR log line(s) of type ConnectionTimeout between 2026-07-14 14:05 and 14:27 UTC, the first 27 minutes before the detection of INC-2026-00482. Example: \"HikariPool-1 - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAY-20260714-14",
+        "timestamp": "2026-07-14T14:05:12Z"
+      },
+      {
+        "evidence_id": "EV-002",
+        "type": "LOG",
+        "source": "payment-api-prod-01, payment-api-prod-02, payment-api-prod-04",
+        "description": "8 WARN log line(s) of type ConnectionPoolPressure between 2026-07-14 14:11 and 14:28 UTC, the first 20 minutes before the detection of INC-2026-00482. Example: \"HikariPool-1 active connections reached 96 percent of configured capacity.\"",
+        "citation": "LOG-PAY-20260714-15",
+        "timestamp": "2026-07-14T14:11:42Z"
+      },
+      {
+        "evidence_id": "EV-003",
+        "type": "LOG",
+        "source": "payment-api-prod-01, payment-api-prod-02, payment-api-prod-03, payment-api-prod-04",
+        "description": "16 ERROR log line(s) of type ConnectionTimeout between 2026-07-15 09:40 and 10:17 UTC, the first 8 minutes before the detection of INC-2026-00857. Example: \"HikariPool-1 - Connection is not available, request timed out after 30000ms.\"",
+        "citation": "LOG-PAY-20260715-06",
+        "timestamp": "2026-07-15T09:40:00Z"
+      },
+      {
+        "evidence_id": "EV-004",
+        "type": "LOG",
+        "source": "payment-api-prod-01, payment-api-prod-02, payment-api-prod-04",
+        "description": "5 WARN log line(s) of type ConnectionPoolPressure between 2026-07-15 09:31 and 09:39 UTC, the first 17 minutes before the detection of INC-2026-00857. Example: \"HikariPool-1 active connections reached 99 percent of configured capacity.\"",
+        "citation": "LOG-PAY-20260715-01",
+        "timestamp": "2026-07-15T09:31:00Z"
+      },
+      {
+        "evidence_id": "EV-005",
+        "type": "CHANGE",
+        "source": "CHG-2026-00845",
+        "description": "Deploy Payment API v4.18.1 on CI-PAYMENT-API: Scheduled release: merchant reporting improvements. Implemented at 2026-07-08 09:30 UTC, 6 days before the first incident of the problem (INC-2026-00482).",
+        "citation": "CHG-2026-00845",
+        "timestamp": "2026-07-08T09:30:00Z"
+      },
+      {
+        "evidence_id": "EV-006",
+        "type": "CHANGE",
+        "source": "CHG-2026-00871",
+        "description": "Deploy Payment API v4.18.2 on CI-PAYMENT-API: Deploy the payment retry-handler changes to production. Implemented at 2026-07-14 13:58 UTC, 34 minutes before the first incident of the problem (INC-2026-00482).",
+        "citation": "CHG-2026-00871",
+        "timestamp": "2026-07-14T13:58:00Z"
+      },
+      {
+        "evidence_id": "EV-007",
+        "type": "CHANGE",
+        "source": "CHG-2026-00873",
+        "description": "Update payment dashboard thresholds on CI-PAYMENT-API: Adjust monitoring thresholds for payment latency dashboards. Implemented at 2026-07-14 14:10 UTC, 22 minutes before the first incident of the problem (INC-2026-00482).",
+        "citation": "CHG-2026-00873",
+        "timestamp": "2026-07-14T14:10:00Z"
+      },
+      {
+        "evidence_id": "EV-008",
+        "type": "CHANGE",
+        "source": "CHG-2026-00876",
+        "description": "Roll back Payment API to v4.18.1 on CI-PAYMENT-API: Emergency rollback of v4.18.2 after checkout failures on two days in a row. Implemented at 2026-07-15 10:19 UTC, 20 hours after the first incident of the problem (INC-2026-00482).",
+        "citation": "CHG-2026-00876",
+        "timestamp": "2026-07-15T10:19:00Z"
+      },
+      {
+        "evidence_id": "EV-009",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "payment-api (CI-PAYMENT-API) connects_to payment-postgresql (CI-PAYMENT-DB, database).",
+        "citation": "CI-PAYMENT-DB",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-010",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "payment-api (CI-PAYMENT-API) connects_to payment-retry-queue (CI-PAYMENT-QUEUE, queue).",
+        "citation": "CI-PAYMENT-QUEUE",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-011",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00482",
+        "description": "Incident INC-2026-00482 of the same problem PRB-2026-00106, Payment API, detected 2026-07-14 14:32 UTC: Payment API intermittent failures. Customers experienced intermittent failures when attempting to complete card payments. Symptoms: HTTP 500 responses from Payment API; Increased database connection timeout errors; Latency above 5 seconds.",
+        "citation": "INC-2026-00482",
+        "timestamp": "2026-07-14T14:32:00Z"
+      },
+      {
+        "evidence_id": "EV-012",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2025-00114",
+        "description": "Past RCA RCA-2025-00114 for Payment API, completed 2025-12-05. Summary: Intermittent HTTP 500 errors and latency above 5 seconds were observed across card checkout flows after a release of the Payment API.\nRoot Cause: Database connection pool exhaustion caused by unclosed SQL sessions inside the payment retry handler block during error response flows. Judged relevant because: Intermittent HTTP 500 errors and >5s latency in card checkout flows match the investigation’s 500 errors and high latency symptoms.",
+        "citation": "RCA-2025-00114",
+        "timestamp": "2025-12-05T14:00:00Z"
+      },
+      {
+        "evidence_id": "EV-013",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2024-00036",
+        "description": "Past RCA RCA-2024-00036 for Payment API, completed 2024-02-02. Summary: Card authorisations timed out at peak hours because the acquirer throttled connections above the contracted rate.\nRoot Cause: Peak traffic exceeded the concurrent connection limit agreed with the acquirer. The acquirer queued the extra connections and our 10 second timeout expired. Judged relevant because: Card authorisation timeouts at peak hours due to acquirer throttling align with gateway timeouts and increased abandonment during busy periods.",
+        "citation": "RCA-2024-00036",
+        "timestamp": "2024-02-02T15:00:00Z"
+      },
+      {
+        "evidence_id": "EV-014",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2024-00280",
+        "description": "Past RCA RCA-2024-00280 for Payment API, completed 2024-09-13. Summary: Card tokenisation calls failed for a share of checkouts while the vault provider ran a maintenance with reduced capacity.\nRoot Cause: The tokenisation vendor moved traffic to a reduced-capacity cluster during unannounced maintenance. Our client had no failover to the secondary region configured, so requests failed instead of being retried there. Judged relevant because: Tokenisation failures caused checkout failures, which are a form of checkout abandonment similar to the investigation’s symptoms.",
+        "citation": "RCA-2024-00280",
+        "timestamp": "2024-09-13T20:00:00Z"
+      },
+      {
+        "evidence_id": "EV-015",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2026-00052",
+        "description": "Past RCA RCA-2026-00052 for Payment API, completed 2026-02-17. Summary: Enabling a feature flag for all merchants sent requests to a code path that needs configuration most merchants did not have.\nRoot Cause: The instalments_v2 flag was switched on globally. Merchants without instalment settings hit a null value in the plan resolver and the request failed with HTTP 500. Judged relevant because: Feature‑flag induced HTTP 500 errors directly match the investigation’s 500 error symptom.",
+        "citation": "RCA-2026-00052",
+        "timestamp": "2026-02-17T13:00:00Z"
+      },
+      {
+        "evidence_id": "EV-016",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00034",
+        "description": "Past Payment API incident INC-2024-00034, detected 2024-01-08: Payment API reports timeouts to the card network. Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected. Symptoms: Gateway timeout errors; Increased checkout abandonment. Judged similar because: Timeouts to the card network and increased abandonment match gateway timeout and abandonment symptoms.",
+        "citation": "INC-2024-00034",
+        "timestamp": "2024-01-08T18:51:00Z"
+      },
+      {
+        "evidence_id": "EV-017",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00074",
+        "description": "Past Payment API incident INC-2024-00074, detected 2024-01-17: Payment API reports timeouts to the card network. Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected. Symptoms: Gateway timeout errors; Increased checkout abandonment. Judged similar because: Same as above, matching timeout and abandonment symptoms.",
+        "citation": "INC-2024-00074",
+        "timestamp": "2024-01-17T08:31:00Z"
+      },
+      {
+        "evidence_id": "EV-018",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00380",
+        "description": "Past Payment API incident INC-2024-00380, detected 2024-03-27: Payment API reports timeouts to the card network. Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected. Symptoms: Increased checkout abandonment. Judged similar because: Same timeout and abandonment symptoms as the investigation.",
+        "citation": "INC-2024-00380",
+        "timestamp": "2024-03-27T09:46:00Z"
+      },
+      {
+        "evidence_id": "EV-019",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00401",
+        "description": "Past Payment API incident INC-2025-00401, detected 2025-11-20: Card authorisation requests slow during retry bursts. Checkout requests intermittently returned server errors and some authorisations took longer than five seconds. Symptoms: HTTP 500 responses from Payment API; Latency above 5 seconds; Database timeout warnings. Judged similar because: Slow authorisations, server errors, and database timeouts match 500 errors, high latency, and database timeout symptoms.",
+        "citation": "INC-2025-00401",
+        "timestamp": "2025-11-20T15:06:00Z"
+      },
+      {
+        "evidence_id": "EV-020",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-01586",
+        "description": "Past Payment API incident INC-2024-01586, detected 2024-12-28: Checkout failures for card payments during busy hours. Card payments failed with a timeout for part of the customers; wallets and bank transfers were not affected. First reports came from customers. Symptoms: Gateway timeout errors; Increased checkout abandonment; Circuit breaker opened. Judged similar because: Checkout failures, timeouts, increased abandonment, and circuit breaker opening match the investigation’s gateway timeout and peak‑traffic symptoms.",
+        "citation": "INC-2024-01586",
+        "timestamp": "2024-12-28T18:13:00Z"
+      }
+    ],
+    "trace": [
+      {
+        "name": "similar_incidents",
+        "summary": "Found 5 past incident(s) that look similar: INC-2024-00034, INC-2024-00074, INC-2024-00380, INC-2025-00401, INC-2024-01586.",
+        "started_at": "2026-10-08T13:04:05.812824Z",
+        "finished_at": "2026-10-08T13:04:08.094370Z",
+        "details": {
+          "found": [
+            "INC-2024-00034",
+            "INC-2024-00074",
+            "INC-2024-00380",
+            "INC-2025-00401",
+            "INC-2024-01586"
+          ]
+        }
+      },
+      {
+        "name": "investigation_planner",
+        "summary": "Plan: Payment API, 2026-07-07 14:32 to 2026-07-15 10:48 UTC, sources: logs, changes, cmdb, historical_rcas, historical_incidents.",
+        "started_at": "2026-10-08T13:04:08.096371Z",
+        "finished_at": "2026-10-08T13:04:19.733903Z",
+        "details": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "problems": []
+            }
+          ],
+          "search_queries": [
+            "Payment API returns HTTP 500 errors during card payment attempts",
+            "Card payment requests experience database connection timeouts and high latency",
+            "Checkout process shows gateway timeouts and increased abandonment during busy hours",
+            "Payment API circuit breaker opens and causes server errors during peak traffic"
+          ],
+          "rationale": "These queries target the main symptoms seen in the incidents: HTTP 500 responses, database connection timeouts, latency over five seconds, gateway timeouts, checkout abandonment, and circuit breaker activity. By searching for these patterns in past incidents and RCAs, we can identify similar failure modes and potential common causes."
+        }
+      },
+      {
+        "name": "tools",
+        "summary": "Logs: 4 ERROR/WARN pattern(s) around 2 incident(s). Changes: 4 from 2026-07-07 to 2026-07-15 (CHG-2026-00845, CHG-2026-00871, CHG-2026-00873, CHG-2026-00876). CMDB: 2 component(s) depended on. Other incidents of the problem: INC-2026-00482.",
+        "started_at": "2026-10-08T13:04:19.737961Z",
+        "finished_at": "2026-10-08T13:04:19.780327Z",
+        "details": {
+          "evidence": 11,
+          "services": [
+            "Payment API"
+          ],
+          "log_windows": [
+            {
+              "start": "2026-07-14T12:32:00+00:00",
+              "end": "2026-07-14T15:32:00+00:00",
+              "incident_id": "INC-2026-00482"
+            },
+            {
+              "start": "2026-07-15T07:48:00+00:00",
+              "end": "2026-07-15T10:48:00+00:00",
+              "incident_id": "INC-2026-00857"
+            }
+          ],
+          "change_window": {
+            "start": "2026-07-07T14:32:00+00:00",
+            "end": "2026-07-15T10:31:00+00:00",
+            "incident_id": null
+          },
+          "found": {
+            "logs": [
+              "LOG-PAY-20260714-14",
+              "LOG-PAY-20260714-15",
+              "LOG-PAY-20260715-06",
+              "LOG-PAY-20260715-01"
+            ],
+            "changes": [
+              "CHG-2026-00845",
+              "CHG-2026-00871",
+              "CHG-2026-00873",
+              "CHG-2026-00876"
+            ],
+            "cmdb": [
+              "CI-PAYMENT-DB",
+              "CI-PAYMENT-QUEUE"
+            ],
+            "problem_incidents": [
+              "INC-2026-00482"
+            ]
+          }
+        }
+      },
+      {
+        "name": "historical_rca_agent",
+        "summary": "Kept RCA-2025-00114, RCA-2024-00036, RCA-2024-00280, RCA-2026-00052, INC-2024-00034, INC-2024-00074, INC-2024-00380, INC-2025-00401, INC-2024-01586. Dropped RCA-2025-00042.",
+        "started_at": "2026-10-08T13:04:19.785646Z",
+        "finished_at": "2026-10-08T13:04:44.850953Z",
+        "details": {
+          "kept": [
+            {
+              "id": "RCA-2025-00114",
+              "reason": "Intermittent HTTP 500 errors and >5s latency in card checkout flows match the investigation’s 500 errors and high latency symptoms."
+            },
+            {
+              "id": "RCA-2024-00036",
+              "reason": "Card authorisation timeouts at peak hours due to acquirer throttling align with gateway timeouts and increased abandonment during busy periods."
+            },
+            {
+              "id": "RCA-2024-00280",
+              "reason": "Tokenisation failures caused checkout failures, which are a form of checkout abandonment similar to the investigation’s symptoms."
+            },
+            {
+              "id": "RCA-2026-00052",
+              "reason": "Feature‑flag induced HTTP 500 errors directly match the investigation’s 500 error symptom."
+            },
+            {
+              "id": "INC-2024-00034",
+              "reason": "Timeouts to the card network and increased abandonment match gateway timeout and abandonment symptoms."
+            },
+            {
+              "id": "INC-2024-00074",
+              "reason": "Same as above, matching timeout and abandonment symptoms."
+            },
+            {
+              "id": "INC-2024-00380",
+              "reason": "Same timeout and abandonment symptoms as the investigation."
+            },
+            {
+              "id": "INC-2025-00401",
+              "reason": "Slow authorisations, server errors, and database timeouts match 500 errors, high latency, and database timeout symptoms."
+            },
+            {
+              "id": "INC-2024-01586",
+              "reason": "Checkout failures, timeouts, increased abandonment, and circuit breaker opening match the investigation’s gateway timeout and peak‑traffic symptoms."
+            }
+          ],
+          "dropped": [
+            {
+              "id": "RCA-2025-00042",
+              "reason": "Service is Payroll Service, not Payment API, so it is not relevant."
+            }
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 1: the answer is not a valid draft.",
+        "started_at": "2026-10-08T13:04:44.854899Z",
+        "finished_at": "2026-10-08T13:05:19.805111Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft refused on attempt 1; asking again with the problems.",
+        "started_at": "2026-10-08T13:05:19.810190Z",
+        "finished_at": "2026-10-08T13:05:19.810190Z",
+        "details": {
+          "attempt": 1,
+          "problems": [
+            "The answer is not valid JSON."
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 2: 2 hypothesis(es) proposed.",
+        "started_at": "2026-10-08T13:05:19.816177Z",
+        "finished_at": "2026-10-08T13:05:58.101545Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft accepted on attempt 2: the schema is valid and all 7 cited evidence ids exist.",
+        "started_at": "2026-10-08T13:05:58.105544Z",
+        "finished_at": "2026-10-08T13:05:58.105544Z",
+        "details": {
+          "attempt": 2
+        }
+      },
+      {
+        "name": "confidence",
+        "summary": "HYP-001: HIGH (7 points). HYP-002: MEDIUM (3 points).",
+        "started_at": "2026-10-08T13:05:58.111620Z",
+        "finished_at": "2026-10-08T13:05:58.112989Z",
+        "details": {}
+      }
+    ],
+    "investigation_summary": "Payment API experienced intermittent connection timeouts and high latency coinciding with a recent deployment of retry‑handler changes and a monitoring threshold adjustment. Logs show connection pool pressure and timeout errors on multiple API instances. A rollback to the previous version followed the second incident.",
+    "observed_patterns": [
+      "ConnectionTimeout errors began 27 minutes before first incident and 8 minutes before second incident",
+      "ConnectionPoolPressure warnings appeared 20 minutes before first incident and 17 minutes before second incident",
+      "Both incidents followed deployment of retry‑handler changes (CHG-2026-00871) and threshold adjustment (CHG-2026-00873)",
+      "Rollback to v4.18.1 occurred after second incident",
+      "Database connection pool exhaustion was identified in a prior RCA for a similar change"
+    ],
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "candidate_root_cause": "The retry‑handler deployment introduced unclosed database sessions, exhausting the payment‑api connection pool and causing connection timeouts and high latency.",
+        "reasons": [
+          "EV-006 shows the change was deployed 34 minutes before the first incident",
+          "EV-001 and EV-003 record ConnectionTimeout errors during the incidents",
+          "EV-002 and EV-004 record ConnectionPoolPressure warnings",
+          "EV-009 confirms payment‑api connects to payment‑postgresql",
+          "EV-012 documents a similar issue caused by the retry‑handler in a past RCA"
+        ],
+        "supporting_evidence": [
+          "EV-006",
+          "EV-001",
+          "EV-003",
+          "EV-002",
+          "EV-004",
+          "EV-009",
+          "EV-012"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Check database session counts during the incident windows",
+          "Verify that retry‑handler code closes all DB sessions",
+          "Compare connection pool metrics before and after the change"
+        ],
+        "confidence": "HIGH",
+        "confidence_points": 7,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Change on the affected service or a direct dependency, before the first error (+2).",
+          "Past RCA with the same cause on the same service (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "7 points from 4 different sources: HIGH."
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "candidate_root_cause": "The payment‑postgresql database experienced a capacity or performance degradation, leading to connection pool exhaustion and timeouts in the payment‑api.",
+        "reasons": [
+          "EV-009 shows payment‑api depends on payment‑postgresql",
+          "EV-001 and EV-003 show connection timeouts",
+          "EV-002 and EV-004 show pool pressure warnings",
+          "The timing of the incidents aligns with the database being overloaded"
+        ],
+        "supporting_evidence": [
+          "EV-009",
+          "EV-001",
+          "EV-003",
+          "EV-002",
+          "EV-004"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Review database performance metrics during incident windows",
+          "Check for external maintenance or load spikes on payment‑postgresql",
+          "Verify connection pool configuration matches database capacity"
+        ],
+        "confidence": "MEDIUM",
+        "confidence_points": 3,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "3 points: MEDIUM."
+        ]
+      }
+    ],
+    "single_hypothesis_reason": null,
+    "not_checked": [
+      "Missing database performance metrics during incident windows",
+      "External vendor capacity status during incidents",
+      "Network latency between payment‑api and payment‑postgresql",
+      "Full stack traces of retry‑handler code"
+    ],
+    "weakly_supported": false,
+    "suggested_workaround": "Temporarily disable or reduce the retry‑handler logic to limit database session usage, or increase the payment‑api connection pool size to absorb spikes.",
+    "change_likely_required": true,
+    "review": null,
+    "final_root_cause": null
+  },
+  {
+    "rca_id": "RCA-2026-00003",
+    "incident_id": "INC-2026-00103",
+    "status": "DRAFT",
+    "owner": "RAGAS evaluation",
+    "created_at": "2026-10-08T13:05:58.188312Z",
+    "case_id": null,
+    "cycle": 1,
+    "parent_rca_id": null,
+    "completed_at": null,
+    "duration_seconds": 68.0,
+    "linked_incidents": [
+      "INC-2024-01115",
+      "INC-2026-00314",
+      "INC-2024-01263",
+      "INC-2024-00834"
+    ],
+    "problem_id": "PRB-2026-00121",
+    "context": {
+      "problem_id": "PRB-2026-00121",
+      "incident_ids": [
+        "INC-2026-00103"
+      ],
+      "reference_incident_id": "INC-2026-00103",
+      "services": [
+        "Customer Portal"
+      ],
+      "related_services": [
+        "API Gateway"
+      ],
+      "log_windows": [
+        {
+          "start": "2026-08-10T07:45:00Z",
+          "end": "2026-08-10T10:45:00Z",
+          "incident_id": "INC-2026-00103"
+        }
+      ],
+      "change_window": {
+        "start": "2026-08-03T09:45:00Z",
+        "end": "2026-08-10T11:20:00Z",
+        "incident_id": null
+      },
+      "sources": {
+        "incidents": "problem PRB-2026-00121",
+        "reference_incident": "rule: the most recent incident",
+        "services": "the incidents",
+        "related_services": "CMDB: the services the incident services depend on",
+        "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+        "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+      }
+    },
+    "plan": {
+      "service": "Customer Portal",
+      "related_services": [
+        "API Gateway"
+      ],
+      "window_start": "2026-08-03T09:45:00Z",
+      "window_end": "2026-08-10T11:20:00Z",
+      "sources": [
+        "logs",
+        "changes",
+        "cmdb",
+        "historical_rcas",
+        "historical_incidents"
+      ],
+      "search_queries": [
+        "Customer portal session timeouts after traffic was moved to a different region",
+        "HTTP 500 errors on account pages during a regional failover",
+        "Customers logged out unexpectedly during a network event",
+        "Redirect loops or session cookie errors after a planned change on the customer portal",
+        "Elevated page load times and frontend API timeouts on the customer portal during evening hours"
+      ],
+      "rationale": "These queries target the key symptoms observed in the incident: session timeouts, HTTP 500 errors, unexpected logouts, redirect loops or cookie issues, and performance degradation with API timeouts. By searching for these specific behaviors, we can identify past incidents that match the same patterns and help uncover the underlying cause."
+    },
+    "evidence": [
+      {
+        "evidence_id": "EV-001",
+        "type": "LOG",
+        "source": "portal-web-prod-01, portal-web-prod-02, portal-web-prod-03",
+        "description": "29 ERROR log line(s) of type LockAcquisitionFailure between 2026-08-10 09:38 and 10:44 UTC, the first 7 minutes before detection. Example: \"Failed to acquire session lock portal:session:85988: lock still held by portal-web-prod-02 (lease 100ms expired)\"",
+        "citation": "LOG-PORTAL-20260810-03",
+        "timestamp": "2026-08-10T09:38:20Z"
+      },
+      {
+        "evidence_id": "EV-002",
+        "type": "LOG",
+        "source": "portal-web-prod-01, portal-web-prod-02, portal-web-prod-03",
+        "description": "19 ERROR log line(s) of type SessionConflict between 2026-08-10 09:40 and 10:39 UTC, the first 5 minutes before detection. Example: \"Concurrent session update rejected: version conflict on session S-51853; user logged out\"",
+        "citation": "LOG-PORTAL-20260810-05",
+        "timestamp": "2026-08-10T09:40:00Z"
+      },
+      {
+        "evidence_id": "EV-003",
+        "type": "LOG",
+        "source": "portal-web-prod-02, portal-web-prod-03",
+        "description": "8 WARN log line(s) of type CrossRegionLatency between 2026-08-10 09:33 and 10:30 UTC, the first 12 minutes before detection. Example: \"Session lock store round trip 5,963ms from eu-central-1 (baseline 2ms)\"",
+        "citation": "LOG-PORTAL-20260810-02",
+        "timestamp": "2026-08-10T09:33:00Z"
+      },
+      {
+        "evidence_id": "EV-004",
+        "type": "LOG",
+        "source": "portal-web-prod-01",
+        "description": "1 WARN log line(s) of type RegionFailover between 2026-08-10 09:31 and 09:31 UTC, the first 14 minutes before detection. Example: \"Traffic manager moved 100% of portal traffic to eu-central-1 (health check failures in eu-west-1)\"",
+        "citation": "LOG-PORTAL-20260810-01",
+        "timestamp": "2026-08-10T09:31:00Z"
+      },
+      {
+        "evidence_id": "EV-005",
+        "type": "CHANGE",
+        "source": "CHG-2026-00996",
+        "description": "Update portal marketing banners on CI-PORTAL-WEB: Replace the home page banners for the August campaign. Implemented at 2026-08-10 07:30 UTC, 2 hours before detection.",
+        "citation": "CHG-2026-00996",
+        "timestamp": "2026-08-10T07:30:00Z"
+      },
+      {
+        "evidence_id": "EV-006",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "customer-portal-cdn (CI-PORTAL-CDN) connects_to customer-portal-web (CI-PORTAL-WEB, application).",
+        "citation": "CI-PORTAL-WEB",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-007",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "customer-portal-web (CI-PORTAL-WEB) connects_to public-api-gateway (CI-API-GATEWAY, gateway).",
+        "citation": "CI-API-GATEWAY",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-008",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "customer-portal-web (CI-PORTAL-WEB) connects_to portal-cart-cache (CI-PORTAL-CART-CACHE, cache).",
+        "citation": "CI-PORTAL-CART-CACHE",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-009",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "customer-portal-web (CI-PORTAL-WEB) connects_to portal-session-lock-redis (CI-PORTAL-LOCK-REDIS, cache).",
+        "citation": "CI-PORTAL-LOCK-REDIS",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-010",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "customer-portal-web (CI-PORTAL-WEB) connects_to portal-search-index (CI-PORTAL-SEARCH, application).",
+        "citation": "CI-PORTAL-SEARCH",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-011",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-01115",
+        "description": "Past Customer Portal incident INC-2024-01115, detected 2024-09-11: Slow page loads on the customer portal. Page load time went above five seconds for many customers in the evening. Impact was limited to eu-west-1, eu-central-1. Symptoms: Elevated page load time; Frontend API timeout warnings. Judged similar because: Matches slow page loads and frontend API timeouts during evening hours for Customer Portal.",
+        "citation": "INC-2024-01115",
+        "timestamp": "2024-09-11T20:37:00Z"
+      },
+      {
+        "evidence_id": "EV-012",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2026-00314",
+        "description": "Past Customer Portal incident INC-2026-00314, detected 2026-03-13: Slow page loads on the customer portal. Page load time went above five seconds for many customers in the evening. Impact was limited to eu-west-1. Symptoms: Elevated page load time; Frontend API timeout warnings. Judged similar because: Matches slow page loads and frontend API timeouts during evening hours for Customer Portal.",
+        "citation": "INC-2026-00314",
+        "timestamp": "2026-03-13T18:42:00Z"
+      },
+      {
+        "evidence_id": "EV-013",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-01263",
+        "description": "Past Customer Portal incident INC-2024-01263, detected 2024-10-15: Login redirect loop on the customer portal. Some customers were sent back to the login page repeatedly after signing in. The problems started shortly after a planned change on the service. Impact was limited to eu-west-1, eu-central-1. Symptoms: Redirect loop reports. Judged similar because: Matches login redirect loop after planned change on Customer Portal.",
+        "citation": "INC-2024-01263",
+        "timestamp": "2024-10-15T19:51:00Z"
+      },
+      {
+        "evidence_id": "EV-014",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00834",
+        "description": "Past Customer Portal incident INC-2024-00834, detected 2024-07-09: Login redirect loop on the customer portal. Some customers were sent back to the login page repeatedly after signing in. The problems started shortly after a planned change on the service. Symptoms: Session cookie errors. Judged similar because: Matches login redirect loop and session cookie errors after planned change on Customer Portal.",
+        "citation": "INC-2024-00834",
+        "timestamp": "2024-07-09T06:41:00Z"
+      }
+    ],
+    "trace": [
+      {
+        "name": "similar_incidents",
+        "summary": "Found 5 past incident(s) that look similar: INC-2024-01115, INC-2026-00314, INC-2024-01263, INC-2026-00411, INC-2024-00834.",
+        "started_at": "2026-10-08T13:05:58.190311Z",
+        "finished_at": "2026-10-08T13:06:00.554162Z",
+        "details": {
+          "found": [
+            "INC-2024-01115",
+            "INC-2026-00314",
+            "INC-2024-01263",
+            "INC-2026-00411",
+            "INC-2024-00834"
+          ]
+        }
+      },
+      {
+        "name": "investigation_planner",
+        "summary": "Plan: Customer Portal, 2026-08-03 09:45 to 2026-08-10 11:20 UTC, sources: logs, changes, cmdb, historical_rcas, historical_incidents.",
+        "started_at": "2026-10-08T13:06:00.556162Z",
+        "finished_at": "2026-10-08T13:06:19.573554Z",
+        "details": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "problems": []
+            }
+          ],
+          "search_queries": [
+            "Customer portal session timeouts after traffic was moved to a different region",
+            "HTTP 500 errors on account pages during a regional failover",
+            "Customers logged out unexpectedly during a network event",
+            "Redirect loops or session cookie errors after a planned change on the customer portal",
+            "Elevated page load times and frontend API timeouts on the customer portal during evening hours"
+          ],
+          "rationale": "These queries target the key symptoms observed in the incident: session timeouts, HTTP 500 errors, unexpected logouts, redirect loops or cookie issues, and performance degradation with API timeouts. By searching for these specific behaviors, we can identify past incidents that match the same patterns and help uncover the underlying cause."
+        }
+      },
+      {
+        "name": "tools",
+        "summary": "Logs: 4 ERROR/WARN pattern(s) around 1 incident(s). Changes: 1 from 2026-08-03 to 2026-08-10 (CHG-2026-00996). CMDB: 5 component(s) depended on.",
+        "started_at": "2026-10-08T13:06:19.578480Z",
+        "finished_at": "2026-10-08T13:06:19.606525Z",
+        "details": {
+          "evidence": 10,
+          "services": [
+            "Customer Portal",
+            "API Gateway"
+          ],
+          "log_windows": [
+            {
+              "start": "2026-08-10T07:45:00+00:00",
+              "end": "2026-08-10T10:45:00+00:00",
+              "incident_id": "INC-2026-00103"
+            }
+          ],
+          "change_window": {
+            "start": "2026-08-03T09:45:00+00:00",
+            "end": "2026-08-10T11:20:00+00:00",
+            "incident_id": null
+          },
+          "found": {
+            "logs": [
+              "LOG-PORTAL-20260810-03",
+              "LOG-PORTAL-20260810-05",
+              "LOG-PORTAL-20260810-02",
+              "LOG-PORTAL-20260810-01"
+            ],
+            "changes": [
+              "CHG-2026-00996"
+            ],
+            "cmdb": [
+              "CI-PORTAL-WEB",
+              "CI-API-GATEWAY",
+              "CI-PORTAL-CART-CACHE",
+              "CI-PORTAL-LOCK-REDIS",
+              "CI-PORTAL-SEARCH"
+            ],
+            "problem_incidents": []
+          }
+        }
+      },
+      {
+        "name": "historical_rca_agent",
+        "summary": "Kept INC-2024-01115, INC-2026-00314, INC-2024-01263, INC-2024-00834. Dropped RCA-2025-00114, RCA-2024-00280, RCA-2025-00042, RCA-2026-00052, RCA-2024-00036, INC-2026-00411.",
+        "started_at": "2026-10-08T13:06:19.609540Z",
+        "finished_at": "2026-10-08T13:06:32.977791Z",
+        "details": {
+          "kept": [
+            {
+              "id": "INC-2024-01115",
+              "reason": "Matches slow page loads and frontend API timeouts during evening hours for Customer Portal."
+            },
+            {
+              "id": "INC-2026-00314",
+              "reason": "Matches slow page loads and frontend API timeouts during evening hours for Customer Portal."
+            },
+            {
+              "id": "INC-2024-01263",
+              "reason": "Matches login redirect loop after planned change on Customer Portal."
+            },
+            {
+              "id": "INC-2024-00834",
+              "reason": "Matches login redirect loop and session cookie errors after planned change on Customer Portal."
+            }
+          ],
+          "dropped": [
+            {
+              "id": "RCA-2025-00114",
+              "reason": "Service is Payment API, not Customer Portal."
+            },
+            {
+              "id": "RCA-2024-00280",
+              "reason": "Service is Payment API, not Customer Portal."
+            },
+            {
+              "id": "RCA-2025-00042",
+              "reason": "Service is Payroll Service, not Customer Portal."
+            },
+            {
+              "id": "RCA-2026-00052",
+              "reason": "Service is Payment API, not Customer Portal."
+            },
+            {
+              "id": "RCA-2024-00036",
+              "reason": "Service is Payment API, not Customer Portal."
+            },
+            {
+              "id": "INC-2026-00411",
+              "reason": "Service is Payment API, not Customer Portal."
+            }
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+        "started_at": "2026-10-08T13:06:32.981798Z",
+        "finished_at": "2026-10-08T13:07:06.217581Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft accepted on attempt 1: the schema is valid and all 5 cited evidence ids exist.",
+        "started_at": "2026-10-08T13:07:06.220093Z",
+        "finished_at": "2026-10-08T13:07:06.220093Z",
+        "details": {
+          "attempt": 1
+        }
+      },
+      {
+        "name": "confidence",
+        "summary": "HYP-002: LOW (3 points). HYP-001: LOW (2 points). No hypothesis is above LOW: weakly supported, more evidence is recommended before approval.",
+        "started_at": "2026-10-08T13:07:06.222104Z",
+        "finished_at": "2026-10-08T13:07:06.222104Z",
+        "details": {}
+      }
+    ],
+    "investigation_summary": "The incident involved a surge of LockAcquisitionFailure and SessionConflict errors on the customer portal during the morning of 2026-08-10. The errors began shortly after a region failover that moved all traffic to eu-central-1 and coincided with a spike in cross‑region latency to the session lock Redis store. A planned marketing banner change occurred earlier in the day but is unlikely to be the direct cause.",
+    "observed_patterns": [
+      "LockAcquisitionFailure and SessionConflict errors started at 09:38‑09:40 UTC, within minutes of a region failover at 09:31 UTC",
+      "Cross‑region latency to the session lock store spiked from 2 ms to ~6 s starting at 09:33 UTC",
+      "All affected portal instances (portal‑web‑prod‑01/02/03) logged the same lock and session conflict messages",
+      "The region failover was triggered by health‑check failures in eu‑west‑1"
+    ],
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-002",
+        "candidate_root_cause": "The session lock Redis instance (CI‑PORTAL‑LOCK‑REDIS) experienced high latency or overload, causing lock acquisition failures and session conflicts.",
+        "reasons": [
+          "Lock acquisition failures and session conflicts directly involve the session lock store",
+          "The portal‑web instances connect to CI‑PORTAL‑LOCK‑REDIS as shown in the CMDB",
+          "High latency to the lock store can produce the observed error patterns regardless of region"
+        ],
+        "supporting_evidence": [
+          "EV-001",
+          "EV-002",
+          "EV-009"
+        ],
+        "contradicting_evidence": [
+          "EV-003",
+          "EV-004"
+        ],
+        "recommended_validation": [
+          "Inspect Redis metrics (latency, memory usage, connection count) during the incident window",
+          "Run local lock acquisition tests against CI‑PORTAL‑LOCK‑REDIS to reproduce the failures",
+          "Compare Redis performance before and after the region failover"
+        ],
+        "confidence": "LOW",
+        "confidence_points": 3,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "3 points: MEDIUM.",
+          "Contradicting evidence EV-003, EV-004 lowers the level by one band: LOW."
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-001",
+        "candidate_root_cause": "Region failover to eu‑central‑1 caused increased latency to the session lock Redis store, leading to lock acquisition failures and session conflicts.",
+        "reasons": [
+          "Region failover moved traffic to a region with higher network latency to the lock store",
+          "Cross‑region latency spikes were observed during the same window",
+          "Lock acquisition failures and session conflicts are typical symptoms of high latency to the lock store"
+        ],
+        "supporting_evidence": [
+          "EV-004",
+          "EV-003",
+          "EV-001",
+          "EV-002"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Verify network latency between portal‑web instances and CI‑PORTAL‑LOCK‑REDIS before and after the failover",
+          "Confirm that the traffic distribution changed to eu‑central‑1 at 09:31 UTC",
+          "Check health‑check logs for eu‑west‑1 to confirm the cause of the failover"
+        ],
+        "confidence": "LOW",
+        "confidence_points": 2,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "2 points: LOW."
+        ]
+      }
+    ],
+    "single_hypothesis_reason": null,
+    "not_checked": [
+      "Redis cluster health metrics during the incident window",
+      "Network path latency between portal‑web instances and CI‑PORTAL‑LOCK‑REDIS",
+      "Traffic distribution before and after the region failover",
+      "Application logs for session lock acquisition attempts during the failover"
+    ],
+    "weakly_supported": true,
+    "suggested_workaround": "Temporarily route portal traffic back to eu‑west‑1 or increase the lock lease time to reduce contention during high‑latency periods.",
+    "change_likely_required": true,
+    "review": null,
+    "final_root_cause": null
+  },
+  {
+    "rca_id": "RCA-2026-00004",
+    "incident_id": "INC-2026-00104",
+    "status": "DRAFT",
+    "owner": "RAGAS evaluation",
+    "created_at": "2026-10-08T13:07:06.267733Z",
+    "case_id": null,
+    "cycle": 1,
+    "parent_rca_id": null,
+    "completed_at": null,
+    "duration_seconds": 71.4,
+    "linked_incidents": [
+      "INC-2024-00891",
+      "INC-2025-00987",
+      "INC-2024-01273",
+      "INC-2025-00568",
+      "INC-2025-00926"
+    ],
+    "problem_id": "PRB-2026-00066",
+    "context": {
+      "problem_id": "PRB-2026-00066",
+      "incident_ids": [
+        "INC-2026-00104"
+      ],
+      "reference_incident_id": "INC-2026-00104",
+      "services": [
+        "API Gateway"
+      ],
+      "related_services": [
+        "Auth Service",
+        "Kubernetes Platform",
+        "Payment API",
+        "User Profile Service"
+      ],
+      "log_windows": [
+        {
+          "start": "2026-05-01T01:12:00Z",
+          "end": "2026-05-01T04:12:00Z",
+          "incident_id": "INC-2026-00104"
+        }
+      ],
+      "change_window": {
+        "start": "2026-04-24T03:12:00Z",
+        "end": "2026-05-01T04:35:00Z",
+        "incident_id": null
+      },
+      "sources": {
+        "incidents": "problem PRB-2026-00066",
+        "reference_incident": "rule: the most recent incident",
+        "services": "the incidents",
+        "related_services": "CMDB: the services the incident services depend on",
+        "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+        "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+      }
+    },
+    "plan": {
+      "service": "API Gateway",
+      "related_services": [
+        "Auth Service",
+        "Kubernetes Platform",
+        "Payment API",
+        "User Profile Service"
+      ],
+      "window_start": "2026-04-24T03:12:00Z",
+      "window_end": "2026-05-01T04:35:00Z",
+      "sources": [
+        "logs",
+        "changes",
+        "cmdb",
+        "historical_rcas",
+        "historical_incidents"
+      ],
+      "search_queries": [
+        "TLS handshake failures on API gateway",
+        "certificate validation errors in mobile apps",
+        "partner API calls failing due to gateway",
+        "connection refused errors behind gateway",
+        "stale endpoint routing in API gateway"
+      ],
+      "rationale": "These queries target the key symptoms of the incidents: TLS handshake failures, certificate validation errors, partner API call failures, connection refused errors, and stale endpoint routing. They will help locate past incidents with similar patterns to identify the shared root cause."
+    },
+    "evidence": [
+      {
+        "evidence_id": "EV-001",
+        "type": "LOG",
+        "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+        "description": "26 ERROR log line(s) of type TlsHandshakeFailed between 2026-05-01 03:00 and 04:11 UTC, the first 12 minutes before detection. Example: \"SSL_do_handshake() failed (SSL: error:0A000415:SSL routines::sslv3 alert certificate expired) while SSL handshaking\"",
+        "citation": "LOG-GW-20260501-02",
+        "timestamp": "2026-05-01T03:00:05Z"
+      },
+      {
+        "evidence_id": "EV-002",
+        "type": "LOG",
+        "source": "edge-proxy-prod-01, edge-proxy-prod-02, edge-proxy-prod-03, edge-proxy-prod-04",
+        "description": "24 ERROR log line(s) of type CertificateExpired between 2026-05-01 03:00 and 04:10 UTC, the first 12 minutes before detection. Example: \"Serving certificate *.api.example-bank.com expired at 2026-05-01T03:00:00Z\"",
+        "citation": "LOG-GW-20260501-01",
+        "timestamp": "2026-05-01T03:00:02Z"
+      },
+      {
+        "evidence_id": "EV-003",
+        "type": "CHANGE",
+        "source": "CHG-2026-00468",
+        "description": "Monthly OS patching of edge proxy nodes on CI-GW-EDGE-NODES: Rolling kernel and OpenSSL patches, nodes drained one by one. Implemented at 2026-04-30 22:00 UTC, 5 hours before detection.",
+        "citation": "CHG-2026-00468",
+        "timestamp": "2026-04-30T22:00:00Z"
+      },
+      {
+        "evidence_id": "EV-004",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) connects_to auth-service (CI-AUTH-APP, application).",
+        "citation": "CI-AUTH-APP",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-005",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) depends_on cert-manager (CI-CERT-MANAGER, application).",
+        "citation": "CI-CERT-MANAGER",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-006",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) hosted_on edge-proxy-nodes (CI-GW-EDGE-NODES, host).",
+        "citation": "CI-GW-EDGE-NODES",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-007",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) depends_on gateway-rate-limiter (CI-GW-RATE-LIMITER, cache).",
+        "citation": "CI-GW-RATE-LIMITER",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-008",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) depends_on edge-waf-policy (CI-GW-WAF, gateway).",
+        "citation": "CI-GW-WAF",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-009",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) connects_to payment-api (CI-PAYMENT-API, application).",
+        "citation": "CI-PAYMENT-API",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-010",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "public-api-gateway (CI-API-GATEWAY) connects_to user-profile-service (CI-USER-PROFILE-APP, application).",
+        "citation": "CI-USER-PROFILE-APP",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-011",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2024-00088",
+        "description": "Past RCA RCA-2024-00088 for API Gateway, completed 2024-10-02. Summary: The wildcard TLS certificate of the edge proxy nodes expired during the night and all clients failed the TLS handshake with the public API.\nRoot Cause: The wildcard certificate was renewed by hand once a year. The reminder was sent to a former team member and the renewal was missed. Judged relevant because: It describes a TLS certificate expiry causing handshake failures on the API Gateway, matching the investigation.",
+        "citation": "RCA-2024-00088",
+        "timestamp": "2024-10-02T10:00:00Z"
+      },
+      {
+        "evidence_id": "EV-012",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00891",
+        "description": "Past API Gateway incident INC-2024-00891, detected 2024-09-18: Gateway clients report handshake failures. Clients could not open secure connections to the public API for about ninety minutes during the night. Symptoms: TLS handshake failures; Partner API calls failing. Judged similar because: It reports TLS handshake failures on the API Gateway, directly matching the search query.",
+        "citation": "INC-2024-00891",
+        "timestamp": "2024-09-18T03:10:00Z"
+      },
+      {
+        "evidence_id": "EV-013",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00987",
+        "description": "Past API Gateway incident INC-2025-00987, detected 2025-08-14: Connection refused errors behind the gateway. The gateway briefly routed traffic to instances that had already been stopped. Impact was limited to global. Symptoms: Connection refused errors; Stale endpoint routing. Judged similar because: It details connection refused errors behind the gateway, matching the investigation.",
+        "citation": "INC-2025-00987",
+        "timestamp": "2025-08-14T03:21:00Z"
+      },
+      {
+        "evidence_id": "EV-014",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-01273",
+        "description": "Past API Gateway incident INC-2024-01273, detected 2024-10-17: Gateway sending requests to stopped instances. The gateway briefly routed traffic to instances that had already been stopped. First reports came from customers. Symptoms: Connection refused errors. Judged similar because: It describes the gateway routing to stopped instances, causing connection refused errors.",
+        "citation": "INC-2024-01273",
+        "timestamp": "2024-10-17T15:51:00Z"
+      },
+      {
+        "evidence_id": "EV-015",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00568",
+        "description": "Past API Gateway incident INC-2025-00568, detected 2025-05-10: Connection refused errors behind the gateway. The gateway briefly routed traffic to instances that had already been stopped. First reports came from customers. Symptoms: Connection refused errors; Stale endpoint routing. Judged similar because: It reports connection refused errors behind the gateway, relevant to the investigation.",
+        "citation": "INC-2025-00568",
+        "timestamp": "2025-05-10T09:55:00Z"
+      },
+      {
+        "evidence_id": "EV-016",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00926",
+        "description": "Past API Gateway incident INC-2025-00926, detected 2025-07-31: Connection refused errors behind the gateway. The gateway briefly routed traffic to instances that had already been stopped. Impact was limited to us-east-1. Symptoms: Connection refused errors; Stale endpoint routing. Judged similar because: It describes connection refused errors behind the gateway, matching the investigation.",
+        "citation": "INC-2025-00926",
+        "timestamp": "2025-07-31T12:34:00Z"
+      }
+    ],
+    "trace": [
+      {
+        "name": "similar_incidents",
+        "summary": "Found 5 past incident(s) that look similar: INC-2024-00891, INC-2025-00987, INC-2024-01273, INC-2025-00568, INC-2025-00926.",
+        "started_at": "2026-10-08T13:07:06.268730Z",
+        "finished_at": "2026-10-08T13:07:08.582579Z",
+        "details": {
+          "found": [
+            "INC-2024-00891",
+            "INC-2025-00987",
+            "INC-2024-01273",
+            "INC-2025-00568",
+            "INC-2025-00926"
+          ]
+        }
+      },
+      {
+        "name": "investigation_planner",
+        "summary": "Plan: API Gateway, 2026-04-24 03:12 to 2026-05-01 04:35 UTC, sources: logs, changes, cmdb, historical_rcas, historical_incidents.",
+        "started_at": "2026-10-08T13:07:08.584578Z",
+        "finished_at": "2026-10-08T13:07:28.870275Z",
+        "details": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "problems": []
+            }
+          ],
+          "search_queries": [
+            "TLS handshake failures on API gateway",
+            "certificate validation errors in mobile apps",
+            "partner API calls failing due to gateway",
+            "connection refused errors behind gateway",
+            "stale endpoint routing in API gateway"
+          ],
+          "rationale": "These queries target the key symptoms of the incidents: TLS handshake failures, certificate validation errors, partner API call failures, connection refused errors, and stale endpoint routing. They will help locate past incidents with similar patterns to identify the shared root cause."
+        }
+      },
+      {
+        "name": "tools",
+        "summary": "Logs: 2 ERROR/WARN pattern(s) around 1 incident(s). Changes: 1 from 2026-04-24 to 2026-05-01 (CHG-2026-00468). CMDB: 7 component(s) depended on.",
+        "started_at": "2026-10-08T13:07:28.873322Z",
+        "finished_at": "2026-10-08T13:07:28.887323Z",
+        "details": {
+          "evidence": 10,
+          "services": [
+            "API Gateway",
+            "Auth Service",
+            "Kubernetes Platform",
+            "Payment API",
+            "User Profile Service"
+          ],
+          "log_windows": [
+            {
+              "start": "2026-05-01T01:12:00+00:00",
+              "end": "2026-05-01T04:12:00+00:00",
+              "incident_id": "INC-2026-00104"
+            }
+          ],
+          "change_window": {
+            "start": "2026-04-24T03:12:00+00:00",
+            "end": "2026-05-01T04:35:00+00:00",
+            "incident_id": null
+          },
+          "found": {
+            "logs": [
+              "LOG-GW-20260501-02",
+              "LOG-GW-20260501-01"
+            ],
+            "changes": [
+              "CHG-2026-00468"
+            ],
+            "cmdb": [
+              "CI-AUTH-APP",
+              "CI-CERT-MANAGER",
+              "CI-GW-EDGE-NODES",
+              "CI-GW-RATE-LIMITER",
+              "CI-GW-WAF",
+              "CI-PAYMENT-API",
+              "CI-USER-PROFILE-APP"
+            ],
+            "problem_incidents": []
+          }
+        }
+      },
+      {
+        "name": "historical_rca_agent",
+        "summary": "Kept RCA-2024-00088, INC-2024-00891, INC-2025-00987, INC-2024-01273, INC-2025-00568, INC-2025-00926. Dropped RCA-2024-00115, RCA-2024-00151, RCA-2024-00299, RCA-2025-00012.",
+        "started_at": "2026-10-08T13:07:28.891276Z",
+        "finished_at": "2026-10-08T13:07:45.131239Z",
+        "details": {
+          "kept": [
+            {
+              "id": "RCA-2024-00088",
+              "reason": "It describes a TLS certificate expiry causing handshake failures on the API Gateway, matching the investigation."
+            },
+            {
+              "id": "INC-2024-00891",
+              "reason": "It reports TLS handshake failures on the API Gateway, directly matching the search query."
+            },
+            {
+              "id": "INC-2025-00987",
+              "reason": "It details connection refused errors behind the gateway, matching the investigation."
+            },
+            {
+              "id": "INC-2024-01273",
+              "reason": "It describes the gateway routing to stopped instances, causing connection refused errors."
+            },
+            {
+              "id": "INC-2025-00568",
+              "reason": "It reports connection refused errors behind the gateway, relevant to the investigation."
+            },
+            {
+              "id": "INC-2025-00926",
+              "reason": "It describes connection refused errors behind the gateway, matching the investigation."
+            }
+          ],
+          "dropped": [
+            {
+              "id": "RCA-2024-00115",
+              "reason": "The RCA concerns memory pressure and pod eviction, not TLS or connection errors."
+            },
+            {
+              "id": "RCA-2024-00151",
+              "reason": "The issue is a WAF rule blocking profile updates, unrelated to gateway connectivity."
+            },
+            {
+              "id": "RCA-2024-00299",
+              "reason": "This pertains to the Payment API, not the API Gateway."
+            },
+            {
+              "id": "RCA-2025-00012",
+              "reason": "The incident involves the User Profile Service, not the API Gateway."
+            }
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+        "started_at": "2026-10-08T13:07:45.134232Z",
+        "finished_at": "2026-10-08T13:08:17.607263Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft accepted on attempt 1: the schema is valid and all 4 cited evidence ids exist.",
+        "started_at": "2026-10-08T13:08:17.610484Z",
+        "finished_at": "2026-10-08T13:08:17.610484Z",
+        "details": {
+          "attempt": 1
+        }
+      },
+      {
+        "name": "confidence",
+        "summary": "HYP-001: HIGH (5 points). HYP-002: MEDIUM (3 points).",
+        "started_at": "2026-10-08T13:08:17.617029Z",
+        "finished_at": "2026-10-08T13:08:17.617029Z",
+        "details": {}
+      }
+    ],
+    "investigation_summary": "TLS handshake failures on the public API gateway were caused by an expired wildcard certificate that was not renewed in time. The error logs show the certificate expired at 03:00 UTC on 2026-05-01 and subsequent handshake failures. The recent OS patching change occurred before the error and is unrelated. Historical RCAs confirm that certificate expiry is a known root cause for similar incidents.",
+    "observed_patterns": [
+      "TLS handshake failures started at 2026-05-01T03:00:00Z and continued until 04:10:00Z",
+      "CertificateExpired log indicates the wildcard certificate expired at 2026-05-01T03:00:00Z",
+      "Edge proxy nodes were patched on 2026-04-30 22:00 UTC, 5 hours before the error",
+      "Public API gateway depends on cert-manager for certificate issuance"
+    ],
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "candidate_root_cause": "The wildcard TLS certificate was not renewed before its expiry, causing handshake failures.",
+        "reasons": [
+          "CertificateExpired log shows the cert expired at 03:00 UTC",
+          "TLS handshake failures correspond to the expiry time",
+          "Historical RCA (RCA-2024-00088) attributes a similar incident to missed renewal",
+          "Public API gateway depends on cert-manager for certificate issuance"
+        ],
+        "supporting_evidence": [
+          "EV-002",
+          "EV-001",
+          "EV-011",
+          "EV-005"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Check cert-manager renewal schedule and logs for 2026-05-01",
+          "Verify that a new certificate was issued before 03:00 UTC",
+          "Confirm that the edge proxy nodes loaded the new certificate after renewal"
+        ],
+        "confidence": "HIGH",
+        "confidence_points": 5,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Past RCA with the same cause on the same service (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "5 points from 3 different sources: HIGH."
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "candidate_root_cause": "The cert-manager service failed to renew the certificate, leaving the edge proxy nodes with an expired cert.",
+        "reasons": [
+          "Public API gateway depends on cert-manager",
+          "CertificateExpired log indicates the cert was still expired",
+          "No evidence of a manual renewal was found"
+        ],
+        "supporting_evidence": [
+          "EV-005",
+          "EV-002",
+          "EV-001"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Inspect cert-manager pod logs for errors around 2026-05-01",
+          "Check the status of cert-manager certificates and their renewal status",
+          "Verify that cert-manager was running during the renewal window"
+        ],
+        "confidence": "MEDIUM",
+        "confidence_points": 3,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "3 points: MEDIUM."
+        ]
+      }
+    ],
+    "single_hypothesis_reason": null,
+    "not_checked": [
+      "cert-manager renewal logs for 2026-05-01",
+      "certificate issuance schedule and expiry dates",
+      "edge proxy certificate file contents after patch",
+      "OpenSSL version and configuration after OS patch"
+    ],
+    "weakly_supported": false,
+    "suggested_workaround": "Deploy a new wildcard certificate manually to the edge proxy nodes and reload the configuration to restore TLS handshakes.",
+    "change_likely_required": true,
+    "review": null,
+    "final_root_cause": null
+  },
+  {
+    "rca_id": "RCA-2026-00005",
+    "incident_id": "INC-2026-00105",
+    "status": "DRAFT",
+    "owner": "RAGAS evaluation",
+    "created_at": "2026-10-08T13:08:17.674609Z",
+    "case_id": null,
+    "cycle": 1,
+    "parent_rca_id": null,
+    "completed_at": null,
+    "duration_seconds": 65.0,
+    "linked_incidents": [
+      "INC-2025-00982",
+      "INC-2024-00884",
+      "INC-2024-00485",
+      "INC-2025-00826",
+      "INC-2024-00131"
+    ],
+    "problem_id": "PRB-2026-00024",
+    "context": {
+      "problem_id": "PRB-2026-00024",
+      "incident_ids": [
+        "INC-2026-00105"
+      ],
+      "reference_incident_id": "INC-2026-00105",
+      "services": [
+        "Settlement Service"
+      ],
+      "related_services": [
+        "Event Streaming Platform",
+        "External Vendors"
+      ],
+      "log_windows": [
+        {
+          "start": "2026-02-12T20:18:00Z",
+          "end": "2026-02-12T23:18:00Z",
+          "incident_id": "INC-2026-00105"
+        }
+      ],
+      "change_window": {
+        "start": "2026-02-05T22:18:00Z",
+        "end": "2026-02-13T00:40:00Z",
+        "incident_id": null
+      },
+      "sources": {
+        "incidents": "problem PRB-2026-00024",
+        "reference_incident": "rule: the most recent incident",
+        "services": "the incidents",
+        "related_services": "CMDB: the services the incident services depend on",
+        "log_windows": "rule: 2 hours before to 1 hour after the detection of every incident",
+        "change_window": "rule: 7 days before the first incident to the resolution of the last one"
+      }
+    },
+    "plan": {
+      "service": "Settlement Service",
+      "related_services": [
+        "Event Streaming Platform",
+        "External Vendors"
+      ],
+      "window_start": "2026-02-05T22:18:00Z",
+      "window_end": "2026-02-13T00:40:00Z",
+      "sources": [
+        "logs",
+        "changes",
+        "cmdb",
+        "historical_rcas",
+        "historical_incidents"
+      ],
+      "search_queries": [
+        "settlement events backlog with consumer lag and repeated rebalancing",
+        "settlement processing throughput drop and consumer lag during evening",
+        "settlement service consumer lag and backlog growth over hours",
+        "settlement events processing paused with frequent rebalance events",
+        "settlement service backlog and delayed end-of-day settlement files"
+      ],
+      "rationale": "The queries target the key symptoms of consumer lag, backlog growth, frequent rebalancing, throughput drops, and delayed end‑of‑day files that appear in the current incident and its historical counterparts."
+    },
+    "evidence": [
+      {
+        "evidence_id": "EV-001",
+        "type": "LOG",
+        "source": "settlement-consumer-prod-02",
+        "description": "22 ERROR log line(s) of type DeserializationError between 2026-02-12 21:58 and 23:09 UTC, the first 20 minutes before detection. Example: \"Failed to deserialize record at settlement-events-4 offset 1883201: schema id 412 field 'amount' cannot be converted from string to decimal (retry 1)\"",
+        "citation": "LOG-SETTLE-20260212-01",
+        "timestamp": "2026-02-12T21:58:14Z"
+      },
+      {
+        "evidence_id": "EV-002",
+        "type": "LOG",
+        "source": "settlement-consumer-prod-03",
+        "description": "4 ERROR log line(s) of type CommitFailed between 2026-02-12 22:40 and 22:58 UTC, the first 22 minutes after detection. Example: \"CommitFailedException: the group has already rebalanced and assigned the partitions to another member\"",
+        "citation": "LOG-SETTLE-20260212-21",
+        "timestamp": "2026-02-12T22:40:00Z"
+      },
+      {
+        "evidence_id": "EV-003",
+        "type": "LOG",
+        "source": "settlement-consumer-prod-01",
+        "description": "7 WARN log line(s) of type ConsumerLag between 2026-02-12 22:03 and 23:11 UTC, the first 15 minutes before detection. Example: \"Consumer lag on settlement-events: 4,200 records\"",
+        "citation": "LOG-SETTLE-20260212-03",
+        "timestamp": "2026-02-12T22:03:00Z"
+      },
+      {
+        "evidence_id": "EV-004",
+        "type": "LOG",
+        "source": "settlement-consumer-prod-01, settlement-consumer-prod-02",
+        "description": "5 WARN log line(s) of type ConsumerRebalance between 2026-02-12 22:07 and 23:06 UTC, the first 11 minutes before detection. Example: \"Revoking previously assigned partitions [settlement-events-4]\"",
+        "citation": "LOG-SETTLE-20260212-04",
+        "timestamp": "2026-02-12T22:07:00Z"
+      },
+      {
+        "evidence_id": "EV-005",
+        "type": "CHANGE",
+        "source": "CHG-2026-00181",
+        "description": "Rolling restart of kafka-prod-cluster brokers on CI-KAFKA-CLUSTER: Apply broker configuration and JVM patch with a rolling restart. Implemented at 2026-02-10 20:00 UTC, 2 days before detection.",
+        "citation": "CHG-2026-00181",
+        "timestamp": "2026-02-10T20:00:00Z"
+      },
+      {
+        "evidence_id": "EV-006",
+        "type": "CHANGE",
+        "source": "CHG-2026-00188",
+        "description": "Register settlement-events schema v7 on CI-SCHEMA-REGISTRY: Register v7 of the settlement-events Avro schema (adds fx_rate_source, amount becomes a string). Compatibility mode set to NONE for this subject to allow the type change. Implemented at 2026-02-12 21:05 UTC, 73 minutes before detection.",
+        "citation": "CHG-2026-00188",
+        "timestamp": "2026-02-12T21:05:00Z"
+      },
+      {
+        "evidence_id": "EV-007",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "settlement-consumer (CI-SETTLE-SERVICE) connects_to clearing-house-link (CI-CLEARING-HOUSE, gateway).",
+        "citation": "CI-CLEARING-HOUSE",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-008",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "settlement-consumer (CI-SETTLE-SERVICE) connects_to kafka-prod-cluster (CI-KAFKA-CLUSTER, queue).",
+        "citation": "CI-KAFKA-CLUSTER",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-009",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "settlement-consumer (CI-SETTLE-SERVICE) depends_on schema-registry (CI-SCHEMA-REGISTRY, application).",
+        "citation": "CI-SCHEMA-REGISTRY",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-010",
+        "type": "CMDB",
+        "source": "CMDB",
+        "description": "settlement-consumer (CI-SETTLE-SERVICE) depends_on settlement-ledger-db (CI-SETTLE-DB, database).",
+        "citation": "CI-SETTLE-DB",
+        "timestamp": null
+      },
+      {
+        "evidence_id": "EV-011",
+        "type": "HISTORICAL_RCA",
+        "source": "RCA-2025-00192",
+        "description": "Past RCA RCA-2025-00192 for Settlement Service, completed 2025-07-25. Summary: Settlement event processing paused repeatedly because the consumer group kept rebalancing during the end-of-day peak.\nRoot Cause: Slow ledger writes during the end-of-day peak made each batch take longer than max.poll.interval.ms. Consumers were removed from the group, which triggered a rebalance storm and stopped processing. Judged relevant because: Settlement Service, consumer lag and rebalancing during peak caused backlog, matching investigation symptoms.",
+        "citation": "RCA-2025-00192",
+        "timestamp": "2025-07-25T09:30:00Z"
+      },
+      {
+        "evidence_id": "EV-012",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00982",
+        "description": "Past Settlement Service incident INC-2025-00982, detected 2025-07-11: Settlement events stop processing temporarily. Settlement event processing paused several times during the evening and a backlog built up. Symptoms: Consumer lag; Frequent rebalance events. Judged similar because: Settlement Service incident with backlog, consumer lag, frequent rebalance events.",
+        "citation": "INC-2025-00982",
+        "timestamp": "2025-07-11T22:18:00Z"
+      },
+      {
+        "evidence_id": "EV-013",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00884",
+        "description": "Past Settlement Service incident INC-2024-00884, detected 2024-07-20: Settlement backlog growing slowly. Consumer lag on settlement events grew during the afternoon and recovered on its own. First reports came from customers. Symptoms: Frequent rebalance events; Processing throughput drop; Consumer lag. Judged similar because: Settlement Service incident describing backlog, consumer lag, rebalancing, throughput drop.",
+        "citation": "INC-2024-00884",
+        "timestamp": "2024-07-20T11:25:00Z"
+      },
+      {
+        "evidence_id": "EV-014",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00485",
+        "description": "Past Settlement Service incident INC-2024-00485, detected 2024-04-20: Settlement events processed slowly. Consumer lag on settlement events grew during the afternoon and recovered on its own. Symptoms: Processing throughput drop. Judged similar because: Settlement Service incident with consumer lag and throughput drop.",
+        "citation": "INC-2024-00485",
+        "timestamp": "2024-04-20T14:33:00Z"
+      },
+      {
+        "evidence_id": "EV-015",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2025-00826",
+        "description": "Past Settlement Service incident INC-2025-00826, detected 2025-07-08: Settlement backlog growing slowly. Consumer lag on settlement events grew during the afternoon and recovered on its own. First reports came from customers. Symptoms: Frequent rebalance events; Processing throughput drop. Judged similar because: Settlement Service incident with backlog, consumer lag, rebalancing, throughput drop.",
+        "citation": "INC-2025-00826",
+        "timestamp": "2025-07-08T07:06:00Z"
+      },
+      {
+        "evidence_id": "EV-016",
+        "type": "HISTORICAL_INCIDENT",
+        "source": "INC-2024-00131",
+        "description": "Past Settlement Service incident INC-2024-00131, detected 2024-01-30: Settlement processing throughput dropped. Consumer lag on settlement events grew during the afternoon and recovered on its own. Impact was limited to global. Symptoms: Frequent rebalance events; Consumer lag. Judged similar because: Settlement Service incident with consumer lag and throughput drop.",
+        "citation": "INC-2024-00131",
+        "timestamp": "2024-01-30T07:34:00Z"
+      }
+    ],
+    "trace": [
+      {
+        "name": "similar_incidents",
+        "summary": "Found 5 past incident(s) that look similar: INC-2025-00982, INC-2024-00884, INC-2024-00485, INC-2025-00826, INC-2024-00131.",
+        "started_at": "2026-10-08T13:08:17.676614Z",
+        "finished_at": "2026-10-08T13:08:19.981093Z",
+        "details": {
+          "found": [
+            "INC-2025-00982",
+            "INC-2024-00884",
+            "INC-2024-00485",
+            "INC-2025-00826",
+            "INC-2024-00131"
+          ]
+        }
+      },
+      {
+        "name": "investigation_planner",
+        "summary": "Plan: Settlement Service, 2026-02-05 22:18 to 2026-02-13 00:40 UTC, sources: logs, changes, cmdb, historical_rcas, historical_incidents.",
+        "started_at": "2026-10-08T13:08:19.983096Z",
+        "finished_at": "2026-10-08T13:08:30.540078Z",
+        "details": {
+          "attempts": [
+            {
+              "attempt": 1,
+              "problems": []
+            }
+          ],
+          "search_queries": [
+            "settlement events backlog with consumer lag and repeated rebalancing",
+            "settlement processing throughput drop and consumer lag during evening",
+            "settlement service consumer lag and backlog growth over hours",
+            "settlement events processing paused with frequent rebalance events",
+            "settlement service backlog and delayed end-of-day settlement files"
+          ],
+          "rationale": "The queries target the key symptoms of consumer lag, backlog growth, frequent rebalancing, throughput drops, and delayed end‑of‑day files that appear in the current incident and its historical counterparts."
+        }
+      },
+      {
+        "name": "tools",
+        "summary": "Logs: 4 ERROR/WARN pattern(s) around 1 incident(s). Changes: 2 from 2026-02-05 to 2026-02-13 (CHG-2026-00181, CHG-2026-00188). CMDB: 4 component(s) depended on.",
+        "started_at": "2026-10-08T13:08:30.544080Z",
+        "finished_at": "2026-10-08T13:08:30.567076Z",
+        "details": {
+          "evidence": 10,
+          "services": [
+            "Settlement Service",
+            "Event Streaming Platform",
+            "External Vendors"
+          ],
+          "log_windows": [
+            {
+              "start": "2026-02-12T20:18:00+00:00",
+              "end": "2026-02-12T23:18:00+00:00",
+              "incident_id": "INC-2026-00105"
+            }
+          ],
+          "change_window": {
+            "start": "2026-02-05T22:18:00+00:00",
+            "end": "2026-02-13T00:40:00+00:00",
+            "incident_id": null
+          },
+          "found": {
+            "logs": [
+              "LOG-SETTLE-20260212-01",
+              "LOG-SETTLE-20260212-21",
+              "LOG-SETTLE-20260212-03",
+              "LOG-SETTLE-20260212-04"
+            ],
+            "changes": [
+              "CHG-2026-00181",
+              "CHG-2026-00188"
+            ],
+            "cmdb": [
+              "CI-CLEARING-HOUSE",
+              "CI-KAFKA-CLUSTER",
+              "CI-SCHEMA-REGISTRY",
+              "CI-SETTLE-DB"
+            ],
+            "problem_incidents": []
+          }
+        }
+      },
+      {
+        "name": "historical_rca_agent",
+        "summary": "Kept RCA-2025-00192, INC-2025-00982, INC-2024-00884, INC-2024-00485, INC-2025-00826, INC-2024-00131. Dropped RCA-2025-00230, RCA-2024-00299, RCA-2025-00114, RCA-2024-00115.",
+        "started_at": "2026-10-08T13:08:30.570135Z",
+        "finished_at": "2026-10-08T13:08:48.020728Z",
+        "details": {
+          "kept": [
+            {
+              "id": "RCA-2025-00192",
+              "reason": "Settlement Service, consumer lag and rebalancing during peak caused backlog, matching investigation symptoms."
+            },
+            {
+              "id": "INC-2025-00982",
+              "reason": "Settlement Service incident with backlog, consumer lag, frequent rebalance events."
+            },
+            {
+              "id": "INC-2024-00884",
+              "reason": "Settlement Service incident describing backlog, consumer lag, rebalancing, throughput drop."
+            },
+            {
+              "id": "INC-2024-00485",
+              "reason": "Settlement Service incident with consumer lag and throughput drop."
+            },
+            {
+              "id": "INC-2025-00826",
+              "reason": "Settlement Service incident with backlog, consumer lag, rebalancing, throughput drop."
+            },
+            {
+              "id": "INC-2024-00131",
+              "reason": "Settlement Service incident with consumer lag and throughput drop."
+            }
+          ],
+          "dropped": [
+            {
+              "id": "RCA-2025-00230",
+              "reason": "Different service (Billing Service); symptoms unrelated to settlement consumer lag."
+            },
+            {
+              "id": "RCA-2024-00299",
+              "reason": "Different service (Payment API); no settlement consumer lag."
+            },
+            {
+              "id": "RCA-2025-00114",
+              "reason": "Different service (Payment API); unrelated to settlement backlog."
+            },
+            {
+              "id": "RCA-2024-00115",
+              "reason": "Different service (API Gateway); not about settlement consumer lag."
+            }
+          ]
+        }
+      },
+      {
+        "name": "rca_reasoning_agent",
+        "summary": "Attempt 1: 2 hypothesis(es) proposed.",
+        "started_at": "2026-10-08T13:08:48.023731Z",
+        "finished_at": "2026-10-08T13:09:22.706600Z",
+        "details": {}
+      },
+      {
+        "name": "guardrail",
+        "summary": "Draft accepted on attempt 1: the schema is valid and all 7 cited evidence ids exist.",
+        "started_at": "2026-10-08T13:09:22.710259Z",
+        "finished_at": "2026-10-08T13:09:22.710259Z",
+        "details": {
+          "attempt": 1
+        }
+      },
+      {
+        "name": "confidence",
+        "summary": "HYP-001: HIGH (5 points). HYP-002: LOW (4 points).",
+        "started_at": "2026-10-08T13:09:22.715751Z",
+        "finished_at": "2026-10-08T13:09:22.715751Z",
+        "details": {}
+      }
+    ],
+    "investigation_summary": "On 2026-02-12, the Settlement Service experienced deserialization errors, consumer lag, rebalance events, and commit failures across its consumer instances. A schema change (v7) was applied 73 minutes before the first error, altering the 'amount' field type from decimal to string. The errors coincide with the schema change timing, suggesting a compatibility issue. An earlier Kafka broker restart (2 days prior) is unlikely to be the cause.",
+    "observed_patterns": [
+      "DeserializationError on settlement-consumer-prod-02 from 21:58 UTC",
+      "ConsumerLag on settlement-consumer-prod-01 from 22:03 UTC",
+      "ConsumerRebalance on settlement-consumer-prod-01/02 from 22:07 UTC",
+      "CommitFailed on settlement-consumer-prod-03 from 22:40 UTC",
+      "Schema change to settlement-events v7 applied 21:05 UTC"
+    ],
+    "hypotheses": [
+      {
+        "hypothesis_id": "HYP-001",
+        "candidate_root_cause": "The schema change to settlement-events v7 caused deserialization errors, leading to consumer lag, rebalancing, and commit failures.",
+        "reasons": [
+          "Schema change applied 73 minutes before first error",
+          "Deserialization errors match type mismatch introduced by schema change",
+          "Consumer lag and rebalance events are typical when consumers cannot deserialize records",
+          "CommitFailed exceptions occur during rebalancing triggered by deserialization failures"
+        ],
+        "supporting_evidence": [
+          "EV-006",
+          "EV-001",
+          "EV-003",
+          "EV-004",
+          "EV-002",
+          "EV-009"
+        ],
+        "contradicting_evidence": [],
+        "recommended_validation": [
+          "Verify consumer code handles new schema version",
+          "Test deserialization against v7 schema locally",
+          "Check schema registry compatibility mode settings",
+          "Confirm consumer group offsets after error",
+          "Review consumer max.poll.interval.ms configuration"
+        ],
+        "confidence": "HIGH",
+        "confidence_points": 5,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Change on the affected service or a direct dependency, before the first error (+2).",
+          "CMDB dependency confirms the technical path (+1).",
+          "5 points from 3 different sources: HIGH."
+        ]
+      },
+      {
+        "hypothesis_id": "HYP-002",
+        "candidate_root_cause": "The Kafka broker rolling restart 2 days earlier caused lingering configuration or network issues that led to consumer rebalancing and commit failures.",
+        "reasons": [
+          "Kafka broker restart precedes the incident",
+          "Consumer rebalance events and commit failures are common after broker restarts",
+          "Restart could have altered partition assignments"
+        ],
+        "supporting_evidence": [
+          "EV-005",
+          "EV-004",
+          "EV-002"
+        ],
+        "contradicting_evidence": [
+          "EV-006",
+          "EV-001",
+          "EV-003",
+          "EV-004",
+          "EV-002"
+        ],
+        "recommended_validation": [
+          "Inspect broker logs for errors around restart time",
+          "Check consumer group state post-restart",
+          "Verify network connectivity between consumers and brokers",
+          "Confirm no configuration drift after restart"
+        ],
+        "confidence": "LOW",
+        "confidence_points": 4,
+        "confidence_reasons": [
+          "Log evidence of the symptom (+2).",
+          "Change on the affected service or a direct dependency, before the first error (+2).",
+          "4 points: MEDIUM.",
+          "Contradicting evidence EV-006, EV-001, EV-003, EV-004, EV-002 lowers the level by one band: LOW."
+        ]
+      }
+    ],
+    "single_hypothesis_reason": null,
+    "not_checked": [
+      "Consumer lag metrics before schema change",
+      "Schema registry compatibility mode details",
+      "Kafka broker configuration changes",
+      "Consumer group state before restart",
+      "Load metrics on settlement-ledger-db"
+    ],
+    "weakly_supported": false,
+    "suggested_workaround": "Pause the settlement-consumer group, restart consumers, or revert to the previous schema version if possible.",
+    "change_likely_required": true,
+    "review": null,
+    "final_root_cause": null
+  }
+]

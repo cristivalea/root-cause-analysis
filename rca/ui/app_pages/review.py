@@ -12,16 +12,20 @@ confirmation step, and nothing overwrites the analysis that was read.
 
 import streamlit as st
 
+from rca.compare import compare, previous_revision
 from rca.ui import formatting, services, state, theme
 from rca.ui.components import rca_draft
 from rca.ui.components.cause_diagram import cause_diagram
 from rca.ui.components.incident_card import incident_summary
 from rca.ui.components.page_header import page_header
+from rca.ui.components.rca_diagram import rca_diagram
+from rca.ui.components.timeline_view import timeline_view
 from rca.ui.strings import t
 
 # REVIEWER_KEY = "reviewer_name"
 OUTCOME_KEY = "review_outcome"
-DECIDABLE = ("PENDING_REVIEW",)
+MAX_REVISIONS = 3  # the same limit as rca.store.MAX_REVISIONS: the interface talks to the API only
+DECIDABLE = ("AWAITING_TECHNICAL_REVIEW",)
 
 
 def chosen_rca() -> str | None:
@@ -57,12 +61,14 @@ def requested_checks(decision: str, comment: str) -> list[str] | None:
     return lines if len(lines) > 1 else None
 
 
-def decide(rca_id: str, decision: str, comment: str, hypothesis_id: str | None = None) -> bool:
+def decide(rca_id: str, decision: str, comment: str, hypothesis_id: str | None = None,
+           guidance: dict | None = None) -> bool:
     """Record a decision. The screen shows what happened next, so it only reports success."""
     try:
         services.apply_review(
             rca_id, reviewer_name(), decision, comment, hypothesis_id,
             requested_checks=requested_checks(decision, comment),
+            guidance=guidance,
         )
     except services.ServiceError as error:
         st.error(t("review.decision_failed"), icon=theme.ICONS["error"])
@@ -80,7 +86,8 @@ def decide(rca_id: str, decision: str, comment: str, hypothesis_id: str | None =
 def queue() -> None:
     st.subheader(t("review.queue_title"))
     try:
-        waiting = services.list_rcas(status="PENDING_REVIEW")
+        waiting = services.list_rcas(status="AWAITING_TECHNICAL_REVIEW")
+        summaries = {item.rca_id: item for item in services.list_rca_summaries()}
     except services.ServiceError as error:
         st.error(t("state.error_data"), icon=theme.ICONS["error"])
         st.caption(t("state.error_detail", detail=error))
@@ -92,18 +99,23 @@ def queue() -> None:
         return
 
     for record in waiting:
+        summary = summaries.get(record.rca_id)
         with st.container(border=True):
             with st.container(horizontal=True, vertical_alignment="center", horizontal_alignment="distribute"):
-                st.markdown(f"`{record.rca_id}` · {t('review.for_incident')} `{record.incident_id}`")
+                st.markdown(f"`{record.rca_id}` · `{record.problem_id}` **{summary.title if summary else ''}**")
                 if st.button(t("review.open"), key=f"open-{record.rca_id}", type="primary",
                              icon=theme.ICONS["review"]):
                     open_review(record.rca_id)
-            summary = record.investigation_summary or ""
+            revisions = summary.revisions if summary else record.revision
             st.caption(f"{t('review.created')}: {formatting.date_time(record.created_at)} · "
-                       f"{t('draft.evidence_count')}: {len(record.evidence)} · "
-                       f"{t('cycle.number', number=record.cycle)}")
-            if summary:
-                st.markdown(summary[:200] + ("..." if len(summary) > 200 else ""))
+                       + (t("history.revisions_one") if revisions == 1 else t("history.revisions_many", count=revisions))
+                       + f" · {t('review.decision_number', number=record.review_rounds + 1, maximum=MAX_REVISIONS)}",
+                       help=t("history.revisions_help"))
+            if record.revision > 1:
+                st.caption(t("review.answers_request", revision=record.revision))
+            summary_text = record.investigation_summary or ""
+            if summary_text:
+                st.markdown(summary_text[:200] + ("..." if len(summary_text) > 200 else ""))
             if record.weakly_supported:
                 st.caption(t("draft.weak"))
 
@@ -135,13 +147,38 @@ def request_dialog(record) -> None:
     for hypothesis in record.hypotheses:
         st.markdown(f"- **{hypothesis.confidence}** - {hypothesis.candidate_root_cause}")
     question = st.text_area(t("request.question"), placeholder=t("request.placeholder"))
+    guidance = search_form()
     # st.text_input(t("review.reviewer"), key=REVIEWER_KEY, placeholder=state.role_name(state.TECHNICAL_EXPERT))
+    decision = record.review_rounds + 1  # failed runs do not count: only the decisions of the expert
+    if decision >= MAX_REVISIONS:
+        st.warning(t("request.last_revision", maximum=MAX_REVISIONS), icon=":material/warning:")
+    else:
+        st.caption(t("request.revision", number=decision, maximum=MAX_REVISIONS))
     if st.button(t("request.send"), type="primary", icon=":material/send:"):
         if not question.strip():
             st.error(t("review.comment_required"), icon=theme.ICONS["error"])
             return
-        if decide(record.rca_id, "REQUEST_MORE_DETAILS", question.strip()):
+        if decide(record.rca_id, "REQUEST_MORE_DETAILS", question.strip(), guidance=guidance):
             st.rerun()
+
+
+def search_form() -> dict | None:
+    """Wider searches the expert may ask for. Applied by code in the next revision; only what was
+    changed is sent."""
+    with st.expander(t("request.search_title"), icon=":material/tune:"):
+        try:
+            options = services.cmdb_services()
+        except services.ServiceError:
+            options = []
+        extra = st.multiselect(t("guidance.services"), options, help=t("guidance.services_help"), key="request_services")
+        days = st.number_input(t("guidance.change_days"), min_value=7, max_value=90, value=7, step=1, key="request_days")
+        hours = st.number_input(t("guidance.log_hours"), min_value=2, max_value=168, value=2, step=1, key="request_hours")
+    guidance = {
+        "extra_services": extra,
+        "change_window_days": int(days) if days != 7 else None,
+        "log_hours_before": int(hours) if hours != 2 else None,
+    }
+    return guidance if any(guidance.values()) else None
 
 
 @st.dialog(t("reject.title"))
@@ -178,12 +215,12 @@ def outcome(record) -> None:
     if review is None:
         return
     with st.container(border=True):
-        if record.status == "FINAL":
+        if record.status == "VALIDATED":
             st.markdown(f"**{t('approve.done_title')}**")
             st.caption(t("approve.done_text"))
             st.caption(t("approve.final_cause"))
             st.markdown(f"**{record.final_root_cause}**")
-        elif record.status == "MORE_DETAILS_REQUESTED":
+        elif record.status == "REQUEST_MORE_DETAILS":
             st.markdown(f"**{t('request.done_title')}**")
             st.caption(t("request.done_text"))
             checks = rca_draft.extra_checks(review)
@@ -194,6 +231,9 @@ def outcome(record) -> None:
         elif record.status == "REJECTED":
             st.markdown(f"**{t('reject.done_title')}**")
             st.caption(t("reject.done_text"))
+        elif record.status == "ESCALATED_MANUAL":
+            st.markdown(f"**{t('investigation.escalated_manual')}**")
+            st.caption(t("investigation.escalated_manual_hint"))
 
         st.caption(t("review.decided_by", name=review.reviewer, date=formatting.date_time(review.decided_at)))
         if review.comment:
@@ -206,9 +246,59 @@ def outcome(record) -> None:
 # --------------------------------------------------------------------------------------
 
 
+def comparison(record) -> None:
+    """What changed since the revision the expert saw before (rca/compare.py), read before deciding again."""
+    try:
+        revisions = services.list_case(record.rca_id)
+    except services.ServiceError:
+        return
+    previous = previous_revision(revisions, record)
+    if previous is None:
+        return
+    found = compare(previous, record)
+    with st.expander(t("compare.title", previous=previous.revision, current=record.revision), expanded=True,
+                     icon=":material/compare_arrows:"):
+        if found.request:
+            st.caption(t("compare.request"))
+            st.markdown(found.request)
+        st.caption(t("compare.main_changed") if found.main_changed else t("compare.main_same"))
+        for change in found.hypotheses:
+            if change.kind == "kept":
+                st.markdown(f":gray-badge[{t('compare.kept')}] {change.current.candidate_root_cause}  \n"
+                            + t("compare.confidence", before=change.previous.confidence, after=change.current.confidence))
+            elif change.kind == "new":
+                st.markdown(f":green-badge[{t('compare.new')}] {change.current.candidate_root_cause}  \n"
+                            + t("compare.confidence_new", after=change.current.confidence))
+            else:
+                st.markdown(f":red-badge[{t('compare.dropped')}] {change.previous.candidate_root_cause}")
+        st.caption(t("compare.new_evidence", count=len(found.new_evidence)))
+        st.markdown(", ".join(f"`{item}`" for item in found.new_evidence) or "—")
+        if found.dropped_evidence:
+            st.caption(t("compare.dropped_evidence", count=len(found.dropped_evidence)))
+            st.markdown(", ".join(f"`{item}`" for item in found.dropped_evidence))
+        if found.newly_not_checked:
+            st.caption(t("compare.not_checked"))
+            for item in found.newly_not_checked:
+                st.markdown(f"- {item}")
+
+
+def diagrams(record, title: str | None) -> None:
+    """The two diagrams of the analysis, one at a time: the evidence map (the incident, the hypotheses and the
+    evidence for and against each one) and the causal diagram (5 Whys or fishbone, chosen by code)."""
+    shown = st.segmented_control(t("review.diagram"), ["evidence_map", "causal"], default="evidence_map",
+                                 format_func=lambda value: t(f"review.diagram.{value}"), key=f"diagram-{record.rca_id}",
+                                 label_visibility="collapsed")
+    if shown == "causal":
+        rca_diagram(record, title)
+    else:
+        cause_diagram(record, title)
+
+
 def review(rca_id: str) -> None:
     try:
         record = services.get_rca(rca_id)
+        summary = next((item for item in services.list_rca_summaries() if item.rca_id == record.rca_id), None) \
+            if record else None
     except services.ServiceError as error:
         st.error(t("state.error_data"), icon=theme.ICONS["error"])
         st.caption(t("state.error_detail", detail=error))
@@ -221,24 +311,34 @@ def review(rca_id: str) -> None:
         return
 
     incident = services.get_incident(record.incident_id)
+    title = summary.title if summary else (incident.title if incident else None)
+
+    if st.button(t("review.back_to_queue"), icon=theme.ICONS["back"], type="tertiary"):
+        back_to_queue()
+    st.subheader(f"{record.problem_id} · {title or ''}")
+    incidents = record.context.incident_ids if record.context else [record.incident_id]
+    st.caption(t("review.problem_line", rca=record.rca_id, revision=record.revision, count=len(incidents),
+                 incidents=", ".join(incidents)))
 
     left, right = st.columns([5, 4], gap="large")
 
     with left:
         if record.status not in DECIDABLE:
             outcome(record)
+        comparison(record)
         rca_draft.rca_draft(
             record,
             with_metadata=True,
-            context=f"{t('review.for_incident')} `{record.incident_id}` · "
-                    f"{t('cycle.number', number=record.cycle)}",
+            context=f"{record.problem_id} · {t('cycle.number', number=record.revision)}",
         )
 
     with right:
         if incident is not None:
             with st.container(border=True):
+                st.caption(t("review.reference_incident"))
                 incident_summary(incident)
-        cause_diagram(record, incident.title if incident else None)
+        diagrams(record, title)
+        timeline_view(record)
 
     # The decisions close the page: the whole analysis has been read by the time they
     # are in reach.
