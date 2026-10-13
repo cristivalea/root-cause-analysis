@@ -97,6 +97,16 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def evaluation_db() -> Path:
+    """A temporary copy of the database: the investigations of the evaluation never reach the application."""
+    import shutil
+    import tempfile
+
+    copy = Path(tempfile.mkdtemp()) / "evaluation.sqlite3"
+    shutil.copy(DB_PATH, copy)
+    return copy
+
+
 def main() -> None:
     args = parse_args()
 
@@ -126,6 +136,7 @@ def main() -> None:
     if not incidents_to_evaluate:
         sys.exit("Nu s-au găsit incidente eligibile pentru evaluare.")
 
+    eval_db = evaluation_db()  # the investigations stay out of the application
     print(f"=== EVALUARE KPI: ACURATEȚEA IPOTEZELOR ({len(incidents_to_evaluate)} incidente) ===")
     print(f"Model: {GROQ_MODEL} | Mod judecător: {args.judge.upper()}\n")
 
@@ -150,7 +161,7 @@ def main() -> None:
         record = run_investigation(
             incident_id=inc_id,
             owner="KPI Evaluator",
-            db_path=DB_PATH,
+            db_path=eval_db,
         )
         elapsed = time.time() - t0
         print(f" gata în {elapsed:.1f}s. Evaluare ipoteze:")

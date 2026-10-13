@@ -67,7 +67,7 @@ from datetime import datetime, timezone
 from rca.models import RCARecord, TimelineEntry
 from rca.ui.components.timeline_view import timeline_view
 at = datetime(2026, 7, 14, 13, 58, tzinfo=timezone.utc)
-record = RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="PENDING_REVIEW", owner="pm",
+record = RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="AWAITING_TECHNICAL_REVIEW", owner="pm",
                    created_at=at, timeline=[
     TimelineEntry(at=at, evidence_id="EV-007", type="CHANGE", citation="CHG-2026-00871",
                   what="Deploy Payment API v4.18.2", marker="before the first error")])

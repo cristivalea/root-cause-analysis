@@ -208,3 +208,68 @@ def test_an_existing_evidence_named_but_not_cited_is_only_a_warning():
 
     assert check_draft(checked, LEDGER_IDS) == []
     assert text_warnings(checked) == ["HYP-001 names EV-002 in its text without citing it."]
+
+
+# The checks of E5: contradictions, support beyond the incident, late changes, certainty -----------
+
+from rca.guardrails import claims_certainty, text_warnings  # noqa: E402
+from rca.models import Evidence  # noqa: E402
+
+FIRST_ERROR = datetime.fromisoformat("2026-07-14T14:05:00+00:00")
+LEDGER = [
+    Evidence(evidence_id="EV-001", type="INCIDENT", source="INC-1", description="The incident.", citation="INC-1",
+             timestamp=datetime.fromisoformat("2026-07-14T14:32:00+00:00")),
+    Evidence(evidence_id="EV-002", type="LOG", source="host", description="Pool timeouts.", citation="LOG-1",
+             timestamp=FIRST_ERROR),
+    Evidence(evidence_id="EV-003", type="CHANGE", source="CHG-1", description="Deploy before.", citation="CHG-1",
+             timestamp=datetime.fromisoformat("2026-07-14T13:58:00+00:00")),
+    Evidence(evidence_id="EV-004", type="CHANGE", source="CHG-2", description="Hotfix after.", citation="CHG-2",
+             timestamp=datetime.fromisoformat("2026-07-14T15:10:00+00:00")),
+]
+IDS = {item.evidence_id for item in LEDGER}
+
+
+def checked(*hypotheses):
+    return check_draft(draft(*hypotheses), IDS, LEDGER, FIRST_ERROR)
+
+
+def test_a_fact_cited_both_for_and_against_one_hypothesis_is_refused():
+    problems = checked(hypothesis("HYP-001", ["EV-002", "EV-003"], ["EV-003"]), hypothesis("HYP-002", ["EV-002"]))
+
+    assert problems == ["HYP-001 cites EV-003 both as supporting and as contradicting evidence: decide which one it is"]
+
+
+def test_a_hypothesis_supported_only_by_the_incident_itself_is_refused():
+    problems = checked(hypothesis("HYP-001", ["EV-001"]), hypothesis("HYP-002", ["EV-002"]))
+
+    assert len(problems) == 1 and "supported only by the incident itself" in problems[0]
+
+
+def test_a_change_made_after_the_first_error_is_never_support():
+    problems = checked(hypothesis("HYP-001", ["EV-002", "EV-004"]), hypothesis("HYP-002", ["EV-003"], ["EV-004"]))
+
+    assert len(problems) == 1 and problems[0].startswith("HYP-001 cites EV-004 as supporting evidence, a change made after")
+
+
+def test_a_candidate_presented_as_the_demonstrated_cause_is_refused_and_certain_reasons_are_a_warning():
+    certain = hypothesis("HYP-001", ["EV-002"]).model_copy(update={
+        "candidate_root_cause": "The root cause is the pool exhaustion.",
+        "reasons": ["The logs definitely show it."]})
+
+    problems = checked(certain, hypothesis("HYP-002", ["EV-003"]))
+
+    assert len(problems) == 1 and "presents its cause as demonstrated" in problems[0]
+    assert text_warnings(draft(certain)) == ["HYP-001 uses certain wording in its reasons; it is still a candidate."]
+
+
+@pytest.mark.parametrize("text, certain", [
+    ("The root cause is the pool.", True), ("The pool was confirmed as the cause.", True),
+    ("Certainly the pool.", True), ("The pool is not confirmed yet.", False), ("It has not been proven.", False),
+    ("A possible cause: the pool.", False),
+])
+def test_certain_wording_is_told_apart_from_its_negation(text, certain):
+    assert claims_certainty(text) is certain
+
+
+def test_a_good_draft_passes_every_check():
+    assert checked(hypothesis("HYP-001", ["EV-002", "EV-003"], ["EV-004"]), hypothesis("HYP-002", ["EV-002"])) == []

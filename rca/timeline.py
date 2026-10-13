@@ -1,6 +1,7 @@
 """The timeline of an investigation: the facts of the ledger on one time axis (audit P.1, P.2 step 4).
 
-Built by code from the evidence ledger only, so it adds no fact: it puts in order the detection of
+Built by code from the evidence ledger only, so it adds no fact; each moment keeps its evidence id, the
+time it happened (from the source) and the time the investigation found it: it puts in order the detection of
 every incident of the problem, the log patterns and the changes, and marks the first error. A change
 before the first error can have caused it; a change after it cannot. This is the same rule the
 confidence calculation uses (rca/confidence.py), so the expert sees why a change earned points or not.
@@ -48,7 +49,7 @@ def build_timeline(evidence: list[Evidence], problem_incidents: list[str], first
         else:
             continue
         entries.append(TimelineEntry(at=at, evidence_id=item.evidence_id, type=item.type, citation=item.citation,
-                                     what=_short(item.description), marker=marker))
+                                     what=_short(item.description), marker=marker, collected_at=item.collected_at))
     return sorted(entries, key=lambda entry: (entry.at, entry.evidence_id))
 
 

@@ -68,6 +68,7 @@ def rca_diagram(record: RCARecord, incident_title: str | None = None) -> None:
     diagram = choose_diagram(record.hypotheses)
     drawing = dot(record, incident_title)
     if diagram is None or drawing is None:
+        st.info(t("diagram.none"), icon=":material/info:")
         return
     if diagram.kind == "five_whys":
         st.subheader(t("diagram.five_whys_title"))

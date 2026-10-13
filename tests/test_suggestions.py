@@ -82,23 +82,157 @@ def test_a_rejected_suggestion_is_not_proposed_again(db, embeddings):
     assert again is None or not set(again.incident_ids) & set(first.incident_ids)
 
 
-def test_an_incident_marked_as_needing_no_problem_gets_no_suggestion_and_is_suggested_to_no_one(db, embeddings):
-    first = next(item for item in suggestions.suggest_all(db, embeddings).values() if item and item.kind == "new_problem")
-    partner = first.incident_ids[0]
-
-    problems.dismiss_incident(partner, "pm", "Known vendor issue.", db_path=db)
-    found = suggestions.suggest_all(db, embeddings)
-
-    assert partner not in found
-    assert all(partner not in item.incident_ids for item in found.values() if item)
+def covered(found) -> list[str]:
+    return [incident_id for item in found for incident_id in item.incident_ids]
 
 
-def test_proposed_problems_are_groups_of_at_least_three_incidents_in_no_problem(db, embeddings):
-    groups = suggestions.proposed_problems(db, embeddings)
+def test_every_incident_in_no_problem_is_in_exactly_one_proposal(db, embeddings):
+    an_incident_for_an_open_problem(db)  # an incident removed from a problem is proposed again too
+
+    found = suggestions.proposals(db, embeddings)
+
+    unassigned = sorted(item.incident_id for item in problems.unassigned_incidents(db))
+    assert sorted(covered(found)) == unassigned  # every one, and none twice
+    assert "INC-2026-00857" in covered(found)
+    assert {"group", "attach"} <= {item.kind for item in found} <= {"group", "attach", "single"}
+
+def test_proposed_groups_are_alike_incidents_in_no_problem_of_one_service(db, embeddings):
+    groups = [item.incident_ids for item in suggestions.proposals(db, embeddings) if item.kind == "group"]
 
     assert groups
     owned = {link.incident_id for problem in problems.list_problems(db_path=db) for link in problem.incidents}
     for group in groups:
-        assert len(group) >= suggestions.MIN_PROPOSED_PROBLEM
+        assert len(group) >= suggestions.MIN_GROUP
         assert not set(group) & owned
         assert len({storage.get_incident(db, item).service for item in group}) == 1
+
+
+def test_the_incidents_that_may_be_added_to_a_problem_come_with_their_similarity(db, embeddings):
+    """An incident removed from a problem is eligible again, and it is the most alike of the candidates."""
+    payment_problem = storage.get_problem_id_for_incident(db, "INC-2026-00482")
+    problems.detach_incident(payment_problem, "INC-2026-00857", "pm", "Test.", db_path=db)
+
+    found = suggestions.candidates_for_problem(payment_problem, db, embeddings, limit=500)
+
+    ids = [item.incident_id for item in found]
+    assert "INC-2026-00857" in ids and "INC-2026-00482" not in ids  # only incidents in no problem
+    first = found[0]
+    assert (first.incident_id, first.closest_incident_id, first.alike) == ("INC-2026-00857", "INC-2026-00482", True)
+    assert all(0 <= item.similarity <= 1 for item in found if item.similarity is not None)
+    scores = [item.similarity for item in found if item.alike]
+    assert scores == sorted(scores, reverse=True)  # the alike ones first, the closest first
+
+
+# Proposed Problem Records (E6) ---------------------------------------------------------------------
+
+
+def an_incident_for_an_open_problem(db):
+    """The source data puts every incident of an open problem in it: one removed, with a reason, is proposed back."""
+    payment_problem = storage.get_problem_id_for_incident(db, "INC-2026-00482")
+    problems.detach_incident(payment_problem, "INC-2026-00857", "pm", "Test.", db_path=db)
+
+
+def test_the_proposals_are_of_three_kinds_with_a_stable_key_an_explained_score_reasons_and_evidence(db, embeddings):
+    an_incident_for_an_open_problem(db)
+    found = suggestions.proposals(db, embeddings)
+
+    kinds = {item.kind for item in found}
+    assert {"group", "attach"} <= kinds
+    for item in found:
+        assert item.key == suggestions.proposal_key(item.kind, item.incident_ids, item.problem_id)
+        assert item.reasons and item.evidence
+        assert "not a probability" in item.score_meaning
+        assert item.score is None or 0 <= item.score <= 1
+    groups = [item for item in found if item.kind == "group"]
+    assert all(len(item.incident_ids) >= suggestions.MIN_GROUP for item in groups)
+    assert suggestions.proposals(db, embeddings) == found  # the same data gives the same proposals
+
+
+def test_an_incident_is_proposed_only_for_an_open_problem_and_a_closed_one_is_named_as_a_recurrence(db, embeddings):
+    found = suggestions.proposals(db, embeddings)
+    statuses = {item.problem_id: item.status for item in problems.list_problems(db_path=db)}
+
+    assert all(statuses[item.problem_id] in ("Open", "In investigation") for item in found if item.kind == "attach")
+    recurrences = [item for item in found if item.recurrence_of]
+    assert recurrences and all(statuses[item.recurrence_of] == "Closed" and item.kind in ("group", "single")
+                               for item in recurrences)
+    assert all(any(item.recurrence_of in reason for reason in item.reasons) for item in recurrences)
+
+
+def test_an_incident_belongs_to_one_proposal_at_most(db, embeddings):
+    seen = [incident_id for item in suggestions.proposals(db, embeddings) for incident_id in item.incident_ids]
+
+    assert len(seen) == len(set(seen))
+
+
+def test_the_incidents_of_a_rejected_group_come_back_on_their_own_the_major_ones_first(db, embeddings):
+    group = next(item for item in suggestions.proposals(db, embeddings) if item.kind == "group" and any(
+        storage.get_incident(db, incident_id).severity == "SEV-1" or storage.get_incident(db, incident_id).rca_required
+        for incident_id in item.incident_ids))
+    major = next(incident_id for incident_id in group.incident_ids
+                 if storage.get_incident(db, incident_id).severity == "SEV-1"
+                 or storage.get_incident(db, incident_id).rca_required)
+
+    problems.reject_proposal(group.key, "group", group.incident_ids, "pm", reason="Different causes.", db_path=db)
+    found = suggestions.proposals(db, embeddings)
+
+    alone = {item.incident_ids[0]: item for item in found if item.kind == "single"}
+    assert set(group.incident_ids) <= set(alone)
+    assert all("was rejected" in alone[item].reasons[0] for item in group.incident_ids)  # it says why it is alone
+    singles = [item for item in found if item.kind == "single"]
+    majors = [suggestions._major(suggestions._World(db, embeddings), item) for item in singles]
+    assert majors == sorted(majors, reverse=True)  # the major incidents first
+    assert majors[[item.incident_ids[0] for item in singles].index(major)]
+    assert sorted(covered(found)) == sorted(item.incident_id for item in problems.unassigned_incidents(db))
+
+
+def test_no_incident_is_proposed_for_a_problem_in_investigation(db, embeddings):
+    from rca import store
+
+    an_incident_for_an_open_problem(db)
+    payment_problem = storage.get_problem_id_for_incident(db, "INC-2026-00482")
+    assert any(item.kind == "attach" and item.problem_id == payment_problem for item in suggestions.proposals(db, embeddings))
+
+    store.begin_rca(payment_problem, "pm", None, db_path=db)
+    found = suggestions.proposals(db, embeddings)
+
+    assert not any(item.kind == "attach" and item.problem_id == payment_problem for item in found)
+    assert "INC-2026-00857" in covered(found)  # it is proposed another way meanwhile
+
+def test_a_rejected_proposal_is_not_proposed_again(db, embeddings):
+    an_incident_for_an_open_problem(db)
+    found = suggestions.proposals(db, embeddings)
+    group = next(item for item in found if item.kind == "group")
+    attach = next(item for item in found if item.kind == "attach")
+
+    problems.reject_proposal(group.key, "group", group.incident_ids, "pm", reason="Different causes.", db_path=db)
+    problems.reject_proposal(attach.key, "attach", attach.incident_ids, "pm", attach.problem_id, db_path=db)
+
+    found = suggestions.proposals(db, embeddings)
+    keys = {item.key for item in found}
+    assert group.key not in keys and attach.key not in keys
+    assert set(group.incident_ids + attach.incident_ids) <= set(covered(found))  # still proposed, another way
+    again = suggestions.suggest(attach.incident_ids[0], db, embeddings)  # that problem is not proposed for it again
+    assert again is None or again.problem_id != attach.problem_id
+
+
+def test_an_incident_removed_from_a_problem_is_proposed_again(db, embeddings):
+    payment_problem = storage.get_problem_id_for_incident(db, "INC-2026-00482")
+    problems.detach_incident(payment_problem, "INC-2026-00857", "pm", "Test.", db_path=db)
+
+    found = [item for item in suggestions.proposals(db, embeddings) if "INC-2026-00857" in item.incident_ids]
+
+    assert found and found[0].kind == "attach" and found[0].problem_id == payment_problem
+
+
+def test_a_rejected_group_is_proposed_again_once_a_new_alike_incident_joins_it(db, embeddings):
+    """The rejection holds for those incidents only: when another alike incident arrives the group is not the
+    same any more, and it is proposed again with all of them. Simulated by rejecting the group without its
+    newest incident, as it was before that incident arrived."""
+    group = next(item for item in suggestions.proposals(db, embeddings) if item.kind == "group" and len(item.incident_ids) >= 3)
+    earlier = group.incident_ids[:-1]
+    problems.reject_proposal(suggestions.proposal_key("group", earlier), "group", earlier, "pm", db_path=db)
+
+    found = suggestions.proposals(db, embeddings)
+
+    assert group.key in {item.key for item in found}

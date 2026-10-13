@@ -43,14 +43,13 @@ INCIDENT_STATUS: dict[str, Style] = {
 
 # Where the analysis stands. Orange means somebody has to act.
 RCA_STATUS: dict[str, Style] = {
-    "INVESTIGATING": Style("blue", ":material/progress_activity:"),
     "DRAFT": Style("gray", ":material/description:"),
-    "PENDING_REVIEW": Style("orange", ":material/pending:"),
-    "MORE_DETAILS_REQUESTED": Style("violet", ":material/help:"),
-    "ESCALATED": Style("red", ":material/priority_high:"),
+    "AWAITING_TECHNICAL_REVIEW": Style("orange", ":material/pending:"),
+    "REQUEST_MORE_DETAILS": Style("violet", ":material/help:"),
+    "FAILED": Style("red", ":material/priority_high:"),
     "ESCALATED_MANUAL": Style("red", ":material/support_agent:"),
     "REJECTED": Style("red", ":material/cancel:"),
-    "FINAL": Style("green", ":material/verified:"),
+    "VALIDATED": Style("green", ":material/verified:"),
 }
 
 # How sure the investigation is about a candidate cause. The level is calculated by the
@@ -86,11 +85,13 @@ FALLBACK = Style("gray")
 ICONS = {
     "home": ":material/home:",
     "start_rca": ":material/troubleshoot:",
+    "kpis": ":material/monitoring:",
     "investigation": ":material/graphic_eq:",
     "review": ":material/fact_check:",
     "history": ":material/history:",
     "problems": ":material/category:",
     "incidents": ":material/report:",
+    "proposals": ":material/lightbulb:",
     "back": ":material/arrow_back:",
     "role": ":material/badge:",
     "scaffold": ":material/construction:",

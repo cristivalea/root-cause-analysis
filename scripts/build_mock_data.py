@@ -13,8 +13,8 @@ What it writes:
     data/evaluation/answer_key.json, story_definitions.json, retrieval_questions.json,
     grouping_truth.json
 
-After writing, reload SQLite (scripts/load_sources_sqlite.py --reset) and ChromaDB
-(scripts/ingest_chroma.py --reset).
+After writing, reload SQLite (scripts/load_sources_sqlite.py --reset, or --reset-app when the problems
+changed) and ChromaDB (scripts/ingest_chroma.py --reset).
 """
 
 from __future__ import annotations

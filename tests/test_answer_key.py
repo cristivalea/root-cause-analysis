@@ -25,8 +25,13 @@ def db(tmp_path_factory):
 
 def found(db, story, guidance=None) -> set[str]:
     context, incidents = build_context(db, incident_id=story["target_incident"], guidance=guidance)
-    state = {"db_path": str(db), "context": context, "incidents": incidents, "plan": SimpleNamespace(sources=[])}  # the step only names the sources in its trace
-    return {cited for item in pipeline.tools(state)["evidence"] for cited in (item.citation, *item.related_ids)}
+    # the rules of the context only: no extra search of the planner, and no search of similar past incidents
+    state = {"db_path": str(db), "context": context, "incidents": incidents,
+             "plan": SimpleNamespace(extra_searches=[], refused_searches=[])}
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(pipeline, "_search", lambda *args, **kwargs: [])
+        evidence = pipeline.gather_evidence(state)["evidence"]
+    return {cited for item in evidence for cited in (item.citation, *item.related_ids)}
 
 
 @pytest.mark.parametrize("story_id", [key for key, story in ANSWER_KEY.items() if story["expert_followup"]])

@@ -1,11 +1,17 @@
-"""The RCA investigation: the incident, the work as it happens, and the analysis it produces.
+"""The RCA investigation: the problem, the work as it happens, and the analysis it produces.
 
-The screen is split the way the work is split. On the left is what the analysis is about
-and what it concluded; on the right is the investigation itself, step by step, updating
-while it runs. One action closes the screen: sending the analysis to a Technical Expert.
+The screen is split the way the work is split. On the left is what the analysis is about (the problem and
+its most recent incident) and what it concluded; on the right is the investigation itself, step by step,
+updating while it runs. One action closes the screen: sending the analysis to a Technical Expert.
 
-The investigation runs in this browser tab, so the tab has to stay open while it works.
+An RCA always starts from a problem, on the Problems page; this screen follows it, and starts its next
+revision when the expert asked for more details or the last run failed.
+
+The investigation runs on the server (api.py): starting it saves the RCA at once, and this screen follows
+the saved revision, step by step, until the run ends. Nothing is shown as done before it has run.
 """
+
+from uuid import uuid4
 
 import streamlit as st
 
@@ -18,7 +24,8 @@ from rca.ui.components.page_header import page_header
 from rca.ui.strings import t
 
 SENT_KEY = "investigation_sent"
-NEXT_CYCLE_KEY = "next_cycle_after"
+REQUEST_KEY = "investigation_request_key"  # one per start: a repeated click gets the same RCA back
+POLL_SECONDS = 2
 
 
 def show(rca_id: str | None) -> None:
@@ -31,13 +38,12 @@ def show(rca_id: str | None) -> None:
 
 
 def active_record():
-    """The analysis this screen is showing, kept in the address so the page can be reopened."""
-    from_url = st.query_params.get("rca")
-    if from_url and not state.active_rca_id():
-        state.set_active_rca(from_url)
-    rca_id = state.active_rca_id()
+    """The analysis this screen is showing: the one another page has just opened (Problems, History), then
+    kept in the address only. Opened from the menu, the address has none and the screen shows no RCA: the
+    last investigation is not shown again on its own."""
+    opened = st.session_state.pop(state.ACTIVE_RCA_KEY, None)
+    rca_id = opened or st.query_params.get("rca")
     if not rca_id:
-        st.query_params.pop("rca", None)
         return None
     if st.query_params.get("rca") != rca_id:
         st.query_params["rca"] = rca_id
@@ -56,12 +62,32 @@ def incident_for(incident_id: str | None):
         return None
 
 
-def incident_panel(incident) -> None:
-    """The context: enough of the incident to know what is being investigated."""
+def problem_for(problem_id: str | None):
+    if not problem_id:
+        return None
+    try:
+        found = services.get_problem(problem_id)
+    except services.ServiceError:
+        return None
+    return found["problem"] if found else None
+
+
+def context_panel(record, problem, incident) -> None:
+    """What is being investigated: the problem, with the way back to it, and its most recent incident."""
+    with st.container(border=True):
+        with st.container(horizontal=True, vertical_alignment="center", horizontal_alignment="distribute"):
+            st.markdown(f"`{record.problem_id}` **{problem.title if problem else ''}**")
+            if record.problem_id and st.button(t("investigation.open_problem"), icon=theme.ICONS["problems"],
+                                               type="tertiary"):
+                st.switch_page(navigation.PROBLEMS, query_params={"problem": record.problem_id})
+        if problem is not None:
+            st.caption(t("investigation.problem_line", count=len(problem.incidents), status=problem.status,
+                         priority=problem.priority))
     if incident is None:
         st.caption(t("investigation.incident_missing"))
         return
     with st.container(border=True):
+        st.caption(t("investigation.reference_incident"))
         incident_summary(incident)
         if st.button(t("selection.view_details"), icon=":material/info:", type="tertiary"):
             incident_details_dialog(incident)
@@ -78,77 +104,46 @@ def steps_panel(record=None, *, running: bool = False, failed: bool = False) -> 
     )
 
 
-# def run_investigation(incident_id: str, right) -> None:
-#     """Run the investigation, showing each step on the right as it finishes."""
-#     finished: list = []
-#     slot = right.empty()
-
-#     def draw() -> None:
-#         with slot.container():
-#             st.subheader(t("investigation.steps_title"))
-#             timeline(finished, running=True)
-
-#     draw()
-
-#     def on_step(step) -> None:
-#         finished.append(step)
-#         draw()
-
-#     try:
-#         record = services.start_investigation(
-#             incident_id,
-#             owner=state.role_name(state.PROBLEM_MANAGER),
-#             on_step=on_step,
-#         )
-#     except services.ServiceError as error:
-#         state.set_investigation_error(str(error))
-#         st.rerun()
-
-#     state.set_investigation_error(None)
-#     previous = st.session_state.pop(NEXT_CYCLE_KEY, None)
-#     if previous:
-#         try:
-#             services.link_to_case(previous, record.rca_id)
-#         except services.ServiceError:
-#             pass  # the analysis is saved either way; only the link to the case is lost
-#     show(record.rca_id)
-#     st.session_state.pop(SENT_KEY, None)
-#     st.rerun()
-
-def run_investigation(incident_id: str, right) -> None:
-    """Run the investigation via FastAPI, showing progress while it executes."""
-    slot = right.empty()
-
-    with slot.container():
-        st.subheader(t("investigation.steps_title"))
-        timeline([], running=True)
-
+def start_next(record) -> None:
+    """Start the next revision of this RCA on the server (the expert asked for more details, or the last run
+    failed) and follow it. A repeated click gets the same revision back."""
+    key = st.session_state.setdefault(REQUEST_KEY, uuid4().hex)
     try:
-        with st.spinner("AI Multi-Agent Pipeline is analyzing incident logs, changes and CMDB..."):
-            # the next revision of a case is linked by the backend, with the request of the expert as input
-            record = services.start_investigation(
-                incident_id,
-                owner=state.role_name(state.PROBLEM_MANAGER),
-                guidance=state.investigation_guidance(),
-                previous_rca_id=st.session_state.get(NEXT_CYCLE_KEY),
-            )
+        revision = services.start_next_revision(record.rca_id, request_key=key)
     except services.ServiceError as error:
-        state.set_investigation_error(str(error))
+        st.session_state.pop(REQUEST_KEY, None)
+        state.set_investigation_error(services.user_message(error))
         st.rerun()
-
+    st.session_state.pop(REQUEST_KEY, None)
     state.set_investigation_error(None)
-    st.session_state.pop(NEXT_CYCLE_KEY, None)
-    show(record.rca_id)
+    show(revision.rca_id)
     st.session_state.pop(SENT_KEY, None)
     st.rerun()
 
 
-def failure_panel(message: str, incident_id: str | None) -> None:
+@st.fragment(run_every=POLL_SECONDS)
+def progress(rca_id: str) -> None:
+    """The steps of the running revision, read again every few seconds from what the server saved."""
+    current = services.get_rca(rca_id)
+    if current is None or current.run_status != "RUNNING":
+        st.rerun()  # the run ended: the whole screen shows the result
+    st.subheader(t("investigation.steps_title"))
+    timeline(list(current.trace), running=True, plan=current.plan, current=current.current_step)
+
+
+def running_panel(record) -> None:
+    st.info(t("investigation.running"), icon=":material/hourglass_top:")
+    st.caption(t("investigation.running_revision", revision=record.revision, rca=record.rca_id))
+    st.caption(t("investigation.running_hint"))
+
+
+def failure_panel(message: str, record) -> None:
     st.error(t("investigation.failed"), icon=theme.ICONS["error"])
     st.caption(t("investigation.failed_hint"))
-    if incident_id and st.button(t("investigation.try_again"), type="primary", icon=":material/refresh:"):
+    if st.button(t("investigation.try_again"), type="primary", icon=":material/refresh:"):
         state.set_investigation_error(None)
-        state.request_investigation(state.investigation_guidance())  # the same guidance as the failed run
+        if record.status in ("FAILED", "REQUEST_MORE_DETAILS"):
+            start_next(record)
         st.rerun()
     with st.expander(t("investigation.technical_detail")):
         st.code(message)
@@ -172,7 +167,7 @@ def send_panel(record) -> None:
             st.rerun()
         return
 
-    if record.status == "PENDING_REVIEW":
+    if record.status == "AWAITING_TECHNICAL_REVIEW":
         with st.container(border=True):
             st.markdown(f"**{t('send.sent_title')}**")
             st.caption(t("send.sent_text"))
@@ -194,21 +189,11 @@ def next_cycle_panel(record) -> None:
             # a new case needs something new (guidance or incidents), which is given on the problem page
             st.caption(t("cycle.rejected_next"))
             if st.button(t("cycle.open_problem", problem=record.problem_id), type="primary", icon=theme.ICONS["problems"]):
-                st.query_params.clear()
-                st.query_params["problem"] = record.problem_id
-                st.switch_page(navigation.PROBLEMS)
+                st.switch_page(navigation.PROBLEMS, query_params={"problem": record.problem_id})
             return
         if st.button(t("cycle.start_next"), type="primary", icon=theme.ICONS["investigation"],
                      help=t("cycle.start_next_help")):
-            # more details: the next revision of the same case. Rejected: a new case for the same problem.
-            if record.status == "MORE_DETAILS_REQUESTED":
-                st.session_state[NEXT_CYCLE_KEY] = record.rca_id
-            else:
-                st.session_state.pop(NEXT_CYCLE_KEY, None)
-            state.select_incident(record.incident_id)
-            show(None)
-            state.request_investigation()
-            st.rerun()
+            start_next(record)
 
 
 def analysis_panel(record) -> None:
@@ -216,29 +201,27 @@ def analysis_panel(record) -> None:
     if record.status == "ESCALATED_MANUAL":
         st.warning(t("investigation.escalated_manual"), icon=":material/warning:")
         st.caption(t("investigation.escalated_manual_hint"))
-        rca_draft.rca_draft(record, with_metadata=True, context=t("cycle.number", number=record.cycle), brief=True)
+        rca_draft.rca_draft(record, with_metadata=True, context=t("cycle.number", number=record.revision), brief=True)
         return
-    if record.status == "ESCALATED":
+    if record.status == "FAILED":
         st.warning(t("investigation.escalated"), icon=":material/warning:")
         st.caption(t("investigation.escalated_hint"))
         rca_draft.metadata(record)
         if st.button(t("investigation.try_again"), icon=":material/refresh:"):
-            state.request_investigation()
-            show(None)
-            st.rerun()
-        if record.investigation_summary:
+            start_next(record)
+        if record.error or record.investigation_summary:
             with st.expander(t("investigation.technical_detail")):
-                st.markdown(record.investigation_summary)
+                st.markdown(record.error or record.investigation_summary)
         return
 
     rca_draft.rca_draft(
         record,
         with_metadata=True,
-        context=t("cycle.number", number=record.cycle) if record.cycle > 1 else None,
+        context=t("cycle.number", number=record.revision) if record.revision > 1 else None,
         brief=True,
     )
     # What happens next comes after the whole analysis, never before it.
-    if record.status in ("REJECTED", "MORE_DETAILS_REQUESTED"):
+    if record.status in ("REJECTED", "REQUEST_MORE_DETAILS"):
         next_cycle_panel(record)
     else:
         send_panel(record)
@@ -249,59 +232,41 @@ page_header(t("investigation.title"), t("investigation.subtitle"))
 record = active_record()
 asked_for = st.query_params.get("rca")
 missing_record = bool(asked_for) and record is None
-incident_id = record.incident_id if record else state.selected_incident_id()
-incident = incident_for(incident_id)
-starting = state.take_investigation_request() and bool(incident_id)
 
 left, right = st.columns([5, 4], gap="large")
 
 if st.session_state.pop(SENT_KEY, False):
     st.toast(t("send.confirmation"), icon=":material/send:")
 
-if missing_record:
-    show(None)
+if record is None:
+    if missing_record:
+        show(None)
     with left:
-        st.info(t("investigation.not_found"), icon=":material/info:")
-        st.caption(t("investigation.not_found_hint"))
-        if st.button(t("investigation.choose_incident"), type="primary", icon=theme.ICONS["start_rca"]):
-            st.switch_page(navigation.START_RCA)
-    with right:
-        steps_panel()
-
-elif incident is None and record is None:
-    with left:
-        st.info(t("investigation.nothing_selected"), icon=":material/info:")
-        if st.button(t("investigation.choose_incident"), type="primary", icon=theme.ICONS["start_rca"]):
-            st.switch_page(navigation.START_RCA)
-    with right:
-        steps_panel()
-
-elif starting:
-    with left:
-        incident_panel(incident)
-        st.info(t("investigation.running"), icon=":material/hourglass_top:")
-        st.caption(t("investigation.running_hint"))
-    run_investigation(incident_id, right)
-
-elif state.investigation_error():
-    with left:
-        incident_panel(incident)
-        failure_panel(state.investigation_error(), incident_id)
-    with right:
-        steps_panel(failed=True)
-
-elif record is None:
-    with left:
-        incident_panel(incident)
-        if st.button(t("investigation.start"), type="primary", icon=theme.ICONS["investigation"]):
-            state.request_investigation()
-            st.rerun()
+        st.info(t("investigation.not_found") if missing_record else t("investigation.nothing_open"),
+                icon=":material/info:")
+        st.caption(t("investigation.start_from_problem"))
+        if st.button(t("investigation.open_problems"), type="primary", icon=theme.ICONS["problems"]):
+            st.switch_page(navigation.PROBLEMS)
     with right:
         steps_panel()
 
 else:
+    problem = problem_for(record.problem_id)
+    incident = incident_for(record.incident_id)
     with left:
-        incident_panel(incident)
-        analysis_panel(record)
-    with right:
-        steps_panel(record)
+        context_panel(record, problem, incident)
+    if state.investigation_error():
+        with left:
+            failure_panel(state.investigation_error(), record)
+        with right:
+            steps_panel(failed=True)
+    elif record.run_status == "RUNNING":
+        with left:
+            running_panel(record)
+        with right:
+            progress(record.rca_id)
+    else:
+        with left:
+            analysis_panel(record)
+        with right:
+            steps_panel(record)

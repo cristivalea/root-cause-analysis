@@ -8,7 +8,7 @@ the descriptions they write, so a description must carry what the agent needs to
 order of events: the time, and how long before the detection it happened.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from rca.models import Change, Evidence, EvidenceType, LogGroup, ServiceDependencies
 
@@ -29,11 +29,14 @@ class EvidenceLedger:
         timestamp: datetime | None = None,
         related_ids: list[str] | None = None,
         service: str | None = None,
+        tool_run: str | None = None,
     ) -> Evidence:
         """Record a fact and return it with its id.
 
         The same original record (same type and citation) is recorded only once, so it cannot
         count twice in the confidence calculation. Adding it again returns the existing evidence.
+        timestamp is when the fact happened, as the source says; collected_at, set here, is when the
+        investigation found it. tool_run is the ToolRun that found it.
         """
         for item in self._items:
             if item.type == evidence_type and item.citation == citation:
@@ -48,6 +51,8 @@ class EvidenceLedger:
             timestamp=timestamp,
             related_ids=[item for item in related_ids or [] if item != citation],
             service=service,
+            collected_at=datetime.now(timezone.utc),
+            tool_run=tool_run,
         )
         self._items.append(evidence)
         return evidence
@@ -89,13 +94,15 @@ def _example(message: str) -> str:
 
 
 def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: datetime, of: str = "detection",
-                   dependency: bool = False) -> None:
+                   dependency: bool = False, tool_run: str | None = None) -> list[Evidence]:
     """One evidence per log group, cited by its first line; the other lines are kept as related ids.
-    dependency: the lines come from a service the problem depends on, which the description says."""
+    dependency: the lines come from a service the problem depends on, which the description says.
+    Returns the evidence of the groups (an existing one when the group was already in the ledger)."""
+    added = []
     for group in groups:
         first = group.examples[0]
         where = f"On {group.service}, a dependency: " if dependency else ""
-        ledger.add(
+        added.append(ledger.add(
             "LOG",
             ", ".join(group.hosts),
             f"{where}{group.count} {group.level} log line(s) of type {group.error_type} between "
@@ -105,30 +112,40 @@ def add_log_groups(ledger: EvidenceLedger, groups: list[LogGroup], detected_at: 
             group.first_seen,
             group.log_ids,
             group.service,
-        )
+            tool_run,
+        ))
+    return added
 
 
-def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime, of: str = "detection") -> None:
+def add_changes(ledger: EvidenceLedger, changes: list[Change], detected_at: datetime, of: str = "detection",
+                tool_run: str | None = None) -> list[Evidence]:
     """One evidence per change."""
+    added = []
     for change in changes:
-        ledger.add(
+        added.append(ledger.add(
             "CHANGE",
             change.change_id,
             f"{change.title} on {change.ci_id}: {change.description} Implemented at "
             f"{change.implemented_at:%Y-%m-%d %H:%M} UTC, {relative_to_detection(change.implemented_at, detected_at, of)}.",
             change.change_id,
             change.implemented_at,
-        )
+            tool_run=tool_run,
+        ))
+    return added
 
 
-def add_dependencies(ledger: EvidenceLedger, dependencies: ServiceDependencies) -> None:
+def add_dependencies(ledger: EvidenceLedger, dependencies: ServiceDependencies,
+                     tool_run: str | None = None) -> list[Evidence]:
     """One evidence per component depended on, cited by its CMDB id, naming every component of the
     service that depends on it. One evidence per relationship would lose all but the first when two
     components depend on the same one, because the ledger keeps one evidence per citation."""
+    added = []
     by_target: dict[str, list] = {}
     for dependency in dependencies.dependencies:
         by_target.setdefault(dependency.depends_on.ci_id, []).append(dependency)
     for group in by_target.values():
         target = group[0].depends_on
         sources = " and ".join(f"{item.component.name} ({item.component.ci_id}) {item.relationship_type}" for item in group)
-        ledger.add("CMDB", "CMDB", f"{sources} {target.name} ({target.ci_id}, {target.type}).", target.ci_id)
+        added.append(ledger.add("CMDB", "CMDB", f"{sources} {target.name} ({target.ci_id}, {target.type}).", target.ci_id,
+                                tool_run=tool_run))
+    return added

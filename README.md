@@ -309,7 +309,9 @@ you change the stories or the catalog in `scripts/mock_data/`:
 ```bash
 python scripts/build_mock_data.py --check       # build and validate only, write nothing
 python scripts/build_mock_data.py               # write the files in data/
-python scripts/load_sources_sqlite.py --reset   # reload SQLite (saved RCAs are kept)
+python scripts/load_sources_sqlite.py --reset   # reload the sources (problems and RCAs are kept)
+python scripts/load_sources_sqlite.py --reset-app  # only when the problems changed: also starts the
+                                                 # problems and RCAs again (a copy is kept in data/backups/)
 python scripts/ingest_chroma.py --reset         # rebuild the search index
 ```
 

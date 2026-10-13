@@ -7,9 +7,6 @@ Run it with:
 This file is the shell: it sets the page up, decides which pages the current role can open,
 draws the one control that is on every screen, and then runs the page. Everything the user
 actually reads lives in the pages, the components and `strings.py`.
-
-The older screens (`rca/app.py`, `rca/expert_app.py`) still run on their own and are left
-untouched until each of them is replaced here.
 """
 
 import sys
@@ -19,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import streamlit as st
 
-from rca.ui import navigation, services, state, theme
+from rca.ui import code_check, navigation, services, state, theme
 from rca.ui.strings import t
 
 st.set_page_config(
@@ -80,6 +77,10 @@ if "auth_token" not in st.session_state:
 if st.button(f"Deconectare ({st.session_state['auth_username']})"):
         st.session_state.clear()
         st.rerun()
+
+changed = code_check.changed_since_start()
+if changed is not None:
+    st.warning(t("app.code_changed", time=f"{changed:%H:%M}"), icon=":material/restart_alt:")
 
 page = st.navigation(
     navigation.build_pages(state.current_role()),

@@ -17,18 +17,20 @@ from rca.models import InvestigationStep
 from rca.ui import formatting, theme
 from rca.ui.strings import readable, t
 
-# The steps in the order they run. The saving of the record is not a step a person cares
-# about, and it records no trace, so it is not listed.
+# The nodes of the graph in the order they run (rca/pipeline.py). The saving of the revision is not a step
+# a person cares about, and it records no trace, so it is not listed.
 STEPS = (
-    "similar_incidents",
+    "build_context",
     "investigation_planner",
-    "tools",
+    "gather_evidence",
     "build_timeline",
-    "historical_rca_agent",
+    "historical_review",
     "rca_reasoning_agent",
     "guardrail",
     "confidence",
 )
+# The names of the steps in the RCAs saved before E5: shown the way their new step is shown.
+ALIASES = {"tools": "gather_evidence", "historical_rca_agent": "historical_review"}
 
 
 def step_title(name: str) -> str:
@@ -71,7 +73,7 @@ def _window(window: dict) -> str:
 # What the evidence step searched, source by source, in the order it searched them.
 FOUND = (("logs", "step.found_logs"), ("dependency_logs", "step.found_dependency_logs"),
          ("changes", "step.found_changes"), ("cmdb", "step.found_cmdb"),
-         ("problem_incidents", "step.found_problem_incidents"))
+         ("problem_incidents", "step.found_problem_incidents"), ("similar_incidents", "step.found_similar_incidents"))
 
 
 def _searches(details: dict) -> None:
@@ -93,14 +95,103 @@ def _searches(details: dict) -> None:
         st.markdown(", ".join(f"`{item}`" for item in ids) if ids else t("step.found_none"))
 
 
-def _details(step: InvestigationStep, plan=None) -> None:
+def _tool_run(run: dict) -> str:
+    """One call of a tool: what it read, why, and what came back."""
+    arguments = run.get("arguments") or {}
+    target = arguments.get("service") or ", ".join(arguments.get("services") or []) or arguments.get("incident_id", "")
+    outcome = (t("step.run_ok", count=run.get("result_count", 0)) if run["status"] == "ok"
+               else t(f"step.run_{run['status']}", error=run.get("error") or ""))
+    return f"`{run['run_id']}` {run['tool']} · {target} · {outcome}"
+
+
+def _finding(finding: dict) -> None:
+    """What the historical review found about one past record it kept."""
+    st.caption(f"`{finding['citation']}`")
+    for label, values in (("step.alike", finding.get("similarities")), ("step.different", finding.get("differences"))):
+        if values:
+            st.markdown(f"{t(label)}: " + "; ".join(values))
+    if finding.get("remediation"):
+        st.markdown(f"{t('step.done_then')}: {finding['remediation']}")
+    if finding.get("outcome"):
+        st.markdown(f"{t('step.outcome')}: {finding['outcome']}")
+
+
+def _value(value) -> str:
+    if isinstance(value, bool):
+        return t("step.yes") if value else t("step.no")
+    if isinstance(value, (list, tuple)):
+        return ", ".join(str(item) for item in value) or "—"
+    if isinstance(value, dict):
+        return ", ".join(f"{key} {item}" for key, item in value.items())
+    return str(value)
+
+
+def _common(step: InvestigationStep, steps: list[InvestigationStep]) -> None:
+    """What every node shows, whatever it does: what it read, its runs, its requests to the model, its
+    evidence and where the graph went next. Read from the saved step: nothing here is inferred."""
+    details = step.details or {}
+    if details.get("input"):
+        st.caption(t("step.input"))
+        st.markdown("  \n".join(f"{key.replace('_', ' ')}: {_value(value)}" for key, value in details["input"].items()))
+    runs = sum(1 for item in steps if item.name == step.name)
+    if runs > 1:
+        st.caption(t("step.runs", count=runs))
+    calls = details.get("llm_calls") or []
+    if calls:
+        tokens_in = sum(call.get("input_tokens") or 0 for call in calls)
+        tokens_out = sum(call.get("output_tokens") or 0 for call in calls)
+        seconds = sum(call.get("latency_seconds") or 0 for call in calls)
+        st.caption(t("step.llm_line", count=len(calls), tokens_in=tokens_in, tokens_out=tokens_out,
+                     seconds=f"{seconds:.1f}"))
+        thinking = sum(call.get("reasoning_tokens") or 0 for call in calls)
+        if thinking:
+            st.caption(t("step.llm_reasoning", tokens=thinking))
+        cut = sum(1 for call in calls if call.get("finish_reason") == "length")
+        if cut:
+            st.caption(t("step.llm_cut", count=cut))
+        invalid = [call for call in calls if call.get("outcome") != "valid"]
+        if invalid:
+            st.caption(t("step.llm_invalid", outcomes=", ".join(call.get("outcome", "") for call in invalid)))
+    if step.name not in ("guardrail",):
+        _listing(t("step.problems"), list(details.get("problems", [])))
+    _listing(t("step.shortened"), list(details.get("input_shortened", [])))
+    _listing(t("step.ids_cleaned"), list(details.get("ids_cleaned", [])))
+    evidence = details.get("evidence_ids") or []
+    if evidence:
+        st.caption(t("step.evidence_ids", count=len(evidence)))
+        st.markdown(", ".join(f"`{item}`" for item in evidence[:40]) + (" ..." if len(evidence) > 40 else ""))
+    after = _next(step, steps)
+    if after:
+        st.caption(t("step.next", step=step_title(after)))
+
+
+def _next(step: InvestigationStep, steps: list[InvestigationStep]) -> str | None:
+    """The node that ran after the last run of this one, as the trace saved it."""
+    positions = [index for index, item in enumerate(steps) if item.name == step.name]
+    if positions and positions[-1] + 1 < len(steps):
+        return steps[positions[-1] + 1].name
+    return (step.details or {}).get("next")
+
+
+def _details(step: InvestigationStep, plan=None, steps: list[InvestigationStep] | None = None) -> None:
     """What this step did, told in the words of the step rather than of the code."""
     details = step.details or {}
     st.markdown(step.summary)
 
-    if step.name == "similar_incidents":
+    kind = ALIASES.get(step.name, step.name)
+    if kind == "similar_incidents":
         _listing(t("step.related_found"), list(details.get("found", [])))
-    elif step.name == "investigation_planner":
+    elif kind == "build_context":
+        texts = details.get("given_text") or {}
+        if texts:
+            st.caption(t("step.given"))
+            for name, text in texts.items():
+                st.markdown(f"**{name.capitalize()}**")
+                st.text(text)
+        else:  # revisions saved before the texts were kept: the names only
+            _listing(t("step.given"), list(details.get("given", [])))
+        _listing(t("step.services_searched"), list(details.get("services", [])))
+    elif kind == "investigation_planner":
         if plan is not None:
             st.caption(t("step.service"))
             st.markdown(plan.service)
@@ -108,18 +199,29 @@ def _details(step: InvestigationStep, plan=None) -> None:
             st.markdown(f"{formatting.date_time(plan.window_start)} - {formatting.date_time(plan.window_end)}")
             st.caption(t("step.sources"))
             st.markdown(", ".join(plan.sources))
+        read = [name.replace("_", " ") for name in ("notes", "instructions", "expert_request")
+                if (details.get("input") or {}).get(name)]
+        if read:
+            st.caption(t("step.planner_read", items=", ".join(read)))
         _listing(t("step.searched_for"), list(details.get("search_queries", [])))
         if details.get("rationale"):
             st.caption(t("step.why"))
             st.markdown(details["rationale"])
-    elif step.name == "tools":
+        _listing(t("step.extra_searches"), [f"{item['source']} · {item['service']} · {item['reason']}"
+                                            for item in details.get("extra_searches", [])])
+        _listing(t("step.refused_searches"), [f"{item['source']} · {item['service']}: {item['refused']}"
+                                              for item in details.get("refused_searches", [])])
+    elif kind == "gather_evidence":
         if details.get("evidence") is not None:
             st.caption(t("step.evidence_collected"))
             st.markdown(str(details["evidence"]))
         _searches(details)
-    elif step.name == "historical_rca_agent":
+        _listing(t("step.tool_runs"), [_tool_run(item) for item in details.get("tool_runs", [])])
+    elif kind == "historical_review":
         _listing(t("step.kept"), list(details.get("kept", [])))
         _listing(t("step.dropped"), list(details.get("dropped", [])))
+        for finding in details.get("findings", []):
+            _finding(finding)
         if len(details.get("attempts") or []) > 1:
             st.caption(t("step.attempts", count=len(details["attempts"])))
     elif step.name == "guardrail":
@@ -130,6 +232,7 @@ def _details(step: InvestigationStep, plan=None) -> None:
 
     if not details and step.name in ("rca_reasoning_agent", "confidence"):
         st.caption(t("step.no_detail"))
+    _common(step, steps or [step])
 
 
 def _counted(summary: str, pattern: str) -> int | None:
@@ -148,6 +251,11 @@ def _result_line(step: InvestigationStep, plan=None, limit: int = 70) -> str:
     """
     summary = (step.summary or t("step.found")).strip()
     details = step.details or {}
+    kind = ALIASES.get(step.name, step.name)
+
+    if kind == "build_context" and details.get("incidents") is not None:
+        count = len(details["incidents"])
+        return t("step.context_one") if count == 1 else t("step.context_many", count=count)
 
     if step.name == "similar_incidents":
         found = details.get("found")
@@ -162,7 +270,7 @@ def _result_line(step: InvestigationStep, plan=None, limit: int = 70) -> str:
         window = f"{formatting.date_time(plan.window_start)} - {formatting.date_time(plan.window_end)}"
         return t("step.plan_line", service=plan.service, window=window)
 
-    if step.name == "tools" and details.get("evidence") is not None:
+    if kind == "gather_evidence" and details.get("evidence") is not None:
         count = details["evidence"]
         return t("step.collected_count_one") if count == 1 else t("step.collected_count", count=count)
 
@@ -201,10 +309,12 @@ def models_line(step: InvestigationStep) -> str | None:
     return t("step.models", models=", ".join(names)) if names else None
 
 
-def _line(name: str, state: str, step: InvestigationStep | None, plan=None) -> None:
+def _line(name: str, state: str, step: InvestigationStep | None, plan=None,
+          steps: list[InvestigationStep] | None = None) -> None:
     """One step: its name, where it stands, how long it took, and what it did."""
     style = theme.STEP_STATE[state]
-    duration = _duration(step) if step else None
+    # a node running again (a refused draft asked again) shows that it runs, not the time of its last run
+    duration = _duration(step) if step and state == "done" else None
     heading = f"{style.icon} **{step_title(name)}**"
 
     with st.container(border=True):
@@ -220,26 +330,29 @@ def _line(name: str, state: str, step: InvestigationStep | None, plan=None) -> N
                 st.caption(text)
         elif step is not None:
             with st.expander(_result_line(step, plan)):
-                _details(step, plan)
+                _details(step, plan, steps)
 
 
-def timeline(finished: list[InvestigationStep], *, running: bool, failed: bool = False, plan=None) -> None:
+def timeline(finished: list[InvestigationStep], *, running: bool, failed: bool = False, plan=None,
+             current: str | None = None) -> None:
     """The whole investigation: what is done, what is happening now, what is still to come.
 
     Steps can repeat — a refused draft is asked again — so the last run of each step is the
-    one shown, with its attempt number inside.
+    one shown, with the number of its runs inside. current is the node LangGraph says is running
+    (RCARecord.current_step); without it, the first node not done yet is the one running.
     """
     done = {step.name: step for step in finished}
     order = list(STEPS) + [step.name for step in finished if step.name not in STEPS]
-    current = next((name for name in order if name not in done), None)
+    if current is None or current not in order:
+        current = next((name for name in order if name not in done), None)
 
     for name in order:
-        if name in done:
+        if running and name == current:
+            state = "running"  # a step may run again: a refused draft is asked again
+        elif name in done:
             state = "done"
         elif failed and name == current:
             state = "failed"
-        elif running and name == current:
-            state = "running"
         else:
             state = "queued"
-        _line(name, state, done.get(name), plan)
+        _line(name, state, done.get(name), plan, finished)

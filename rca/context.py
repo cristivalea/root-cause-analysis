@@ -16,7 +16,9 @@ must exist in the CMDB, the windows have limits) and records it with the source 
 
 In a later revision of a case, the request of the Technical Expert is part of the context, and
 the wider searches the expert asked for are added to the guidance of the previous revision
-(merge_guidance).
+(merge_guidance). The context also carries, for the agents (final_project_steps.md, E5): the title of the
+problem, the notes and the instructions of the Problem Manager (the guidance saved on the problem), and
+what earlier RCAs of the problem concluded (previous_conclusions, given by the pipeline).
 
 Every value records where it comes from, so the expert can see what the investigation started with.
 """
@@ -46,6 +48,7 @@ def merge_guidance(earlier: InvestigationGuidance | None, added: InvestigationGu
 
     return InvestigationGuidance(
         notes=earlier.notes or added.notes,
+        instructions=earlier.instructions or added.instructions,
         extra_services=list(dict.fromkeys([*earlier.extra_services, *added.extra_services])),
         change_window_days=wider(earlier.change_window_days, added.change_window_days),
         log_hours_before=wider(earlier.log_hours_before, added.log_hours_before),
@@ -59,6 +62,7 @@ def build_context(
     guidance: InvestigationGuidance | None = None,
     expert_request: str | None = None,
     guidance_by: str = "Problem Manager",
+    previous_conclusions: list[str] | None = None,
 ) -> tuple[InvestigationContext, list[Incident]]:
     """The context and the incidents it covers. Start from a problem, or from an incident: an incident
     attached to a problem brings the whole problem. Raises ValueError for an unknown id or a service
@@ -68,6 +72,7 @@ def build_context(
     if problem_id is None and incident_id:
         problem_id = storage.get_problem_id_for_incident(db_path, incident_id)
 
+    problem = None
     if problem_id is not None:
         problem = storage.get_problem(db_path, problem_id)
         if problem is None:
@@ -115,7 +120,10 @@ def build_context(
             start=first.detected_at - changes_before,
             end=max(item.resolved_at or item.detected_at for item in incidents),
         ),
+        title=problem.title if problem else None,
+        previous_conclusions=list(previous_conclusions or []),
         notes=(guidance.notes or "").strip() or None,
+        instructions=(guidance.instructions or "").strip() or None,
         expert_request=(expert_request or "").strip() or None,
         guidance=given,
         sources={
@@ -127,7 +135,10 @@ def build_context(
                            + " before to 1 hour after the detection of every incident",
             "change_window": (f"{pm}: {guidance.change_window_days} days" if guidance.change_window_days else "rule: 7 days")
                              + " before the first incident to the resolution of the last one",
+            **({"previous_conclusions": "the decisions of the experts on earlier RCAs of the problem"}
+               if previous_conclusions else {}),
             **({"notes": "Problem Manager"} if (guidance.notes or "").strip() else {}),
+            **({"instructions": "Problem Manager, Start RCA"} if (guidance.instructions or "").strip() else {}),
             **({"expert_request": "Technical Expert, review of the previous revision"} if (expert_request or "").strip() else {}),
         },
     )

@@ -72,33 +72,29 @@ UI_RCA_FIXTURE = ROOT / "tests" / "fixtures" / "sample_rca_record.json"
 
 
 def seed_ui_rcas(db_path: Path) -> None:
-    """One RCA in every status the pages show, and a case with two revisions."""
+    """One RCA in every status the pages show, one with two revisions, each on its own open problem
+    (a problem has one RCA in progress at a time), built through the lifecycle of rca/store.py."""
     import json
 
-    from rca import store
-    from rca.models import RCARecord, ReviewDecision
+    from rca import problems, store
+    from rca.models import RCARecord
+    from rca_helpers import make_rca
 
     base = RCARecord.model_validate(json.loads(UI_RCA_FIXTURE.read_text(encoding="utf-8")))
-    decided = datetime.fromisoformat("2026-09-15T10:00:00+00:00")
-
-    def save(rca_id, status, **changes):
-        store.save_rca(base.model_copy(update={"rca_id": rca_id, "status": status, **changes}), db_path=db_path)
-
-    save("RCA-2026-00101", "DRAFT")
-    save("RCA-2026-00102", "PENDING_REVIEW")
-    save("RCA-2026-00103", "ESCALATED", hypotheses=[], investigation_summary="The RCA Reasoning Agent did not "
-         "produce a valid draft in 3 attempts.")
-    save("RCA-2026-00104", "FINAL", final_root_cause=base.hypotheses[0].candidate_root_cause, completed_at=decided,
-         review=ReviewDecision(reviewer="expert", decision="APPROVE", hypothesis_id=base.hypotheses[0].hypothesis_id,
-                               comment="Confirmed with the pool metrics.", decided_at=decided))
-    save("RCA-2026-00105", "MORE_DETAILS_REQUESTED", case_id="RCA-2026-00105",
-         review=ReviewDecision(reviewer="expert", decision="REQUEST_MORE_DETAILS", comment="Check the pool size.\n"
-                               "Check the retry settings.", decided_at=decided,
-                               requested_checks=["Check the pool size.", "Check the retry settings."]))
-    save("RCA-2026-00106", "PENDING_REVIEW", case_id="RCA-2026-00105", cycle=2, parent_rca_id="RCA-2026-00105")
-    save("RCA-2026-00107", "REJECTED", completed_at=decided,
-         review=ReviewDecision(reviewer="expert", decision="REJECT", comment="The deploy is not on the failing path.",
-                               decided_at=decided))
+    payment = storage.get_problem_id_for_incident(db_path, "INC-2026-00482")
+    others = [item.problem_id for item in problems.list_problems("Open", db_path=db_path) if item.problem_id != payment]
+    # first, so it is the oldest: an RCA whose run is still going on, with the two steps it finished
+    running = make_rca(db_path, others[5], base)
+    for finished in base.trace[:2]:
+        store.record_step(running.revision_id, finished, db_path=db_path)
+    make_rca(db_path, others[0], base, "draft")
+    make_rca(db_path, payment, base, "draft", "submit")
+    make_rca(db_path, others[1], base, "fail", investigation_summary="The RCA Reasoning Agent did not produce a "
+             "valid draft in 3 attempts.")
+    make_rca(db_path, others[2], base, "draft", "submit", "approve")
+    make_rca(db_path, others[3], base, "draft", "submit", "more", "next", "draft", "submit")
+    make_rca(db_path, others[4], base, "draft", "submit", "reject")
+    make_rca(db_path, others[6], base, "draft", "submit", "more")  # waiting for its next revision
 
 
 @pytest.fixture(autouse=True)
@@ -150,6 +146,9 @@ def ui_through_the_api(request, monkeypatch, tmp_path):
 
         def post(self, url, headers=None, json=None, timeout=None, **kwargs):
             return Response(client.post(url, headers=headers, json=json, **kwargs))
+
+        def put(self, url, headers=None, json=None, timeout=None, **kwargs):
+            return Response(client.put(url, headers=headers, json=json, **kwargs))
 
     def role_header() -> dict:
         try:

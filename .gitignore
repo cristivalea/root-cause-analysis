@@ -10,6 +10,8 @@ venv/
 # ChromaDB local storage
 chroma_db/
 data/*.sqlite3
+# copies written before a migration or a --reset-app (rca/migrations.py)
+data/backups/
 
 # LangGraph Studio local server state
 .langgraph_api/

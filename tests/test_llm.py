@@ -228,3 +228,105 @@ def test_an_invalid_answer_is_not_sent_to_another_model(fake_providers):
 
 def test_json_in_a_code_block_is_accepted():
     assert parse_output('```json\n{"service": "Payment API", "symptoms": []}\n```', Answer).service == "Payment API"
+
+
+# Metering ------------------------------------------------------------------------------
+
+def with_usage(content: str, prompt_tokens: int, completion_tokens: int, reasoning_tokens: int | None = None,
+               finish_reason: str = "stop") -> SimpleNamespace:
+    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content), finish_reason=finish_reason)],
+                           usage=SimpleNamespace(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens,
+                                                 completion_tokens_details=SimpleNamespace(reasoning_tokens=reasoning_tokens)))
+
+
+def test_metering_records_the_tokens_and_the_outcome_of_each_request(monkeypatch):
+    results = [with_usage(VALID, 1200, 80, 30), with_usage("not json", 1300, 40, 40, "length")]
+    completions = SimpleNamespace(create=lambda **kwargs: results.pop(0))
+    monkeypatch.setattr(llm, "_client", lambda provider: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    with llm.metering() as calls:
+        ask_json("instructions", "input", Answer)
+        with pytest.raises(LLMOutputError):
+            ask_json("instructions", "input", Answer)
+
+    assert [(c["model"], c["input_tokens"], c["output_tokens"], c["outcome"]) for c in calls] == [
+        ("groq:openai/gpt-oss-120b", 1200, 80, "valid"),
+        ("groq:openai/gpt-oss-120b", 1300, 40, "invalid"),
+    ]
+    # the thinking of a reasoning model and an answer cut by the output limit are kept apart
+    assert [(c["reasoning_tokens"], c["finish_reason"]) for c in calls] == [(30, "stop"), (40, "length")]
+    assert all(call["latency_seconds"] >= 0 and call["waited_seconds"] == 0 for call in calls)
+
+
+def test_metering_keeps_the_rate_limit_waits_apart_from_the_latency(fake_groq):
+    fake_groq(rate_limit_error("1"), VALID)
+
+    with llm.metering() as calls:
+        ask_json("instructions", "input", Answer)
+
+    assert len(calls) == 1
+    assert calls[0]["waited_seconds"] == 5.0  # the wait is counted, not slept: _sleep is replaced
+    assert calls[0]["input_tokens"] is None  # the fake answer says nothing about the tokens
+    assert calls[0]["latency_seconds"] < 5.0
+
+
+def test_metering_records_the_error_of_a_model_that_failed(fake_providers):
+    fake_providers({"openai/gpt-oss-120b": [status_error(503)], "openai/gpt-oss-20b": [VALID]})
+
+    with llm.metering() as calls:
+        ask_json("instructions", "input", Answer)
+
+    assert [(call["model"], call["outcome"]) for call in calls] == [
+        ("groq:openai/gpt-oss-120b", "APIStatusError"), ("groq:openai/gpt-oss-20b", "valid")]
+
+
+def test_without_metering_nothing_is_recorded(fake_groq):
+    fake_groq(VALID)
+
+    ask_json("instructions", "input", Answer)  # no error: the measures are only kept inside metering()
+
+
+def test_the_reasoning_effort_is_sent_only_to_the_gpt_oss_models_and_only_when_set(monkeypatch):
+    sent = []
+    completions = SimpleNamespace(create=lambda **kwargs: sent.append(kwargs) or with_usage(VALID, 10, 5))
+    monkeypatch.setattr(llm, "_client", lambda provider: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    monkeypatch.setattr(config, "LLM_REASONING_EFFORT", "")
+    ask_json("instructions", "input", Answer)
+    monkeypatch.setattr(config, "LLM_REASONING_EFFORT", "low")
+    ask_json("instructions", "input", Answer)
+    monkeypatch.setattr(config, "GROQ_MODEL", "groq:llama-3.3-70b-versatile")
+    ask_json("instructions", "input", Answer)
+
+    assert [call.get("reasoning_effort") for call in sent] == [None, "low", None]
+
+
+def test_the_compact_schema_drops_titles_and_developer_notes_but_keeps_every_field(monkeypatch):
+    from rca.models import DraftRCA
+
+    full = build_system_prompt("Do it.", DraftRCA)
+    monkeypatch.setattr(config, "LLM_COMPACT_SCHEMA", True)
+    compact = build_system_prompt("Do it.", DraftRCA)
+
+    assert len(compact) < len(full) - 1000  # about 270 tokens fewer on every request of the reasoning agent
+    assert '"title"' not in compact and "a model writes in the order" not in compact
+    for field in ("supporting_evidence", "contradicting_evidence", "why_chain", "single_hypothesis_reason"):
+        assert f'"{field}"' in compact
+
+
+def test_the_output_limit_is_sent_only_when_asked_and_fills_what_the_request_limit_leaves(monkeypatch):
+    sent = []
+    completions = SimpleNamespace(create=lambda **kwargs: sent.append(kwargs) or with_usage(VALID, 10, 5))
+    monkeypatch.setattr(llm, "_client", lambda provider: SimpleNamespace(chat=SimpleNamespace(completions=completions)))
+
+    ask_json("instructions", "input", Answer)
+    monkeypatch.setattr(config, "LLM_EXPLICIT_OUTPUT_LIMIT", True)
+    ask_json("instructions", "x" * 16000, Answer)  # about 5000 tokens of input
+
+    assert "max_completion_tokens" not in sent[0]
+    assert config.LLM_OUTPUT_RESERVE_TOKENS <= sent[1]["max_completion_tokens"] < 8000 - 5000
+
+
+def test_the_groq_free_tier_has_a_smaller_request_limit_than_the_other_providers():
+    assert llm.request_limit("groq:openai/gpt-oss-120b") == config.LLM_REQUEST_LIMIT_TOKENS
+    assert llm.request_limit("gemini:gemini-3.6-flash") == config.LLM_LARGE_REQUEST_LIMIT_TOKENS

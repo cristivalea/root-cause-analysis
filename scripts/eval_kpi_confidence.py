@@ -58,14 +58,35 @@ def extract_confidence(hyp) -> tuple[str, int]:
     return level_str, int(points) if isinstance(points, (int, float)) else 0
 
 
+def evaluation_db() -> Path:
+    """A temporary copy of the database: the investigations of the evaluation never reach the application."""
+    import shutil
+    import tempfile
+
+    copy = Path(tempfile.mkdtemp()) / "evaluation.sqlite3"
+    shutil.copy(DB_PATH, copy)
+    return copy
+
+
+EVAL_DB: Path | None = None
+
+
 def run_with_connection_retry(incident_id: str, max_retries: int = 3):
-    """Rulează investigația cu retry în caz de cădere temporară a conexiunii la Groq."""
+    """Rulează investigația cu retry în caz de cădere temporară a conexiunii la Groq. O rulare oprită de eroare
+    este salvată FAILED; reîncercarea este revizia următoare a aceluiași RCA."""
+    from rca import storage, store
+
+    global EVAL_DB
+    EVAL_DB = EVAL_DB or evaluation_db()
     for attempt in range(1, max_retries + 1):
+        problem_id = storage.get_problem_id_for_incident(EVAL_DB, incident_id)
+        failed = [item.rca_id for item in store.list_summaries("FAILED", problem_id, EVAL_DB)] if problem_id else []
         try:
             return run_investigation(
-                incident_id=incident_id,
+                incident_id=None if failed else incident_id,
+                rca_id=failed[0] if failed else None,
                 owner="Confidence KPI Evaluator",
-                db_path=DB_PATH,
+                db_path=EVAL_DB,
             )
         except Exception as exc:
             err_msg = str(exc)

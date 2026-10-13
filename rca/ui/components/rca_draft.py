@@ -39,7 +39,7 @@ def metadata(record: RCARecord, *, context: str | None = None) -> None:
     case it belongs to. The first two lines carry the answer to "which one am I looking
     at", so they are the ones that can be read at a glance.
     """
-    st.markdown(f"#### `{record.rca_id}`")
+    st.markdown(f"#### `{record.revision_id}`")
     badges.rca_status_badge(record.status)
     facts = [
         f"{t('draft.duration')}: {formatting.seconds(record.duration_seconds)}",
