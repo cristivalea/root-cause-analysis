@@ -7,6 +7,14 @@ se potrivește cu expected_outcome.acceptable_confidence din answer_key.json.
 Utilizare:
     python scripts/eval_kpi_confidence.py
     python scripts/eval_kpi_confidence.py --incident INC-2026-00482
+
+Reguli de numărare:
+- O investigație oprită de eroare sau terminată FAILED (eroare tehnică) nu intră în calcul: apare în raport
+  la "run_errors".
+- Una terminată ESCALATED_MANUAL (guardrail-ul a refuzat draftul) nu are ipoteze: intră în calcul ca
+  necalibrată și apare la "without_hypotheses".
+- weakly_supported este o măsură separată: se compară cu answer_key.json doar când acesta o definește.
+- Raportul se scrie după fiecare incident.
 """
 
 from __future__ import annotations
@@ -27,6 +35,8 @@ INCIDENTS_PATH = ROOT / "data" / "sources" / "incidents.json"
 ANSWER_KEY_PATH = ROOT / "data" / "evaluation" / "answer_key.json"
 OUTPUT_REPORT_PATH = ROOT / "data" / "evaluation" / "kpi_confidence_report.json"
 
+TRANSIENT_ERRORS = ("Connection error", "getaddrinfo", "429", "rate limit", "Rate limit")
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Măsurare KPI: Corectitudinea Nivelului de Încredere.")
@@ -40,22 +50,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def extract_confidence(hyp) -> tuple[str, int]:
-    """Extrage robust nivelul de încredere (HIGH/MEDIUM/LOW) și punctele."""
+    """Nivelul de încredere (HIGH/MEDIUM/LOW) și punctele ipotezei; NONE când nu există ipoteză."""
     if hyp is None:
         return "NONE", 0
-
-    # Verificăm confidence_level sau confidence din modelul Hypothesis
-    level = getattr(hyp, "confidence_level", None) or getattr(hyp, "confidence", None)
-    if isinstance(level, str):
-        level_str = level.upper().strip()
-    else:
-        level_str = "NONE"
-
-    points = getattr(hyp, "confidence_points", None)
-    if points is None:
-        points = getattr(hyp, "points", 0)
-
-    return level_str, int(points) if isinstance(points, (int, float)) else 0
+    return str(hyp.confidence).upper().strip(), int(hyp.confidence_points)
 
 
 def evaluation_db() -> Path:
@@ -72,8 +70,8 @@ EVAL_DB: Path | None = None
 
 
 def run_with_connection_retry(incident_id: str, max_retries: int = 3):
-    """Rulează investigația cu retry în caz de cădere temporară a conexiunii la Groq. O rulare oprită de eroare
-    este salvată FAILED; reîncercarea este revizia următoare a aceluiași RCA."""
+    """Rulează investigația cu retry în caz de cădere temporară a conexiunii sau de limită de rată. O rulare
+    oprită de eroare este salvată FAILED; reîncercarea este revizia următoare a aceluiași RCA."""
     from rca import storage, store
 
     global EVAL_DB
@@ -89,13 +87,54 @@ def run_with_connection_retry(incident_id: str, max_retries: int = 3):
                 db_path=EVAL_DB,
             )
         except Exception as exc:
-            err_msg = str(exc)
-            if "Connection error" in err_msg or "getaddrinfo" in err_msg:
-                if attempt < max_retries:
-                    print(f"\n   [Avertisment] Eroare conexiune Groq/DNS. Reîncercare {attempt}/{max_retries} în 5s...")
-                    time.sleep(5)
-                    continue
-            raise exc
+            if attempt < max_retries and any(token in str(exc) for token in TRANSIENT_ERRORS):
+                print(f"\n   [Avertisment] Eroare temporară (conexiune/limită). Reîncercare {attempt}/{max_retries} în 15s...")
+                time.sleep(15)
+                continue
+            raise
+
+
+def percent(part: int, whole: int) -> float:
+    return round(part / whole * 100, 2) if whole else 0.0
+
+
+def build_report(results: list[dict]) -> dict:
+    """Metrics over the cases that count: the run completed (not an error or FAILED)."""
+    counted = [item for item in results if item["counted"]]
+    success = [item for item in counted if item["kind"] == "success"]
+    edge = [item for item in counted if item["kind"] != "success"]
+    calibrated = lambda items: sum(1 for item in items if item["is_calibrated"])  # noqa: E731
+    weak_checked = [item for item in counted if item["weakly_supported_match"] is not None]
+    return {
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "total_cases_selected": len(results),
+        "total_cases": len(counted),
+        "overall_calibration_rate_percent": percent(calibrated(counted), len(counted)),
+        "success_cases": {
+            "total": len(success),
+            "correct": calibrated(success),
+            "rate_percent": percent(calibrated(success), len(success)),
+        },
+        "edge_cases": {
+            "total": len(edge),
+            "correct": calibrated(edge),
+            "rate_percent": percent(calibrated(edge), len(edge)),
+        },
+        "weakly_supported": {
+            "checked": len(weak_checked),
+            "matching": sum(1 for item in weak_checked if item["weakly_supported_match"]),
+            "rate_percent": percent(sum(1 for item in weak_checked if item["weakly_supported_match"]), len(weak_checked)),
+        },
+        "run_errors": [item["incident_id"] for item in results if item["error"]],
+        "without_hypotheses": [item["incident_id"] for item in counted if item["actual_confidence"] == "NONE"],
+        "details": results,
+    }
+
+
+def save_report(report: dict) -> None:
+    OUTPUT_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with OUTPUT_REPORT_PATH.open("w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, ensure_ascii=False)
 
 
 def main() -> None:
@@ -116,7 +155,7 @@ def main() -> None:
             "title": data["title"],
             "kind": data["kind"],
             "acceptable_confidence": [c.upper() for c in data["expected_outcome"]["acceptable_confidence"]],
-            "expected_weakly_supported": data["expected_outcome"].get("weakly_supported", False),
+            "expected_weakly_supported": data["expected_outcome"].get("weakly_supported"),
         }
         for data in answer_key.values()
     }
@@ -132,116 +171,92 @@ def main() -> None:
 
     print(f"=== EVALUARE KPI: CORECTITUDINEA NIVELULUI DE ÎNCREDERE ({len(incidents_to_evaluate)} cazuri) ===\n")
 
-    correct_confidence_count = 0
-    correct_success_cases = 0
-    total_success_cases = 0
-    correct_edge_cases = 0
-    total_edge_cases = 0
-
-    results_detail = []
+    results: list[dict] = []
 
     for idx, incident in enumerate(incidents_to_evaluate, start=1):
         inc_id = incident["incident_id"]
         bench = benchmark_by_incident[inc_id]
-        expected_confs = bench["acceptable_confidence"]
-        kind = bench["kind"]
-
-        if kind == "success":
-            total_success_cases += 1
-        else:
-            total_edge_cases += 1
+        entry = {
+            "story_id": bench["story_id"],
+            "incident_id": inc_id,
+            "kind": bench["kind"],
+            "title": bench["title"],
+            "rca_status": None,
+            "counted": False,
+            "duration_seconds": 0.0,
+            "actual_confidence": "ERROR",
+            "actual_points": 0,
+            "acceptable_confidence": bench["acceptable_confidence"],
+            "is_calibrated": False,
+            "expected_weakly_supported": bench["expected_weakly_supported"],
+            "actual_weakly_supported": None,
+            "weakly_supported_match": None,
+            "error": None,
+        }
+        results.append(entry)
 
         print("=" * 70)
         print(f"[{idx}/{len(incidents_to_evaluate)}] {bench['story_id']} | INCIDENT: {inc_id} ({bench['kind'].upper()})")
         print(f"   Titlu: {bench['title']}")
-        print(f"   Interval așteptat: {expected_confs}")
+        print(f"   Interval așteptat: {bench['acceptable_confidence']}")
         print("   Rulează investigația...", end="", flush=True)
 
         t0 = time.time()
         try:
             record = run_with_connection_retry(inc_id)
-            elapsed = time.time() - t0
-            print(f" gata în {elapsed:.1f}s.")
-
-            top_hyp = record.hypotheses[0] if getattr(record, "hypotheses", None) else None
-            actual_conf, actual_points = extract_confidence(top_hyp)
-
-            # Verificare potrivire nivel de încredere
-            is_match = actual_conf in expected_confs
-
-            if is_match:
-                correct_confidence_count += 1
-                if kind == "success":
-                    correct_success_cases += 1
-                else:
-                    correct_edge_cases += 1
-
-            verdict_str = "✅ CORECT" if is_match else "❌ DISCREPANȚĂ (Over/Under confident)"
-            print(f"   • Nivel generat (Top-1): {actual_conf} ({actual_points} puncte)")
-            print(f"   • Calibrare:            {verdict_str}\n")
-
-            results_detail.append({
-                "story_id": bench["story_id"],
-                "incident_id": inc_id,
-                "kind": kind,
-                "title": bench["title"],
-                "duration_seconds": elapsed,
-                "actual_confidence": actual_conf,
-                "actual_points": actual_points,
-                "acceptable_confidence": expected_confs,
-                "is_calibrated": is_match,
-                "error": None,
-            })
-
         except Exception as exc:
-            elapsed = time.time() - t0
-            print(f" EȘUAT ({exc}) după {elapsed:.1f}s.\n")
-            results_detail.append({
-                "story_id": bench["story_id"],
-                "incident_id": inc_id,
-                "kind": kind,
-                "title": bench["title"],
-                "duration_seconds": elapsed,
-                "actual_confidence": "ERROR",
-                "actual_points": 0,
-                "acceptable_confidence": expected_confs,
-                "is_calibrated": False,
-                "error": str(exc),
-            })
+            entry["duration_seconds"] = time.time() - t0
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+            print(f" EȘUAT ({exc}) după {entry['duration_seconds']:.1f}s.\n")
+            save_report(build_report(results))
+            continue
 
-    total_cases = len(incidents_to_evaluate)
-    calibration_rate = (correct_confidence_count / total_cases) * 100 if total_cases else 0.0
-    success_rate = (correct_success_cases / total_success_cases) * 100 if total_success_cases else 0.0
-    edge_rate = (correct_edge_cases / total_edge_cases) * 100 if total_edge_cases else 0.0
+        entry["duration_seconds"] = time.time() - t0
+        entry["rca_status"] = record.status
+        print(f" gata în {entry['duration_seconds']:.1f}s (status {record.status}).")
 
+        if record.status == "FAILED":  # a technical failure, not a judgement of the application
+            entry["error"] = "FAILED: no usable answer from the agents"
+            save_report(build_report(results))
+            continue
+
+        top_hyp = record.hypotheses[0] if record.hypotheses else None
+        actual_conf, actual_points = extract_confidence(top_hyp)
+        is_match = actual_conf in bench["acceptable_confidence"]
+        entry.update(counted=True, actual_confidence=actual_conf, actual_points=actual_points, is_calibrated=is_match)
+
+        if bench["expected_weakly_supported"] is not None:
+            entry["actual_weakly_supported"] = record.weakly_supported
+            entry["weakly_supported_match"] = record.weakly_supported == bench["expected_weakly_supported"]
+
+        verdict_str = "✅ CORECT" if is_match else "❌ DISCREPANȚĂ (Over/Under confident)"
+        print(f"   • Nivel generat (Top-1): {actual_conf} ({actual_points} puncte)")
+        print(f"   • Calibrare:            {verdict_str}")
+        if entry["weakly_supported_match"] is not None:
+            print(f"   • weakly_supported:     {record.weakly_supported} (așteptat {bench['expected_weakly_supported']})")
+        print()
+        save_report(build_report(results))
+
+    report = build_report(results)
+    save_report(report)
+
+    total = report["total_cases"]
     print("=" * 70)
     print("REZULTATE FINALE DEMONSTRAȚIE KPI - CALIBRARE ÎNCREDERE:")
-    print(f"  • Total cazuri investigate:              {total_cases}")
-    print(f"  • Rata globală de calibrare corectă:     {correct_confidence_count}/{total_cases} ({calibration_rate:.1f}%)")
-    print(f"  • Cazuri 'success' calibrate:            {correct_success_cases}/{total_success_cases} ({success_rate:.1f}%)")
-    print(f"  • Cazuri 'edge' calibrate:               {correct_edge_cases}/{total_edge_cases} ({edge_rate:.1f}%)")
+    print(f"  • Cazuri selectate / evaluate:           {report['total_cases_selected']} / {total}")
+    print(f"  • Rata globală de calibrare corectă:     "
+          f"{sum(1 for item in results if item['is_calibrated'])}/{total} ({report['overall_calibration_rate_percent']:.1f}%)")
+    print(f"  • Cazuri 'success' calibrate:            {report['success_cases']['correct']}/{report['success_cases']['total']} "
+          f"({report['success_cases']['rate_percent']:.1f}%)")
+    print(f"  • Cazuri 'edge' calibrate:               {report['edge_cases']['correct']}/{report['edge_cases']['total']} "
+          f"({report['edge_cases']['rate_percent']:.1f}%)")
+    weak = report["weakly_supported"]
+    print(f"  • weakly_supported conform cheii:        {weak['matching']}/{weak['checked']} ({weak['rate_percent']:.1f}%)")
+    if report["run_errors"]:
+        print(f"  • Excluse (eroare la rulare/FAILED):     {', '.join(report['run_errors'])}")
+    if report["without_hypotheses"]:
+        print(f"  • Fără ipoteze (numărate necalibrate):   {', '.join(report['without_hypotheses'])}")
     print("=" * 70)
-
-    OUTPUT_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    report_data = {
-        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "total_cases": total_cases,
-        "overall_calibration_rate_percent": round(calibration_rate, 2),
-        "success_cases": {
-            "total": total_success_cases,
-            "correct": correct_success_cases,
-            "rate_percent": round(success_rate, 2),
-        },
-        "edge_cases": {
-            "total": total_edge_cases,
-            "correct": correct_edge_cases,
-            "rate_percent": round(edge_rate, 2),
-        },
-        "details": results_detail,
-    }
-    with OUTPUT_REPORT_PATH.open("w", encoding="utf-8") as f:
-        json.dump(report_data, f, indent=2, ensure_ascii=False)
-
     print(f"\nRaportul de calibrare a fost salvat în: {OUTPUT_REPORT_PATH}")
 
 
