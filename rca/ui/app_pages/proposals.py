@@ -8,6 +8,9 @@ its evidence. Accepting creates the problem (or adds the incident) in one step o
 are checked again; the confirmation names the problem and leads to it. Rejecting a group or an attach keeps it out of
 the list while its incidents stay the same, and its incidents come back on their own; an incident on its own
 cannot be rejected.
+
+A fourth tab, apart from the proposals, creates a problem from incidents the Problem Manager chooses, with a
+reason that is required; the incidents leave the proposals they were in.
 """
 
 import streamlit as st
@@ -76,6 +79,40 @@ def proposal_card(proposal: dict, incidents: dict) -> None:
         actions(proposal)
 
 
+def manual_tab(found: list[dict], incidents: dict) -> None:
+    """A problem from incidents the Problem Manager picks, whatever the proposals say."""
+    where = {incident_id: item for item in found for incident_id in item["incident_ids"]}
+    free = sorted((incidents[incident_id] for incident_id in where if incident_id in incidents),
+                  key=lambda item: item.detected_at, reverse=True)
+    if not free:
+        st.info(t("proposals.manual_none"), icon=":material/inbox:")
+        return
+    labels = {f"{item.incident_id} · {item.service} · {item.severity} · {item.title}": item.incident_id for item in free}
+    picked = st.multiselect(t("proposals.manual_choose"), list(labels), key="manual_pick",
+                            help=t("proposals.manual_choose_help"))
+    chosen = [labels[label] for label in picked]
+    if not chosen:
+        return
+    st.caption(t("proposals.manual_now_in"))
+    for incident_id in chosen:
+        proposal = where[incident_id]
+        target = f" → {proposal['problem_id']}" if proposal["kind"] == "attach" else ""
+        st.markdown(f"- `{incident_id}`: {t('proposals.kind_short.' + proposal['kind'])}{target}")
+    title = st.text_input(t("proposals.title_input"), key="manual_title", placeholder=t("proposals.title_hint"))
+    reason = st.text_area(t("proposals.manual_reason"), key="manual_reason")
+    if st.button(t("proposals.manual_create"), type="primary", key="manual_create", icon=":material/add:"):
+        if not reason.strip():
+            st.error(t("problems.reason_required"), icon=theme.ICONS["error"])
+            return
+        try:
+            problem, _ = services.create_problem(chosen, title.strip() or None, reason.strip())
+        except services.ServiceError as error:
+            st.session_state[ERROR_KEY] = services.user_message(error)
+            st.rerun()
+        st.session_state[CREATED_KEY] = (problem.problem_id, "manual", True)
+        st.rerun()
+
+
 def actions(proposal: dict) -> None:
     key = proposal["key"]
     accept, reject = st.columns(2, gap="medium")
@@ -122,7 +159,11 @@ except services.ServiceError as error:
     st.stop()
 
 st.caption(t("proposals.score_hint"))
-tabs = st.tabs([t(f"proposals.kind.{kind}", count=sum(1 for item in found if item["kind"] == kind)) for kind in KINDS])
+tabs = st.tabs([t(f"proposals.kind.{kind}", count=sum(1 for item in found if item["kind"] == kind)) for kind in KINDS]
+               + [t("proposals.kind.manual")])
+with tabs[-1]:
+    st.caption(t("proposals.kind_hint.manual"))
+    manual_tab(found, incidents)
 for tab, kind in zip(tabs, KINDS):
     with tab:
         st.caption(t(f"proposals.kind_hint.{kind}"))

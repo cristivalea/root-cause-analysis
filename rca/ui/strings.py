@@ -178,6 +178,19 @@ EN: dict[str, str] = {
     "proposals.title_input": "Title of the new problem (optional)",
     "proposals.title_hint": "The title of the most recent incident",
     "proposals.reason_input": "Why you accept it (optional, kept in the history)",
+    "proposals.kind.manual": "Create manually",
+    "proposals.kind_short.group": "Alike incidents",
+    "proposals.kind_short.attach": "For an open problem",
+    "proposals.kind_short.single": "Incidents on their own",
+    "proposals.kind_hint.manual": "Not a proposal: your own choice. Pick incidents in no problem that you know share a "
+                                  "cause, even when their texts or services differ. No score supports it, so the reason "
+                                  "is required. The incidents leave the proposals they are in now.",
+    "proposals.manual_choose": "Incidents in no problem",
+    "proposals.manual_choose_help": "Type an incident id, a service or words of the title to search.",
+    "proposals.manual_now_in": "Now in",
+    "proposals.manual_reason": "Why these incidents belong together (required, kept in the history)",
+    "proposals.manual_create": "Create the problem",
+    "proposals.manual_none": "Every incident is in a problem.",
     "proposals.accept_new": "Create the problem",
     "proposals.accept_attach": "Add the incident",
     "proposals.reject_reason": "Why you reject it (optional)",
@@ -280,6 +293,7 @@ EN: dict[str, str] = {
     "event.rca_status": "{rca}: {to}",
     "event.migrated": "(rebuilt from the RCA saved before the redesign)",
     "event.imported": "(imported from the source data)",
+    "event.manual": "(manually, not from a proposal)",
     "cycle.rejected_next": "A new case for this problem must start from something new: guidance or other incidents. "
                            "Add them on the problem page and start the RCA there.",
     "cycle.open_problem": "Open {problem}",

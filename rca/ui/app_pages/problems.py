@@ -289,6 +289,8 @@ def history_section(events) -> None:
                 action += " " + t("event.imported")
             if event.details.get("migrated"):
                 action += " " + t("event.migrated")
+            if event.details.get("manual"):
+                action += " " + t("event.manual")
             st.markdown(t("problems.event", date=formatting.date_time(event.at), name=event.by, action=action)
                         + (f" — {event.reason}" if event.reason else ""))
             if event.action == "guide_updated":  # the guidance as saved; an older text guide as it was

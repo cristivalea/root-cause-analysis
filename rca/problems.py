@@ -149,6 +149,7 @@ def create_problem(
     reason: str | None = None,
     db_path: Path = DB_PATH,
     proposal: tuple[str, str] | None = None,
+    manual: bool = False,
 ) -> Result:
     """A new open problem with the given incidents, none of which may be in a problem already.
     The title and description come from the most recent incident unless given. reason, optional,
@@ -156,10 +157,15 @@ def create_problem(
 
     proposal, (key, kind), when the problem is made from a proposal of the Proposed Problem Records page:
     the proposal is marked accepted in the same transaction, and accepting it again returns the problem it
-    made (created False) instead of a second one."""
+    made (created False) instead of a second one.
+
+    manual: the Problem Manager chose the incidents without a proposal. No score supports the grouping, so the
+    reason is required; the history says the problem was created manually."""
     ids = list(dict.fromkeys(item.strip() for item in incident_ids if item.strip()))
     if not ids:
         raise ProblemError("A problem needs at least one incident.")
+    if manual and not _text(reason):
+        raise ProblemError("Give a reason: a problem created manually has no proposal behind it.")
     incidents = [_incident(incident_id, db_path) for incident_id in ids]
     latest = max(incidents, key=lambda item: item.detected_at)
     with _transaction(db_path) as connection:
@@ -183,7 +189,7 @@ def create_problem(
         connection.execute("INSERT INTO problems VALUES (?, ?, ?, ?)",
                            [problem.problem_id, problem.status, problem.created_at.isoformat(), _payload(problem)])
         _event(connection, problem.problem_id, by, "created", reason=_text(reason),
-               details={"proposal": proposal[0]} if proposal else None)
+               details={"proposal": proposal[0]} if proposal else {"manual": True} if manual else None)
         for incident in incidents:
             _link(connection, problem.problem_id, incident.incident_id, by, _text(reason))
         _decide(connection, proposal, ids, problem.problem_id, "accepted", by, _text(reason))

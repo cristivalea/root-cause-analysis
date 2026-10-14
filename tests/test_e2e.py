@@ -130,7 +130,7 @@ def test_problems_from_a_major_incident_and_from_recurring_incidents_then_incide
 
     # 4. an incident of a problem cannot go into another one, whichever way it is tried
     taken = http.post(f"/api/v1/problems/{problem_id}/incidents", json={"incident_id": MAJOR_INCIDENT, "reason": "x"})
-    again = http.post("/api/v1/problems", json={"incident_ids": [RECURRING[0], "INC-2026-01132"]})
+    again = http.post("/api/v1/problems", json={"incident_ids": [RECURRING[0], "INC-2026-01132"], "reason": "x"})
     assert taken.status_code == again.status_code == 409
     assert [link["incident_id"] for link in problem_of(http, major["problem_id"])["incidents"]] == [
         MAJOR_INCIDENT]

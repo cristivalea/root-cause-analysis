@@ -139,7 +139,7 @@ class CreateProblemRequest(BaseModel):
     incident_ids: List[str]
     title: Optional[str] = None
     description: Optional[str] = None
-    reason: Optional[str] = None  # optional: why these incidents belong together, kept in the history
+    reason: Optional[str] = None  # required: why these incidents belong together, kept in the history
 
 
 class AttachIncidentRequest(BaseModel):
@@ -381,8 +381,9 @@ def api_get_problem(problem_id: str, user: dict = Depends(require_roles("problem
 @app.post("/api/v1/problems")
 def api_create_problem(req: CreateProblemRequest, user: dict = Depends(require_roles("problem_manager"))):
     try:
+        # created here, the problem is the choice of the Problem Manager; a proposal is accepted at /proposals/accept
         return _problem_result(problems.create_problem(req.incident_ids, user["username"], req.title, req.description,
-                                                       req.reason, db_path=DB_PATH))
+                                                       req.reason, db_path=DB_PATH, manual=True))
     except problems.ProblemError as exc:
         raise _problem_error(exc)
 

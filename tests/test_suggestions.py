@@ -236,3 +236,17 @@ def test_a_rejected_group_is_proposed_again_once_a_new_alike_incident_joins_it(d
     found = suggestions.proposals(db, embeddings)
 
     assert group.key in {item.key for item in found}
+
+
+def test_incidents_put_in_a_problem_manually_leave_the_proposals_they_were_in(db, embeddings):
+    found = suggestions.proposals(db, embeddings)
+    group = next(item for item in found if item.kind == "group")
+    other = next(item for item in found if item.kind != "group" or item.key != group.key)
+    chosen = [group.incident_ids[0], other.incident_ids[0]]
+
+    problems.create_problem(chosen, "pm", reason="Same cause, known from the vendor.", manual=True, db_path=db)
+    after = suggestions.proposals(db, embeddings)
+
+    assert not set(chosen) & set(covered(after))
+    assert group.key not in {item.key for item in after}  # the group is no longer the same
+    assert sorted(covered(after)) == sorted(item.incident_id for item in problems.unassigned_incidents(db))

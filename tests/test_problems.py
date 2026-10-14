@@ -406,3 +406,14 @@ def test_a_problem_in_investigation_is_not_closed_or_reopened_by_hand(db):
 def test_a_closed_problem_gets_no_rca(db):
     with pytest.raises(ProblemError, match="closed; reopen it first"):
         problems.check_can_start(closed_problem(db), db_path=db)
+
+
+def test_a_problem_created_manually_needs_a_reason_and_says_so_in_its_history(db):
+    with pytest.raises(ProblemError, match="Give a reason"):
+        problems.create_problem(["INC-2026-00371"], "pm", reason=" ", manual=True, db_path=db)
+
+    made = problems.create_problem(["INC-2026-00371", "INC-2026-00411"], "pm", reason="Same egress proxy.",
+                                   manual=True, db_path=db).problem
+
+    created = problems.problem_events(made.problem_id, db_path=db)[0]
+    assert (created.action, created.reason, created.details) == ("created", "Same egress proxy.", {"manual": True})

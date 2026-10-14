@@ -48,7 +48,7 @@ def test_the_three_kinds_are_listed_with_their_score_explained_reasons_and_evide
     assert not app.exception
     labels = [tab.label for tab in app.tabs]
     assert labels == [t("proposals.kind.group", count=1), t("proposals.kind.attach", count=1),
-                      t("proposals.kind.single", count=0)]  # no tab to create a problem by hand
+                      t("proposals.kind.single", count=0), t("proposals.kind.manual")]
     text = " ".join(item.value for item in app.markdown)
     assert "Reason of the group proposal." in text and "Evidence of the attach proposal." in text
     assert "`INC-2026-00371`" in text
@@ -125,3 +125,26 @@ def test_an_incident_on_its_own_names_the_closed_problem_its_score_compares_it_t
 
     assert not app.exception
     assert [metric.label for metric in app.metric] == [t("proposals.score_to", problem="PRB-2025-00010")]
+
+
+def test_the_manual_tab_offers_the_incidents_of_the_proposals_says_where_they_are_and_needs_a_reason(api, monkeypatch):
+    made = []
+    monkeypatch.setattr(services, "create_problem",
+                        lambda ids, title=None, reason=None: made.append((ids, title, reason)) or (PROBLEM, []))
+    app = AppTest.from_file(PAGE, default_timeout=30).run()
+
+    pick = app.multiselect(key="manual_pick")
+    offered = [label.split(" · ")[0] for label in pick.options]
+    assert sorted(offered) == ["INC-2026-00371", "INC-2026-00411", "INC-2026-00857"]  # every incident of a proposal
+    pick.select(next(label for label in pick.options if label.startswith("INC-2026-00371")))
+    pick.select(next(label for label in pick.options if label.startswith("INC-2026-00857"))).run()
+    text = " ".join(item.value for item in app.markdown)
+    assert t("proposals.kind_short.group") in text and "PRB-2026-00001" in text  # where each one is now
+
+    app.button(key="manual_create").click().run()
+    assert made == []  # no reason, nothing created
+    app.text_area(key="manual_reason").input("Both behind the same egress proxy.").run()
+    app.button(key="manual_create").click().run()
+
+    assert not app.exception
+    assert made == [(["INC-2026-00371", "INC-2026-00857"], None, "Both behind the same egress proxy.")]

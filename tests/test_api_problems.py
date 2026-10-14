@@ -27,7 +27,8 @@ def client(tmp_path, monkeypatch):
 def test_the_problem_manager_creates_and_changes_a_problem(client):
     http, _ = client
 
-    created = http.post("/api/v1/problems", json={"incident_ids": ["INC-2026-00371", "INC-2026-00411"]})
+    created = http.post("/api/v1/problems", json={"incident_ids": ["INC-2026-00371", "INC-2026-00411"],
+                                                  "reason": "Same acquirer timeouts."})
     assert created.status_code == 200, created.text
     problem_id = created.json()["problem"]["problem_id"]
 
@@ -36,13 +37,14 @@ def test_the_problem_manager_creates_and_changes_a_problem(client):
     assert removed.status_code == 200
     detail = http.get(f"/api/v1/problems/{problem_id}").json()
     assert [item["action"] for item in detail["events"]] == ["created", "incident_added", "incident_added", "incident_removed"]
+    assert detail["events"][0]["details"] == {"manual": True}  # created here, not from a proposal
     assert detail["rcas"] == []
 
 
 def test_an_incident_of_another_problem_comes_back_as_409(client):
     http, _ = client
 
-    response = http.post("/api/v1/problems", json={"incident_ids": ["INC-2026-00857"]})
+    response = http.post("/api/v1/problems", json={"incident_ids": ["INC-2026-00857"], "reason": "Test."})
 
     assert response.status_code == 409
     assert "belongs to one problem only" in response.json()["detail"]
@@ -358,7 +360,7 @@ def test_a_proposal_changed_on_the_way_is_refused(client):
 def test_an_incident_taken_meanwhile_stops_the_whole_proposal_and_nothing_is_half_done(client):
     http, _ = client
     one, two = free(http, 2)
-    http.post("/api/v1/problems", json={"incident_ids": [two]})  # someone else made a problem with it meanwhile
+    http.post("/api/v1/problems", json={"incident_ids": [two], "reason": "Test."})  # someone else, meanwhile
     before = len(http.get("/api/v1/problems").json())
 
     response = http.post("/api/v1/proposals/accept", json=proposal("group", [one, two]))
@@ -420,3 +422,12 @@ def test_two_accepts_of_one_proposal_at_the_same_moment_make_one_problem(client)
 
     assert len({item["problem"]["problem_id"] for item in answers}) == 1
     assert sorted(item["created"] for item in answers) == [False, True]
+
+
+def test_a_problem_created_manually_needs_a_reason(client):
+    http, _ = client
+
+    refused = http.post("/api/v1/problems", json={"incident_ids": ["INC-2026-00371"], "reason": " "})
+
+    assert refused.status_code == 400 and "Give a reason" in refused.json()["detail"]
+    assert "INC-2026-00371" in [item["incident_id"] for item in http.get("/api/v1/incidents/unassigned").json()]
