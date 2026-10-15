@@ -17,9 +17,6 @@ langgraph-api==0.14.1
 # chromadb accepts any version; this one matches the OpenTelemetry packages langgraph-api needs
 opentelemetry-exporter-otlp-proto-grpc==1.42.1
 
-# UI
-streamlit==1.63.0
-
 # Configuration and tests
 python-dotenv==1.2.3
 pytest==9.1.1
@@ -28,7 +25,6 @@ pytest==9.1.1
 fastapi>=0.100.0
 uvicorn[standard]>=0.23.0
 pydantic>=2.0.0
-streamlit>=1.25.0
 
 #Login
 pwdlib[argon2]

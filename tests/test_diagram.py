@@ -1,9 +1,5 @@
 """The cause diagram: 5 Whys for one clearly best cause, Fishbone for causes equally supported (audit P.4)."""
 
-from datetime import datetime, timezone
-
-from streamlit.testing.v1 import AppTest
-
 from rca.diagram import choose_diagram, drawn_chain
 from rca.guardrails import check_draft
 from rca.models import AssessedHypothesis, CauseFactor, DraftRCA, WhyStep
@@ -56,38 +52,3 @@ def test_an_evidence_id_invented_in_the_chain_is_refused():
                      change_likely_required=False)
 
     assert any("EV-099" in problem for problem in check_draft(draft, {"EV-002"}))
-
-
-APP = '''
-from datetime import datetime, timezone
-from rca.models import AssessedHypothesis, Evidence, RCARecord, WhyStep
-from rca.ui.components import rca_diagram, rca_draft
-at = datetime(2026, 7, 15, tzinfo=timezone.utc)
-chain = [WhyStep(why="Why did payments fail?", because="No connection was free.", evidence=["EV-002"]),
-         WhyStep(why="Why?", because="The session is never closed.", evidence=[])]
-main = AssessedHypothesis(hypothesis_id="HYP-001", candidate_root_cause="The retry handler leaks connections.",
-                          reasons=["A reason only the expert reads."], supporting_evidence=["EV-002"],
-                          contradicting_evidence=[], recommended_validation=[], why_chain=chain,
-                          confidence="HIGH", confidence_points=8, confidence_reasons=[])
-record = RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="DRAFT", owner="pm", created_at=at,
-                   hypotheses=[main], single_hypothesis_reason="Only one.",
-                   evidence=[Evidence(evidence_id="EV-002", type="LOG", source="h", description="x",
-                                      citation="LOG-PAY-20260714-14")])
-rca_diagram.rca_diagram(record, "Payment API intermittent failures")
-st_dot = rca_diagram.dot(record)
-import streamlit as st
-st.session_state["dot"] = st_dot
-rca_draft.rca_draft(record, brief=True)
-'''
-
-
-def test_the_expert_sees_the_5_whys_with_its_evidence_and_the_problem_manager_a_brief_draft():
-    app = AppTest.from_string(APP).run()
-
-    assert not app.exception
-    drawing = app.session_state["dot"]
-    assert "LOG-PAY-20260714-14" in drawing and "dashed" in drawing and "to check" in drawing
-    assert any(item.value == "5 Whys" for item in app.subheader)
-    text = " ".join(item.value for item in app.markdown)
-    assert "The retry handler leaks connections." in text  # the cause and its confidence...
-    assert "A reason only the expert reads." not in text  # ...but not the reasons, in the brief draft

@@ -57,24 +57,3 @@ def test_the_lines_for_the_reasoning_agent_name_the_evidence_and_the_marker():
 
     assert lines[0] == "2026-07-14 13:58 UTC EV-004 CHANGE (before the first error)"
     assert lines[3] == "2026-07-15 09:40 UTC EV-003 LOG"
-
-
-def test_the_expert_sees_the_timeline_with_its_markers():
-    from streamlit.testing.v1 import AppTest
-
-    app = AppTest.from_string('''
-from datetime import datetime, timezone
-from rca.models import RCARecord, TimelineEntry
-from rca.ui.components.timeline_view import timeline_view
-at = datetime(2026, 7, 14, 13, 58, tzinfo=timezone.utc)
-record = RCARecord(rca_id="RCA-2026-00001", incident_id="INC-2026-00857", status="AWAITING_TECHNICAL_REVIEW", owner="pm",
-                   created_at=at, timeline=[
-    TimelineEntry(at=at, evidence_id="EV-007", type="CHANGE", citation="CHG-2026-00871",
-                  what="Deploy Payment API v4.18.2", marker="before the first error")])
-timeline_view(record)
-''').run()
-
-    assert not app.exception
-    line = " ".join(item.value for item in app.markdown)
-    assert "`CHG-2026-00871`" in line and "before the first error" in line
-    assert "Deploy Payment API v4.18.2" in [item.value for item in app.caption]

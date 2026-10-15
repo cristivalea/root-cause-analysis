@@ -4,7 +4,7 @@ import importlib
 
 import pytest
 
-REQUIRED_PACKAGES = ["chromadb", "requests", "groq", "langgraph", "pydantic", "streamlit", "dotenv"]
+REQUIRED_PACKAGES = ["chromadb", "requests", "groq", "langgraph", "pydantic", "dotenv"]
 
 
 def test_rca_package_is_importable():

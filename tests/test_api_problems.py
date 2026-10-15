@@ -431,3 +431,41 @@ def test_a_problem_created_manually_needs_a_reason(client):
 
     assert refused.status_code == 400 and "Give a reason" in refused.json()["detail"]
     assert "INC-2026-00371" in [item["incident_id"] for item in http.get("/api/v1/incidents/unassigned").json()]
+
+
+# Read-only views for the React interface: the rule stays in Python, the interface draws ------------
+
+
+def test_the_diagram_of_a_revision_is_the_one_rca_diagram_chooses(client):
+    from rca.diagram import choose_diagram
+
+    http, user = client
+    problem_id = storage.get_problem_id_for_incident(api.DB_PATH, "INC-2026-00482")
+    rca = sample_rca(problem_id, "draft")
+
+    answer = http.get(f"/api/v1/rcas/{rca.rca_id}/diagram")
+
+    assert answer.status_code == 200
+    expected = choose_diagram(rca.hypotheses)
+    if expected is None:
+        assert answer.json() is None
+    else:
+        assert answer.json()["kind"] == expected.kind
+        assert [step["because"] for step in answer.json()["steps"]] == [step.because for step in expected.steps]
+        assert len(answer.json()["factors"]) == len(expected.factors)
+    user["role"] = "technical_expert"  # a draft not sent yet stays with the manager, its diagram too
+    assert http.get(f"/api/v1/rcas/{rca.rca_id}/diagram").status_code == 404
+    assert http.get(f"/api/v1/rcas/{rca.rca_id}/comparison").status_code == 404
+
+
+def test_the_comparison_is_empty_for_a_first_revision_and_filled_for_the_next(client):
+    http, _ = client
+    problem_id = storage.get_problem_id_for_incident(api.DB_PATH, "INC-2026-00482")
+    rca = sample_rca(problem_id, "draft", "submit", "more", "next", "draft")
+
+    assert http.get(f"/api/v1/rcas/{rca.rca_id}-R1/comparison").json() is None
+    found = http.get(f"/api/v1/rcas/{rca.rca_id}/comparison").json()
+
+    assert found["previous_revision"] == 1 and found["current_id"].endswith("-R2")
+    assert {item["kind"] for item in found["hypotheses"]} <= {"kept", "new", "dropped"}
+    assert http.get("/api/v1/rcas/RCA-2099-00001/comparison").status_code == 404

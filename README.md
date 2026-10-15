@@ -107,12 +107,12 @@ A summary. The detail, and the reason behind each choice, is in
 | Retrieval | ChromaDB, two collections: past incidents and past RCA sections |
 | Orchestration | LangGraph, as a state machine that routes but does not reason |
 | Backend | FastAPI |
-| Interface | Streamlit, one view per role |
+| Interface | React with TypeScript (Vite), one view per role, in English and Romanian |
 | Output validation | Pydantic, plus citation and content checks in plain Python |
 | Evaluation | RAGAS, against an answer key that the agents never see |
 | Observability and audit | Arize Phoenix with OpenTelemetry, plus an audit trail in the database |
 | Storage | SQLite for records, files for the mock sources |
-| Packaging | Docker Compose, three containers, started with one command |
+| Packaging | Docker Compose for the backend and Phoenix; the interface runs with npm |
 
 Everything runs at zero licensing cost. All source systems are mock data, built to look
 realistic.
@@ -128,7 +128,8 @@ order the first time. After that, you only need [Run the application](#run-the-a
 
 | Tool | Version | What it is used for |
 |---|---|---|
-| [Python](https://www.python.org/downloads/) | 3.12 | Runs the application, the scripts and the tests |
+| [Python](https://www.python.org/downloads/) | 3.12 | Runs the backend, the scripts and the tests |
+| [Node.js](https://nodejs.org/en/download) | 20 or later, with npm | Runs the interface |
 | [Git](https://git-scm.com/downloads) | any recent | Clones the repository |
 | [Ollama](https://ollama.com/download) | any recent | Creates the embeddings for the search, locally |
 | A [Groq](https://console.groq.com/keys) account | free tier | Gives the API key for the reasoning model |
@@ -213,15 +214,17 @@ The application has two parts, and each runs in its own terminal. Start the back
 uvicorn api:app --port 8000 --reload
 ```
 
-**Terminal 2 — the interface (Streamlit):**
+**Terminal 2 — the interface (React):**
 
 ```bash
-streamlit run rca/ui/main.py
+cd web
+npm install        # only the first time, and after package.json changes
+npm run dev
 ```
 
 | What | Address |
 |---|---|
-| The interface | http://localhost:8501 |
+| The interface | http://localhost:5173 |
 | The backend API documentation (Swagger) | http://localhost:8000/docs |
 | The backend health check | http://localhost:8000/health |
 
@@ -229,8 +232,12 @@ The interface does not read the database itself. It calls the backend, so it sho
 if the backend is not running. Ollama must also be running while an investigation is in
 progress.
 
-> If the backend runs somewhere else, set `API_URL` before starting the interface, for
-> example `API_URL=http://192.168.1.10:8000`. The default is `http://127.0.0.1:8000`.
+> The interface sends its requests to `/api`, and the development server passes them on to the
+> backend. If the backend runs somewhere else, set `API_URL` before `npm run dev`, for example
+> `API_URL=http://192.168.1.10:8000`. The default is `http://127.0.0.1:8000`.
+
+To build the interface for production, run `npm run build` in `web/`. The result is in
+`web/dist/`, and `npm run preview` serves it on http://localhost:4173.
 
 ---
 
@@ -328,6 +335,14 @@ python -m pytest -m live            # only the tests that call the real Groq API
 The live tests use your Groq quota. Set `GROQ_MODEL=openai/gpt-oss-20b` in `.env` to run them
 on the smaller model.
 
+The tests of the interface run in `web/`, without the backend:
+
+```bash
+npm test            # the pages and components, with fixed answers from the API
+npm run lint
+npm run typecheck
+```
+
 ### Run the RAGAS evaluation
 
 The evaluation has its own dependencies, which are not needed to run the application:
@@ -351,13 +366,14 @@ The method and how to read the scores are explained in [ragas_project.md](ragas_
 
 | Problem | Cause and fix |
 |---|---|
-| The interface shows `Connection to API failed` | The backend is not running. Start it with `uvicorn api:app --port 8000` |
+| The interface says it can't reach the server | The backend is not running. Start it with `uvicorn api:app --port 8000` |
+| `npm` is not recognised | Node.js is not installed, or the terminal was opened before installing it. Install Node.js and open a new terminal |
 | `Connection refused` on port `11434` | Ollama is not running. Open the Ollama app or run `ollama serve` |
 | An investigation finds no past incidents or RCAs | The search index is empty. Run `python scripts/ingest_chroma.py --reset` |
 | `no such table` or an empty incident list | The database was not created. Run `python scripts/load_sources_sqlite.py --reset` |
 | Groq error `429` | The free tier limit was reached. The application waits and retries; wait a minute between runs |
 | `Activate.ps1 cannot be loaded` on Windows | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again |
-| A change in the code does not show in the interface | Streamlit keeps imported modules in memory. Stop it with `Ctrl+C` and start it again |
+| A change in the backend does not show in the interface | Without `--reload`, the backend keeps the old code. Stop it with `Ctrl+C` and start it again. Changes in `web/` show at once |
 
 ---
 

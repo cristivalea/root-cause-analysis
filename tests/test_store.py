@@ -264,3 +264,7 @@ def test_the_expert_request_reads_as_the_comment_and_the_checks():
                             decided_at=datetime.now(timezone.utc), requested_checks=["pool size", "Check the pool."])
 
     assert store.expert_request(review) == "Check the pool.\n- pool size"  # a check equal to the comment is said once
+
+    lines = ReviewDecision(reviewer="expert", decision="REQUEST_MORE_DETAILS", comment="check the secrets\ncheck the DNS changes",
+                           decided_at=datetime.now(timezone.utc), requested_checks=["check the secrets", "check the DNS changes"])
+    assert store.expert_request(lines) == "check the secrets\ncheck the DNS changes"  # a request on several lines: once
