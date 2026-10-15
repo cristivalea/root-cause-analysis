@@ -23,10 +23,11 @@ not used to decide.
 from __future__ import annotations
 
 import sqlite3
+from bisect import bisect_left, bisect_right
 from collections import Counter
 from contextlib import closing
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -134,6 +135,7 @@ class _World:
             key=lambda item: self.incidents[item].detected_at, reverse=True,
         )
         self._types: dict[str, set[str]] = {}
+        self._log_index: dict[str, tuple[list[datetime], list[str | None]]] | None = None
         self.vectors = {key: np.array(value) / np.linalg.norm(value) for key, value in embeddings.items() if key in self.incidents}
 
     def alike(self, incident_id: str) -> list[tuple[str, float]]:
@@ -194,11 +196,31 @@ class _World:
         return Suggestion(incident_id, kind, problem_id, [item for item, _ in members], round(similarity, 3), reasons)
 
     def _error_types(self, incident: Incident) -> set[str]:
+        """The error types logged on the service of the incident, from 2 hours before its detection to 1 hour
+        after (edges included), as storage.get_logs would find them."""
         if incident.incident_id not in self._types:
-            logs = storage.get_logs(self.db_path, incident.service, incident.detected_at - timedelta(hours=2),
-                                    incident.detected_at + timedelta(hours=1), LOG_LEVELS)
-            self._types[incident.incident_id] = {item.error_type for item in logs if item.error_type}
+            times, kinds = self._logs().get(incident.service, ([], []))
+            start = bisect_left(times, incident.detected_at - timedelta(hours=2))
+            end = bisect_right(times, incident.detected_at + timedelta(hours=1))
+            self._types[incident.incident_id] = {kind for kind in kinds[start:end] if kind}
         return self._types[incident.incident_id]
+
+    def _logs(self) -> dict[str, tuple[list[datetime], list[str | None]]]:
+        """Every ERROR / WARN line, by service and in time order, read once: one query instead of one per
+        incident (each of those scanned the whole log table)."""
+        if self._log_index is None:
+            with closing(sqlite3.connect(self.db_path)) as connection:
+                rows = connection.execute(
+                    f"SELECT service, timestamp, json_extract(payload, '$.error_type') FROM logs "
+                    f"WHERE level IN ({', '.join('?' for _ in LOG_LEVELS)})", LOG_LEVELS).fetchall()
+            by_service: dict[str, list[tuple[datetime, str | None]]] = {}
+            for service, timestamp, kind in rows:
+                by_service.setdefault(service, []).append((datetime.fromisoformat(timestamp), kind))
+            self._log_index = {}
+            for service, entries in by_service.items():
+                entries.sort(key=lambda entry: entry[0])
+                self._log_index[service] = ([entry[0] for entry in entries], [entry[1] for entry in entries])
+        return self._log_index
 
     def evidence(self, incident_ids: list[str]) -> list[str]:
         """The facts behind a proposal, from the sources: the CMDB items, the error types logged around the
@@ -210,7 +232,8 @@ class _World:
         types = Counter(kind for item in items for kind in self._error_types(item))
         if types:
             facts.append("Error types logged around the detections: "
-                         + ", ".join(f"{kind} ({count})" for kind, count in types.most_common(4)) + ".")
+                         + ", ".join(f"{kind} ({count})" for kind, count in  # ties in name order: the same text every time
+                                     sorted(types.items(), key=lambda pair: (-pair[1], pair[0]))[:4]) + ".")
         severities = Counter(item.severity for item in items)
         facts.append("Severity: " + ", ".join(f"{count} {severity}" for severity, count in sorted(severities.items())) + ".")
         first, last = min(item.detected_at for item in items), max(item.detected_at for item in items)

@@ -395,8 +395,11 @@ def status_history(rca_id: str, db_path: Path = DB_PATH) -> list[RCAStatusChange
 
 def expert_request(review: ReviewDecision) -> str:
     """The request of the expert as the next revision reads it: the comment and the checks asked for."""
+    comment = review.comment.strip()
+    # a request written on several lines is saved as the comment and as one check per line: said once
+    said = {line.strip("-* ").strip() for line in comment.splitlines()}
     checks = [check.strip() for check in review.requested_checks if check.strip()]
-    lines = [review.comment.strip(), *(f"- {check}" for check in checks if check != review.comment.strip())]
+    lines = [comment, *(f"- {check}" for check in checks if check not in said)]
     return "\n".join(line for line in lines if line)
 
 

@@ -10,7 +10,9 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from rca import problems, storage, store, suggestions
+from rca.compare import compare, previous_revision
 from rca.config import DB_PATH
+from rca.diagram import choose_diagram
 from rca.models import InvestigationGuidance
 from rca.pipeline import run_investigation
 
@@ -514,6 +516,67 @@ def api_apply_review(rca_id: str, req: ApplyReviewRequest,
         ))
     except (store.RCAError, store.RCANotFound) as exc:
         raise _rca_error(exc)
+
+
+def _readable_record(rca_id: str, user: dict[str, Any]):
+    record = store.get_rca(rca_id, db_path=DB_PATH)
+    if record is None or (user["role"] == "technical_expert" and not _expert_may_read(rca_id)):
+        raise HTTPException(status_code=404, detail=f"RCA {rca_id} nu a fost găsit.")
+    return record
+
+
+@app.get("/api/v1/rcas/{rca_id}/diagram")
+def api_rca_diagram(rca_id: str, user: dict[str, Any] = Depends(require_roles("problem_manager", "technical_expert"))):
+    """Read only: the cause diagram of a revision as rca/diagram.py chooses it (5 Whys or fishbone), or null when
+    the analysis gave no structure to draw. The interface draws it; the rule stays here."""
+    diagram = choose_diagram(_readable_record(rca_id, user).hypotheses)
+    if diagram is None:
+        return None
+    return {
+        "kind": diagram.kind,
+        "hypothesis_id": diagram.hypothesis_id,
+        "steps": [_serialize(step) for step in diagram.steps],
+        "factors": [{"hypothesis_id": hypothesis_id, **_serialize(factor)} for hypothesis_id, factor in diagram.factors],
+    }
+
+
+@app.get("/api/v1/rcas/{rca_id}/comparison")
+def api_rca_comparison(rca_id: str, user: dict[str, Any] = Depends(require_roles("problem_manager", "technical_expert"))):
+    """Read only: what changed since the previous revision with an analysis (rca/compare.py), or null for a
+    first revision."""
+    current = _readable_record(rca_id, user)
+    previous = previous_revision(store.list_revisions(current.rca_id, db_path=DB_PATH), current)
+    if previous is None:
+        return None
+    found = compare(previous, current)
+
+    def cause(hypothesis):
+        return None if hypothesis is None else {"hypothesis_id": hypothesis.hypothesis_id, "confidence": hypothesis.confidence,
+                                                "candidate_root_cause": hypothesis.candidate_root_cause}
+
+    return {
+        "previous_id": found.previous_id, "previous_revision": previous.revision, "current_id": found.current_id,
+        "request": found.request, "new_evidence": found.new_evidence, "dropped_evidence": found.dropped_evidence,
+        "main_changed": found.main_changed, "newly_not_checked": found.newly_not_checked,
+        "hypotheses": [{"kind": item.kind, "current": cause(item.current), "previous": cause(item.previous),
+                        "similarity": item.similarity} for item in found.hypotheses],
+    }
+
+
+@app.get("/api/v1/kpis")
+def api_kpis(date_from: Optional[str] = None, date_to: Optional[str] = None,
+             user: dict[str, Any] = Depends(require_roles("problem_manager"))):
+    """Read only: the KPIs of rca/kpis.py for the RCAs started between the two days (included), plus the current
+    situation and the benchmark reports of the evaluation scripts when they are valid."""
+    from datetime import date
+    from rca import kpis
+
+    try:
+        start = date.fromisoformat(date_from) if date_from else None
+        end = date.fromisoformat(date_to) if date_to else None
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Dates are written as YYYY-MM-DD.")
+    return kpis.compute(DB_PATH, start, end)
 
 
 # 3. RCA-uri cu reviziile lor (RCA History)

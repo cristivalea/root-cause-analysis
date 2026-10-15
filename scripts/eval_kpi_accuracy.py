@@ -29,8 +29,8 @@ from pydantic import BaseModel, Field
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from rca import judge
-from rca.config import DB_PATH, GROQ_MODEL, JUDGE_MODEL
+from rca import judge, kpi_evaluation
+from rca.config import GROQ_MODEL, JUDGE_MODEL
 from rca.pipeline import run_investigation
 
 INCIDENTS_PATH = ROOT / "data" / "sources" / "incidents.json"
@@ -54,7 +54,7 @@ Reguli de decizie (ECHIVALENȚĂ TEHNICĂ):
 """
 
 
-def verify_with_llm(candidate: str, true_cause: str) -> tuple[bool | None, str]:
+def verify_with_llm(candidate: str, true_cause: str, model: str | None = None) -> tuple[bool | None, str]:
     """Judecătorul (rca/judge.py). None = nu a putut da verdictul (eroare), diferit de "incorect"."""
     user_input = (
         f"CAUZA REALĂ (Ground Truth):\n{true_cause}\n\n"
@@ -62,7 +62,7 @@ def verify_with_llm(candidate: str, true_cause: str) -> tuple[bool | None, str]:
         "Identifică ipoteza candidată aceeași problemă tehnică de bază?"
     )
     try:
-        res: MatchVerdict = judge.ask_json(JUDGE_PROMPT, user_input, MatchVerdict)
+        res: MatchVerdict = judge.ask_json(JUDGE_PROMPT, user_input, MatchVerdict, model=model)
         return res.is_match, res.reason
     except Exception as exc:
         return None, f"Eroare arbitraj LLM: {exc}"
@@ -92,6 +92,12 @@ def parse_args() -> argparse.Namespace:
         help="Modul de arbitrare: 'auto' (rca/judge.py, config.JUDGE_MODEL) sau 'manual' (operator uman)",
     )
     parser.add_argument(
+        "--judge-model",
+        default=JUDGE_MODEL,
+        help="Modelul judecătorului (implicit config.JUDGE_MODEL). Un nume 'gemini-…' merge la Google, altul la Groq "
+             "(de ex. llama-3.3-70b-versatile: altă familie decât agenții, fără limita de ~20 cereri/zi a Gemini).",
+    )
+    parser.add_argument(
         "--incident",
         type=str,
         default=None,
@@ -101,30 +107,30 @@ def parse_args() -> argparse.Namespace:
 
 
 def evaluation_db() -> Path:
-    """A temporary copy of the database: the investigations of the evaluation never reach the application."""
-    import shutil
-    import tempfile
-
-    copy = Path(tempfile.mkdtemp()) / "evaluation.sqlite3"
-    shutil.copy(DB_PATH, copy)
-    return copy
+    """A database built from the source files, in a temporary folder (rca/kpi_evaluation.py): the same data at
+    every run, whatever was done in the application, which is never read or written."""
+    return kpi_evaluation.fresh_database()
 
 
 def percent(part: int, whole: int) -> float:
     return round(part / whole * 100, 2) if whole else 0.0
 
 
-def build_report(judge_mode: str, results: list[dict]) -> dict:
+def build_report(judge_mode: str, results: list[dict], judge_model: str = JUDGE_MODEL) -> dict:
     """Metrics over the incidents that count: run completed (not an error or FAILED) and judged."""
     counted = [item for item in results if item["counted"]]
     top1 = sum(1 for item in counted if item["top1_match"])
     topk = sum(1 for item in counted if item["topk_match"])
     hypotheses = sum(item["hypotheses_count"] for item in counted)
     return {
+        "script_version": kpi_evaluation.SCRIPT_VERSION,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "judge_mode": judge_mode,
         "agent_model": GROQ_MODEL,
-        "judge_model": JUDGE_MODEL if judge_mode == "auto" else "human",
+        "agent_models_used": sorted({model for item in results for model in item.get("models", [])}),
+        "judge_model": judge_model if judge_mode == "auto" else "human",
+        "selected": len(results),
+        "evaluated": len(counted),
         "total_incidents_selected": len(results),
         "total_incidents_evaluated": len(counted),
         "run_errors": [item["incident_id"] for item in results if item["outcome"] == "run_error"],
@@ -151,6 +157,7 @@ def save_report(report: dict) -> None:
 
 def main() -> None:
     args = parse_args()
+    kpi_evaluation.same_model_for_every_story()
 
     if not INCIDENTS_PATH.exists() or not ANSWER_KEY_PATH.exists():
         sys.exit("Eroare: Fișierele data/sources/incidents.json sau data/evaluation/answer_key.json lipsesc.")
@@ -176,7 +183,7 @@ def main() -> None:
         sys.exit("Nu s-au găsit incidente eligibile pentru evaluare.")
 
     eval_db = evaluation_db()  # the investigations stay out of the application
-    judge_name = JUDGE_MODEL if args.judge == "auto" else "operator uman"
+    judge_name = args.judge_model if args.judge == "auto" else "operator uman"
     print(f"=== EVALUARE KPI: ACURATEȚEA IPOTEZELOR ({len(incidents_to_evaluate)} incidente) ===")
     print(f"Model agenți: {GROQ_MODEL} | Judecător: {judge_name}\n")
 
@@ -200,6 +207,7 @@ def main() -> None:
             "topk_match": False,
             "hypotheses_count": 0,
             "evaluations": [],
+            "models": [],
             "error": None,
         }
         results.append(entry)
@@ -216,15 +224,16 @@ def main() -> None:
             entry["duration_seconds"] = time.time() - t0
             entry["error"] = f"{type(exc).__name__}: {exc}"
             print(f" EȘUAT ({exc}) după {entry['duration_seconds']:.1f}s.\n")
-            save_report(build_report(args.judge, results))
+            save_report(build_report(args.judge, results, args.judge_model))
             continue
         entry["duration_seconds"] = time.time() - t0
         entry["rca_status"] = record.status
+        entry["models"] = kpi_evaluation.models_used(record)
         print(f" gata în {entry['duration_seconds']:.1f}s (status {record.status}).")
 
         if record.status == "FAILED":  # a technical failure, not a judgement of the application
             entry["error"] = "FAILED: no usable answer from the agents"
-            save_report(build_report(args.judge, results))
+            save_report(build_report(args.judge, results, args.judge_model))
             continue
 
         hypotheses = record.hypotheses
@@ -235,7 +244,7 @@ def main() -> None:
             cand_text = hyp.candidate_root_cause
 
             if args.judge == "auto":
-                is_match, reason = verify_with_llm(cand_text, true_cause)
+                is_match, reason = verify_with_llm(cand_text, true_cause, args.judge_model)
                 symbol = {True: "✅ CORECT", False: "❌ INCORECT", None: "⚠️ FĂRĂ VERDICT"}[is_match]
                 print(f"\n   Ipoteza #{h_idx} [{hyp.confidence} - {hyp.confidence_points} pts]:")
                 print(f"   • Text:    {cand_text}")
@@ -265,9 +274,9 @@ def main() -> None:
 
         label = "FĂRĂ VERDICT" if undetermined else f"Top-1: {'✅' if top1 else '❌'} | Top-K: {'✅' if topk else '❌'}"
         print(f"\n   >>> Rezultat Incident {inc_id}: {label}\n")
-        save_report(build_report(args.judge, results))
+        save_report(build_report(args.judge, results, args.judge_model))
 
-    report = build_report(args.judge, results)
+    report = build_report(args.judge, results, args.judge_model)
     save_report(report)
 
     counted = report["total_incidents_evaluated"]

@@ -28,7 +28,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from rca.config import DB_PATH
+from rca import kpi_evaluation
+from rca.config import GROQ_MODEL
 from rca.pipeline import run_investigation
 
 INCIDENTS_PATH = ROOT / "data" / "sources" / "incidents.json"
@@ -57,13 +58,9 @@ def extract_confidence(hyp) -> tuple[str, int]:
 
 
 def evaluation_db() -> Path:
-    """A temporary copy of the database: the investigations of the evaluation never reach the application."""
-    import shutil
-    import tempfile
-
-    copy = Path(tempfile.mkdtemp()) / "evaluation.sqlite3"
-    shutil.copy(DB_PATH, copy)
-    return copy
+    """A database built from the source files, in a temporary folder (rca/kpi_evaluation.py): the same data at
+    every run, whatever was done in the application, which is never read or written."""
+    return kpi_evaluation.fresh_database()
 
 
 EVAL_DB: Path | None = None
@@ -106,7 +103,12 @@ def build_report(results: list[dict]) -> dict:
     calibrated = lambda items: sum(1 for item in items if item["is_calibrated"])  # noqa: E731
     weak_checked = [item for item in counted if item["weakly_supported_match"] is not None]
     return {
+        "script_version": kpi_evaluation.SCRIPT_VERSION,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "agent_model": GROQ_MODEL,
+        "agent_models_used": sorted({model for item in results for model in item.get("models", [])}),
+        "selected": len(results),
+        "evaluated": len(counted),
         "total_cases_selected": len(results),
         "total_cases": len(counted),
         "overall_calibration_rate_percent": percent(calibrated(counted), len(counted)),
@@ -139,6 +141,7 @@ def save_report(report: dict) -> None:
 
 def main() -> None:
     args = parse_args()
+    kpi_evaluation.same_model_for_every_story()
 
     if not INCIDENTS_PATH.exists() or not ANSWER_KEY_PATH.exists():
         sys.exit("Eroare: Fișierele incidents.json sau answer_key.json lipsesc.")
@@ -191,6 +194,7 @@ def main() -> None:
             "expected_weakly_supported": bench["expected_weakly_supported"],
             "actual_weakly_supported": None,
             "weakly_supported_match": None,
+            "models": [],
             "error": None,
         }
         results.append(entry)
@@ -213,6 +217,7 @@ def main() -> None:
 
         entry["duration_seconds"] = time.time() - t0
         entry["rca_status"] = record.status
+        entry["models"] = kpi_evaluation.models_used(record)
         print(f" gata în {entry['duration_seconds']:.1f}s (status {record.status}).")
 
         if record.status == "FAILED":  # a technical failure, not a judgement of the application
