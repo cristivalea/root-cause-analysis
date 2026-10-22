@@ -239,6 +239,23 @@ progress.
 To build the interface for production, run `npm run build` in `web/`. The result is in
 `web/dist/`, and `npm run preview` serves it on http://localhost:4173.
 
+### Run the application with Docker Compose
+
+With Docker Desktop running and a `.env` file containing `GROQ_API_KEY` and `JWT_SECRET`,
+run the following from the repository root:
+
+```powershell
+docker compose up --build
+```
+
+Open the interface at http://localhost:5173. Nginx serves the built React app and forwards
+its `/api` requests to the FastAPI container. The API documentation is at
+http://localhost:8000/docs. Ollama must be running on the host with `nomic-embed-text`
+available while an investigation is in progress.
+
+Stop the containers with `Ctrl+C`, or run `docker compose down` from another terminal in
+the repository root.
+
 ---
 
 ## Useful commands
