@@ -1,400 +1,226 @@
 # AI-assisted Root Cause Analysis (RCA)
 
-**Area:** Problem Management, large company
-**Status:** documentation phase, implementation not started
-**Last updated:** 2026-08-19
+An application that helps a Problem Manager find out why an incident keeps coming back.
+
+It gathers the past incidents and RCAs, the service dependencies, the recent changes and the
+logs, and writes a draft with the candidate root causes and the evidence behind each one. A
+Technical Expert then approves it, rejects it or asks for more details. **The AI does the
+searching; a person decides the cause.**
+
+- Every fact becomes a numbered piece of evidence before the model reasons, and a cause that
+  cites anything else is refused in code.
+- No RCA is final without the approval of an expert, whatever the confidence.
+- The application only recommends. It never changes a real system.
 
 ---
 
-## What this project is
+## Tech stack
 
-An application that helps a large company find out why an incident keeps coming back.
-
-The Problem Manager starts an investigation. The application searches the past incidents
-and past RCAs, checks the service dependencies, the recent changes and the logs, and
-writes a draft with candidate root causes and the evidence behind each one. A Technical
-Expert then approves it, rejects it, or asks for more evidence. Only after a human
-approves does the RCA become final.
-
-The AI does the searching and the correlation. The human decides the cause.
-
----
-
-## Why it is needed
-
-In ITIL, an incident is an interruption of a service and a problem is the cause behind one
-or more incidents. Restoring the service is Incident Management. Finding out why it broke
-is Problem Management, and that is where this application belongs.
-
-Today that investigation takes one to four weeks in a large company. Most of that time is
-not analysis. It is opening five or six different systems, searching each one separately,
-copying the results into a document and reading until something looks connected. The
-knowledge from past RCAs exists, but it is written in free text and is almost never found
-again.
-
-The application removes the searching, not the judgement. The expert starts from a
-prepared case instead of an empty page.
-
----
-
-## What it produces
-
-One final RCA record: the status, the validated root cause, the evidence behind it, the
-technical validation, the owner, and the dates. Every statement in it points back to the
-exact incident, change, log line or RCA section it came from.
-
-The record also suggests a possible workaround and says whether a change is likely to be
-needed. Those are recommendations. The application never creates a Known Error and never
-opens a Change Request, and it never takes any action on a real system.
-
----
-
-## Three rules the design is built on
-
-1. **The model proposes, the code executes.** Three LLM agents reason. Everything that
-   fetches data, validates output, calculates confidence or writes a record is ordinary
-   Python that can be tested without a model.
-2. **Nothing is cited that was not found.** Every fact collected becomes a numbered
-   evidence record first. A hypothesis that cites an identifier which is not in that list
-   is refused in code, not asked to behave better.
-3. **No RCA becomes final without a human.** The field holding the root cause stays empty
-   until a Technical Expert approves. There is no confidence level, however high, that
-   lets the application decide by itself.
-
----
-
-## The documentation
-
-The documents live in [`docs/`](docs/). Read them in order — each one builds on the one
-before it.
-
-| File | What it answers |
+| Part | Technology |
 |---|---|
-| [01-problem-definition.md](docs/01-problem-definition.md) | What problem we solve, what the objective is, what is in and out of scope |
-| [02-current-process.md](docs/02-current-process.md) | How an RCA is done today without AI, where it loses time, what AI can improve |
-| [03-proposed-solution.md](docs/03-proposed-solution.md) | What the new flow looks like, who does what, the states of an RCA, what goes in and what comes out |
-| [04-architecture.md](docs/04-architecture.md) | The components, the diagrams, the data workflow, the handoffs, the deployment |
-| [05-data-and-rag.md](docs/05-data-and-rag.md) | What data is needed, the entities, the mock data strategy, how ChromaDB is used |
-| [06-reasoning-and-execution.md](docs/06-reasoning-and-execution.md) | What reasons and what executes, the validation, the guardrails, the human approval |
-| [07-kpis.md](docs/07-kpis.md) | What we measure, how we compare with the manual process, when the project is successful |
+| Interface | React 18 + TypeScript (Vite, Tailwind), in English and Romanian |
+| Backend | FastAPI, SQLite |
+| Agents | LangGraph, open models on Groq |
+| Search | ChromaDB, embeddings with `nomic-embed-text` in Ollama (local) |
+| Tracing | Arize Phoenix (optional) |
 
-There is one more file, which is not part of the documentation itself:
-
-| File | What it is |
-|---|---|
-| [PROJECT_CONTEXT.md](docs/PROJECT_CONTEXT.md) | The working reference: all requirements, notes, decisions and open points. If anything disagrees with it, this file wins |
-
-### Where to start
-
-| If you want to | Read |
-|---|---|
-| Understand the project in five minutes | 01, then 03 |
-| Understand how it is built | 04, then 06 |
-| Work on the mock data | 05 |
-| Understand what we promise to prove | 02, then 07 |
+No GPU is needed and everything runs at zero licensing cost. All source systems are mock data.
 
 ---
 
-## How it is built
+## Requirements
 
-A summary. The detail, and the reason behind each choice, is in
-[04-architecture.md](docs/04-architecture.md).
-
-| Area | Choice |
-|---|---|
-| Reasoning model | Open-source model on the Groq free tier |
-| Embeddings | `nomic-embed-text`, run locally in Ollama |
-| Retrieval | ChromaDB, two collections: past incidents and past RCA sections |
-| Orchestration | LangGraph, as a state machine that routes but does not reason |
-| Backend | FastAPI |
-| Interface | React with TypeScript (Vite), one view per role, in English and Romanian |
-| Output validation | Pydantic, plus citation and content checks in plain Python |
-| Evaluation | RAGAS, against an answer key that the agents never see |
-| Observability and audit | Arize Phoenix with OpenTelemetry, plus an audit trail in the database |
-| Storage | SQLite for records, files for the mock sources |
-| Packaging | Docker Compose for the backend and Phoenix; the interface runs with npm |
-
-Everything runs at zero licensing cost. All source systems are mock data, built to look
-realistic.
-
----
-
-## Getting started
-
-This section takes you from a fresh clone to a running application. Follow the steps in
-order the first time. After that, you only need [Run the application](#run-the-application).
-
-### Prerequisites
-
-| Tool | Version | What it is used for |
+| Install | Version | Used for |
 |---|---|---|
-| [Python](https://www.python.org/downloads/) | 3.12 | Runs the backend, the scripts and the tests |
-| [Node.js](https://nodejs.org/en/download) | 20 or later, with npm | Runs the interface |
-| [Git](https://git-scm.com/downloads) | any recent | Clones the repository |
-| [Ollama](https://ollama.com/download) | any recent | Creates the embeddings for the search, locally |
-| A [Groq](https://console.groq.com/keys) account | free tier | Gives the API key for the reasoning model |
-| A [LangSmith](https://smith.langchain.com) account | free tier | Optional. Only needed to open the graph in LangGraph Studio |
+| [Python](https://www.python.org/downloads/) | 3.11 or 3.12 | Backend, scripts, tests |
+| [Node.js](https://nodejs.org/en/download) | 20 or later | Interface |
+| [Ollama](https://ollama.com/download) | any recent | Embeddings for the search |
+| [Groq API key](https://console.groq.com/keys) | free tier | The reasoning model |
 
-No GPU is needed. The reasoning runs on Groq, and Ollama only creates embeddings.
+---
 
-### 1. Clone the repository
+## Quick start
 
-```bash
-git clone <repository-url>
-cd root-cause-analysis
-```
+Run every command from the root of the repository. The first time, follow all the steps.
 
-### 2. Create a virtual environment and install the dependencies
-
-macOS / Linux:
+**1. Install the Python dependencies**
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-Windows (PowerShell):
-
-```powershell
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
-
-Every command below assumes the virtual environment is active.
-
-### 3. Add your API key
-
-Copy the example file and fill in your Groq key:
+**2. Configure**
 
 ```bash
-cp .env.example .env        # Windows: copy .env.example .env
+cp .env.example .env               # Windows: copy .env.example .env
 ```
 
-| Variable | Required | Default | What it does |
-|---|---|---|---|
-| `GROQ_API_KEY` | yes | — | The key from the Groq console |
-| `GROQ_MODEL` | no | `openai/gpt-oss-120b` | The model the agents use. `openai/gpt-oss-20b` is faster and has its own quota, useful for testing |
-| `RAGAS_DO_NOT_TRACK` | no | `true` | Stops RAGAS from sending usage statistics. Only used by the evaluation |
-| `RAGAS_JUDGE_MODEL` | no | `openai/gpt-oss-120b` | The model that judges the hypotheses in the evaluation |
+Fill in `GROQ_API_KEY` and `JWT_SECRET` in `.env`. The file explains each value.
 
-The `.env` file is ignored by Git. Never commit it.
-
-### 4. Start Ollama and download the embedding model
-
-Make sure Ollama is running (the desktop app, or `ollama serve` in a separate terminal),
-then download the model once:
+**3. Download the embedding model** (Ollama must be running)
 
 ```bash
 ollama pull nomic-embed-text
 ```
 
-The application expects Ollama at `http://localhost:11434`, which is its default address.
-
-### 5. Prepare the data
-
-The mock source files are already in the repository, in `data/`. Two local stores are built
-from them, and neither is committed to Git, so you build them once after cloning:
+**4. Build the data** (the mock files are in `data/`, the stores are built locally)
 
 ```bash
-python scripts/load_sources_sqlite.py --reset   # SQLite database: data/rca_sources.sqlite3
-python scripts/ingest_chroma.py --reset         # ChromaDB search index: chroma_db/
+python scripts/load_sources_sqlite.py --reset   # SQLite database
+python scripts/ingest_chroma.py --reset         # search index, a few minutes
 ```
 
-The second command needs Ollama running. It takes a few minutes the first time.
-
-### Run the application
-
-The application has two parts, and each runs in its own terminal. Start the backend first.
-
-**Terminal 1 — the backend (FastAPI):**
+**5. Create the users**
 
 ```bash
-uvicorn api:app --port 8000 --reload
+python scripts/create_user.py manager problem_manager
+python scripts/create_user.py expert technical_expert
 ```
 
-**Terminal 2 — the interface (React):**
+Each command asks for a password.
+
+**6. Start the application**, in two terminals:
+
+```bash
+uvicorn api:app --port 8000 --reload            # terminal 1: backend
+```
 
 ```bash
 cd web
-npm install        # only the first time, and after package.json changes
-npm run dev
+npm install                                     # first time only
+npm run dev                                     # terminal 2: interface
 ```
 
-| What | Address |
-|---|---|
-| The interface | http://localhost:5173 |
-| The backend API documentation (Swagger) | http://localhost:8000/docs |
-| The backend health check | http://localhost:8000/health |
+Open **http://localhost:5173** and sign in. The API documentation is at
+http://localhost:8000/docs.
 
-The interface does not read the database itself. It calls the backend, so it shows an error
-if the backend is not running. Ollama must also be running while an investigation is in
-progress.
-
-> The interface sends its requests to `/api`, and the development server passes them on to the
-> backend. If the backend runs somewhere else, set `API_URL` before `npm run dev`, for example
-> `API_URL=http://192.168.1.10:8000`. The default is `http://127.0.0.1:8000`.
-
-To build the interface for production, run `npm run build` in `web/`. The result is in
-`web/dist/`, and `npm run preview` serves it on http://localhost:4173.
+After the first time, only step 6 is needed.
 
 ---
 
-## Useful commands
+## Commands
 
-All commands run from the root of the repository, with the virtual environment active.
+### Tests
 
-### See the investigation graph in LangGraph Studio
+```bash
+python -m pytest                   # backend, without calling Groq
+python -m pytest -m live           # only the tests that call Groq (uses your quota)
 
-LangGraph Studio draws the graph of the investigation, lets you start a run, and shows the
-state after every node.
+cd web
+npm test                           # interface
+npm run lint
+npm run typecheck
+```
+
+### Interface for production
+
+```bash
+cd web
+npm run build                      # result in web/dist/
+npm run preview                    # serves it on http://localhost:4173
+```
+
+If the backend is not on `http://127.0.0.1:8000`, set `API_URL` before `npm run dev` or
+`npm run preview`.
+
+### One investigation from the terminal
+
+```bash
+python scripts/run_rca.py INC-2026-00482
+```
+
+### Change the mock data
+
+After editing the stories or the catalog in `scripts/mock_data/`:
+
+```bash
+python scripts/build_mock_data.py --check       # validate only
+python scripts/build_mock_data.py               # write the files in data/
+python scripts/load_sources_sqlite.py --reset   # reload the sources, problems and RCAs are kept
+python scripts/ingest_chroma.py --reset         # rebuild the search index
+```
+
+`load_sources_sqlite.py --reset-app` also starts the problems and RCAs again, keeping a copy in
+`data/backups/`. More in [scripts/README.md](scripts/README.md).
+
+### The graph in LangGraph Studio
 
 ```bash
 langgraph dev
 ```
 
-The command starts a local server at `http://127.0.0.1:2024` and opens Studio in the browser:
+Opens Studio at `https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024`. You
+need a free LangSmith account; the data stays local.
+
+### Tracing with Phoenix
+
+```bash
+docker compose up phoenix
+```
+
+Set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` in `.env` and restart the backend.
+The traces are at http://localhost:6006.
+
+### Evaluation
+
+```bash
+pip install -r requirements-eval.txt
+python scripts/evaluate_ragas.py retrieval
+python scripts/eval_kpi_accuracy.py
+python scripts/eval_kpi_confidence.py
+```
+
+The RAGAS results are written in `results/ragas/`, the KPI reports in `data/evaluation/`.
+
+---
+
+## Project structure
 
 ```text
-https://smith.langchain.com/studio/?baseUrl=http://127.0.0.1:2024
+api.py            FastAPI backend
+rca/              investigation pipeline, agents, guardrails, storage
+web/              React interface
+scripts/          data loading, users, evaluation
+data/             mock source data
+tests/            backend tests
+docs/             documentation
+diagrams/         diagrams of the documentation (draw.io)
 ```
 
-- Studio is a web page served by LangSmith, so you need to be signed in to a free LangSmith
-  account. Your data stays on the local server; no LangSmith API key is needed in `.env`.
-- The graph is read from `rca/pipeline.py:graph`, as set in `langgraph.json`. Studio always
-  shows the same pipeline the application runs.
-- To start a run, fill in the `incident_id` field of the input, for example
-  `INC-2026-00482`. The `owner` field is optional. The run uses Groq and Ollama, exactly like
-  the application.
-- Studio does not refresh on its own after you change the code. Stop the server with
-  `Ctrl+C` and start it again.
+---
 
-### Export the graph as an image
+## Documentation
 
-```bash
-python scripts/export_graph.py                  # Mermaid file and PNG, in diagrams/04-architecture/
-python scripts/export_graph.py --format mmd     # only the Mermaid file, fully offline
-python scripts/export_graph.py --out-dir docs   # write the files somewhere else
-```
-
-The PNG is drawn by the public service mermaid.ink, so the names of the graph nodes are sent
-to it. Use `--format mmd` to avoid that.
-
-### Run one investigation from the terminal
-
-Runs the whole pipeline without the interface, prints every step, and saves the draft RCA in
-the database:
-
-```bash
-python scripts/run_rca.py INC-2026-00482
-python scripts/run_rca.py INC-2026-00482 --owner "Jane Doe"
-```
-
-### Search the knowledge base directly
-
-Useful to check what the search finds before the agents see it:
-
-```bash
-python scripts/query_chroma.py --collection historical_incidents --query "database connection pool issue" --before "2026-07-14T14:32:00Z"
-python scripts/query_chroma.py --collection historical_rcas --query "Payment API timeout after deployment" --service "Payment API"
-```
-
-| Option | What it does |
+| File | What it answers |
 |---|---|
-| `--collection` | `historical_incidents` or `historical_rcas` |
-| `--before` | Only records older than this date, as the agents see them |
-| `--service` | Only records from this service |
-| `--max-distance` | How similar a result must be. Lower is stricter |
-| `--limit` | The maximum number of results (default 5) |
-
-### Rebuild the mock data
-
-The mock data is generated by a script, so it is the same on every machine. Run this after
-you change the stories or the catalog in `scripts/mock_data/`:
-
-```bash
-python scripts/build_mock_data.py --check       # build and validate only, write nothing
-python scripts/build_mock_data.py               # write the files in data/
-python scripts/load_sources_sqlite.py --reset   # reload the sources (problems and RCAs are kept)
-python scripts/load_sources_sqlite.py --reset-app  # only when the problems changed: also starts the
-                                                 # problems and RCAs again (a copy is kept in data/backups/)
-python scripts/ingest_chroma.py --reset         # rebuild the search index
-```
-
-More detail is in [scripts/README.md](scripts/README.md).
-
-### Run the tests
-
-```bash
-python -m pytest                    # all tests that do not call Groq
-python -m pytest tests/test_tools.py
-python -m pytest -m live            # only the tests that call the real Groq API
-```
-
-The live tests use your Groq quota. Set `GROQ_MODEL=openai/gpt-oss-20b` in `.env` to run them
-on the smaller model.
-
-The tests of the interface run in `web/`, without the backend:
-
-```bash
-npm test            # the pages and components, with fixed answers from the API
-npm run lint
-npm run typecheck
-```
-
-### Run the RAGAS evaluation
-
-The evaluation has its own dependencies, which are not needed to run the application:
-
-```bash
-python -m pip install -r requirements.txt -r requirements-eval.txt
-```
-
-```bash
-python scripts/evaluate_ragas.py retrieval                    # score the search (needs Ollama)
-python scripts/evaluate_ragas.py calibrate --thresholds 0.35 0.40 0.45 0.50 0.55
-python scripts/evaluate_ragas.py faithfulness --run-stories   # score the hypotheses (needs Groq)
-```
-
-Every run writes a new folder in `results/ragas/` and never changes the application data.
-The method and how to read the scores are explained in [ragas_project.md](ragas_project.md).
+| [01-problem-definition.md](docs/01-problem-definition.md) | The problem, the objective, the scope |
+| [02-current-process.md](docs/02-current-process.md) | How an RCA is done today, without AI |
+| [03-proposed-solution.md](docs/03-proposed-solution.md) | The new flow, the roles, the states of an RCA |
+| [04-architecture.md](docs/04-architecture.md) | The components, the diagrams, the data flow |
+| [05-data-and-rag.md](docs/05-data-and-rag.md) | The data, the mock data, how ChromaDB is used |
+| [06-reasoning-and-execution.md](docs/06-reasoning-and-execution.md) | The agents, the checks, the human approval |
+| [07-kpis.md](docs/07-kpis.md) | What we measure and when the project is successful |
 
 ---
 
 ## Troubleshooting
 
-| Problem | Cause and fix |
+| Problem | Fix |
 |---|---|
-| The interface says it can't reach the server | The backend is not running. Start it with `uvicorn api:app --port 8000` |
-| `npm` is not recognised | Node.js is not installed, or the terminal was opened before installing it. Install Node.js and open a new terminal |
-| `Connection refused` on port `11434` | Ollama is not running. Open the Ollama app or run `ollama serve` |
-| An investigation finds no past incidents or RCAs | The search index is empty. Run `python scripts/ingest_chroma.py --reset` |
-| `no such table` or an empty incident list | The database was not created. Run `python scripts/load_sources_sqlite.py --reset` |
-| Groq error `429` | The free tier limit was reached. The application waits and retries; wait a minute between runs |
-| `Activate.ps1 cannot be loaded` on Windows | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then activate again |
-| A change in the backend does not show in the interface | Without `--reload`, the backend keeps the old code. Stop it with `Ctrl+C` and start it again. Changes in `web/` show at once |
+| The interface can't reach the server | Start the backend: `uvicorn api:app --port 8000` |
+| `Lipsește JWT_SECRET` when the backend starts | Add `JWT_SECRET` to `.env` |
+| `Connection refused` on port 11434 | Start Ollama (the app, or `ollama serve`) |
+| No past incidents or RCAs are found | Run `python scripts/ingest_chroma.py --reset` |
+| `no such table` or an empty list | Run `python scripts/load_sources_sqlite.py --reset` |
+| Groq error `429` | The free limit was reached; wait a minute and try again |
+| `Activate.ps1 cannot be loaded` on Windows | Run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once |
+| `npm` is not recognised | Install Node.js and open a new terminal |
 
 ---
 
 ## Scope
 
-This project builds the **RCA** part of Problem Management, and only that.
-
-It does not build a full Problem Management system, does not manage incidents or changes,
-does not create Known Error records, and does not integrate with a real ITSM tool. Other
-components, such as a Known Error DB Curator, are built separately by other members of the
-team.
-
----
-
-## How these documents are written
-
-- In English, in simple and direct language.
-- One subject per file, so a change stays in one place.
-- Each thing is said once. If it belongs somewhere else, it is not repeated here.
-- Diagrams are written in Mermaid, so they render directly in the repository.
-- Every document has the same header, with the date it was last changed.
-
-When the application changes, the document changes with it. A document that no longer
-matches the code is worse than no document.
+This project builds only the RCA part of Problem Management. It does not manage incidents or
+changes, does not create Known Error records and does not connect to a real ITSM tool.
