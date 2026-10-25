@@ -24,10 +24,10 @@ function BrandPanel() {
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 -top-24 h-80 w-80 rounded-full border border-white/10" />
         <div className="absolute -left-10 -top-10 h-52 w-52 rounded-full border border-white/10" />
-        <div className="absolute -bottom-32 -right-20 h-[420px] w-[420px] rounded-full bg-emerald-400/10 blur-2xl" />
+        <div className="absolute -bottom-32 -right-20 h-[420px] w-[420px] rounded-full bg-sky-400/10 blur-2xl" />
         <LogoMark className="absolute -bottom-16 -right-10 h-[380px] w-[380px] text-white/[0.04]" />
       </div>
-      <Logo name={t("app.name")} className="relative text-lg" markClassName="h-10 w-10 text-emerald-300" />
+      <Logo name={t("app.name")} className="relative text-lg" markClassName="h-10 w-10 text-sky-300" />
       <div className="relative max-w-md">
         <h2 className="text-[34px] font-semibold leading-tight tracking-tight">{t("login.brand_title")}</h2>
         <p className="mt-4 text-[15px] leading-relaxed text-white/75">{t("login.brand_text")}</p>
@@ -35,13 +35,13 @@ function BrandPanel() {
           {points.map((key, index) => (
             <li key={key} className="flex items-center gap-3 text-sm text-white/90 animate-fade-up"
                 style={{ animationDelay: `${150 + index * 120}ms` }}>
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" aria-hidden="true" />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-sky-300" aria-hidden="true" />
               {t(key)}
             </li>
           ))}
         </ul>
       </div>
-      <p className="relative text-xs text-white/50">{t("app.tagline")}</p>
+      <p className="relative text-xs text-white/75">{t("app.tagline")}</p>
     </section>
   );
 }

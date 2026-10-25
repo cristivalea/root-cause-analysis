@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { clsx } from "clsx";
-import { AlertTriangle, Bot, Check, Loader2 } from "lucide-react";
-import type { InvestigationPlan, InvestigationStep } from "@/api/types";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import type { InvestigationPlan, InvestigationStep, RCARecord } from "@/api/types";
 import { useI18n } from "@/i18n/I18nProvider";
 import { formatSeconds } from "@/lib/format";
 import { StepDetails } from "./StepDetails";
-import { stepModels, stepSeconds, stepTitle, stepViews, type StepState } from "./steps";
+import { stepSeconds, stepTitle, stepViews, type StepState } from "./steps";
 
 const DOT: Record<StepState, string> = {
   done: "bg-brand-600 text-white border-brand-600",
@@ -22,14 +22,16 @@ function StateIcon({ state, index }: { state: StepState; index: number }) {
 }
 
 /** The investigation as a horizontal stepper (Ant Design "title placement" pattern): one dot per step,
- * its title under it, its state, time and model; the chosen step opens its details below. On a narrow
+ * its title under it, its state and time; the chosen step opens its details below. On a narrow
  * screen the row scrolls inside its own box. */
-export function Stepper({ trace, plan, running, failed, current }: {
+export function Stepper({ trace, plan, running, failed, current, record }: {
   trace: InvestigationStep[];
   plan: InvestigationPlan | null;
   running: boolean;
   failed: boolean;
   current: string | null;
+  /** The analysis, for what it received (shown in the details of its first step). */
+  record?: RCARecord;
 }) {
   const { t } = useI18n();
   const views = stepViews(trace, { running, failed, current });
@@ -48,7 +50,6 @@ export function Stepper({ trace, plan, running, failed, current }: {
         <ol className="grid min-w-[880px] gap-0" style={{ gridTemplateColumns: `repeat(${views.length}, minmax(0, 1fr))` }}>
           {views.map((view, index) => {
             const title = stepTitle(view.name);
-            const models = stepModels(view.step);
             const seconds = stepSeconds(view.step);
             const isSelected = selected === view.name;
             return (
@@ -74,12 +75,6 @@ export function Stepper({ trace, plan, running, failed, current }: {
                   <span className="mt-0.5 text-[11px] text-muted">
                     {view.state === "done" && seconds !== null ? formatSeconds(seconds, t) : t(`step.state.${view.state}`)}
                   </span>
-                  {models.length > 0 && (
-                    <span className="mt-1 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-[#EEE7FB] px-2 py-0.5 text-[10px] font-semibold text-[#4C2F96]" title={models.map((item) => `${item.provider} · ${item.model}`).join(", ")}>
-                      <Bot className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{models[0]!.model.split("/").pop()}</span>
-                    </span>
-                  )}
                 </button>
               </li>
             );
@@ -89,7 +84,7 @@ export function Stepper({ trace, plan, running, failed, current }: {
       {chosen ? (
         <div className="mt-3 rounded-card border border-brand-600/20 bg-brand-50/40 p-4 animate-fade-in sm:p-5">
           <p className="mb-3 font-semibold text-ink">{stepTitle(chosen.name) ? t(stepTitle(chosen.name)!) : chosen.name}</p>
-          <StepDetails view={chosen} plan={plan} />
+          <StepDetails view={chosen} plan={plan} record={record} />
         </div>
       ) : (
         <p className="mt-2 text-center text-xs text-muted">{t("inv.steps_hint")}</p>

@@ -49,7 +49,7 @@
         <mxCell id="24" edge="1" parent="1" source="10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="all records">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="25" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.2778;exitY=0.0;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="18" value="incidents, CMDB, changes">
+        <mxCell id="25" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.2778;exitY=0.0;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="18" value="incidents, problems, CMDB, changes">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="410" y="167" />
@@ -63,7 +63,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="27" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="15" value="incident and RCA text">
+        <mxCell id="27" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="15" value="incident text, RCA sections">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="28" edge="1" parent="1" source="15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="22" value="vectors">

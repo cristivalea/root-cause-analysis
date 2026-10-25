@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-19
+**Last updated:** 2026-10-22
 
 ---
 
@@ -17,13 +17,13 @@ A large company runs hundreds of IT services. Some incidents keep coming back. W
 happens, Problem Management must find out **why** it happens, not only restore the
 service. This investigation is called Root Cause Analysis.
 
-Today this work is manual. To investigate one recurring incident, a person has to:
+Today this work is manual. To investigate one recurring problem, a person has to:
 
-- read the current incident and find the older incidents that look similar,
+- read the incidents and decide which ones belong to the same problem,
 - search past RCA documents to see if the same thing happened before,
 - open the CMDB to understand what the affected service depends on,
-- check which changes and deployments happened before the incident,
-- read logs from the incident time window,
+- check which changes and deployments happened before the incidents,
+- read logs from the incident time windows,
 - put all of this together and write a conclusion.
 
 Each of these lives in a different system, with a different search, and often a different
@@ -47,19 +47,22 @@ The company loses time and money, and the knowledge it already has stays unused.
 ## 1.2 Objective
 
 Build an application that does the searching and correlation automatically, and gives
-the expert a **draft RCA with hypotheses and evidence**, ready to be reviewed.
+the expert a **draft RCA with candidate causes and evidence**, ready to be reviewed.
 
 The application must:
 
-1. Find the past incidents and past RCAs that are similar to the current one.
-2. Describe the pattern behind the recurrence: which service, under which conditions, and
+1. Propose which incidents belong together, so the Problem Manager can group them into a
+   problem. Every RCA starts from a problem.
+2. Find the past incidents and past RCAs that are similar to the problem, on the same service.
+3. Describe the pattern behind the recurrence: which service, under which conditions, and
    whether the failures follow a time pattern, for example every Monday during the payroll
    batch.
-3. Collect the technical evidence: service dependencies, recent changes, logs.
-4. Propose one or more candidate root causes, each supported by evidence with citations.
-5. Say clearly what it could not check.
-6. Ask a human Technical Expert to approve, reject, or request more evidence.
-7. Produce one final RCA record, visible to both the Problem Manager and the expert.
+4. Collect the technical evidence: service dependencies, recent changes, logs.
+5. Propose one or more candidate root causes, each supported by evidence with citations,
+   and a confidence level calculated by code.
+6. Say clearly what it could not check.
+7. Ask a human Technical Expert to approve, reject, or request more details.
+8. Keep every RCA with all its revisions and decisions, visible to both roles.
 
 What we want to achieve:
 
@@ -76,48 +79,60 @@ The AI never decides the root cause. It prepares the case. The human decides.
 
 ### What the application does
 
-- Starts an RCA for one incident that needs an investigation.
-- Builds the group of similar past incidents that form the recurring problem.
-- Runs the automatic investigation over four sources: past RCAs, CMDB, changes, logs.
-- Produces candidate root causes with confidence, evidence and citations.
-- Sends the draft to the Technical Expert for review.
-- Handles the three expert answers: approve, reject, request more evidence.
-- Lets the Problem Manager accept the validated RCA or send it back for clarification.
-- Stores the final RCA and shows it to both roles.
-- Records every step for audit: what was searched, what was decided, who approved.
+- Proposes groups of alike incidents as problems, and lets the Problem Manager accept,
+  reject, or create a problem by hand.
+- Lets the Problem Manager add or remove incidents, close and reopen a problem, and give
+  optional guidance for the investigation.
+- Starts an RCA for one problem, covering all its incidents.
+- Runs the automatic investigation over four sources: past RCAs and incidents, CMDB,
+  changes, logs.
+- Produces candidate root causes with confidence, evidence and citations, and a cause
+  diagram (5 Whys or Fishbone).
+- Sends the draft to the Technical Expert, when the Problem Manager decides to.
+- Handles the three expert answers: approve, reject, request more details.
+- Runs a new revision of the RCA when the expert asks for more details.
+- Closes the problem when the expert validates a root cause.
+- Records every step for audit: what was searched, what was decided, who decided it.
+- Shows four KPIs about how well the analysis works.
 
 ### Who uses it
 
 | Role | What they do |
 |---|---|
-| Problem Manager | Starts the RCA, follows the investigation, sends the draft to the expert, accepts the final RCA. Main user. |
-| Technical Expert | Reviews the hypotheses and the evidence, then approves, rejects, or asks for more evidence. |
+| Problem Manager | Groups incidents into problems, starts the RCA, follows the investigation, sends the draft to the expert, starts the next revision when the expert asks for more. Main user. |
+| Technical Expert | Reviews the RCAs sent to them: the candidate causes and the evidence, then approves, rejects, or asks for more details. |
 
-The Incident Manager is not a user of this application. Incidents arrive as data.
+Each user signs in with their own account, and the account has one of the two roles. The
+Incident Manager is not a user of this application. Incidents arrive as data.
 
 ### What the application produces
 
-One final RCA record containing: the status, the validated root cause, the evidence
-behind it, the technical validation, the RCA owner, the creation date and the completion
-date.
+One RCA per investigation of a problem. An RCA has one or more **revisions**: each run of
+the investigation is a revision, and every revision is kept. Each revision holds the
+candidate causes, the evidence behind them, the timeline, what could not be checked and
+the steps of the run.
 
-The record also carries two suggestions about what to do next: a possible workaround, and
-whether a change is likely to be needed. These are **recommendations, not actions**. The
-application never creates a Known Error and never opens a Change Request. It hands over a
-finished analysis, and the next process decides what to do with it.
+When the expert approves, the RCA is **validated**: it holds the validated root cause, the
+expert who decided, the comment, the dates, and it closes the problem.
+
+Each revision also carries two suggestions about what to do next: a possible workaround,
+and whether a change is likely to be needed. These are **recommendations, not actions**.
+The application never creates a Known Error and never opens a Change Request. It hands
+over a finished analysis, and the next process decides what to do with it.
 
 ---
 
 ## 1.4 Assumptions
 
-- The incidents that need an RCA are already identified and arrive as input. The
-  application does not decide which incident deserves an RCA.
+- The incidents arrive as input. The application proposes how to group them, but the
+  Problem Manager decides which incidents form a problem and which problem gets an RCA.
 - The company already has past RCA documents that can be searched.
 - CMDB, change records and logs exist and can be read.
 - For this project all four sources are mock data, built to look realistic.
 - Both users are internal employees. There is no external access.
 - The Technical Expert has the knowledge to judge whether a hypothesis is correct.
-- The application runs with an open-source model at zero cost.
+- The application runs at zero cost: an open-weight model on the Groq free tier, and a
+  local embedding model in Ollama.
 
 ---
 

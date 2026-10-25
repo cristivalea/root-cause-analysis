@@ -148,6 +148,18 @@ def test_the_proposals_are_of_three_kinds_with_a_stable_key_an_explained_score_r
     assert suggestions.proposals(db, embeddings) == found  # the same data gives the same proposals
 
 
+def test_every_reason_and_fact_comes_with_a_note_for_the_interface(db, embeddings):
+    """The interface says the notes in its own language: one note per English sentence, with a known code."""
+    an_incident_for_an_open_problem(db)
+    reasons = {"same_service", "same_ci", "text_alike", "same_errors", "days_apart", "more_alike", "closed_problem",
+               "busy_problem", "group", "looks_like_closed", "group_rejected", "attach_rejected", "major", "alone",
+               "looks_like_busy"}
+    for item in suggestions.proposals(db, embeddings):
+        assert len(item.reason_notes) == len(item.reasons) and len(item.evidence_notes) == len(item.evidence)
+        assert {note.code for note in item.reason_notes} <= reasons
+        assert {note.code for note in item.evidence_notes} <= {"ci_count", "error_types", "severities", "detected"}
+
+
 def test_an_incident_is_proposed_only_for_an_open_problem_and_a_closed_one_is_named_as_a_recurrence(db, embeddings):
     found = suggestions.proposals(db, embeddings)
     statuses = {item.problem_id: item.status for item in problems.list_problems(db_path=db)}

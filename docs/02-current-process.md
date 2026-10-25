@@ -2,7 +2,7 @@
 
 **Project:** AI-assisted Root Cause Analysis (RCA) application
 **Area:** Problem Management, large company
-**Last updated:** 2026-08-19
+**Last updated:** 2026-10-22
 
 ---
 
@@ -16,9 +16,9 @@ The short version:
 
 | Stage | How it is done today | Where it loses time | What the application changes |
 |---|---|---|---|
-| Spotting the recurrence | Weekly reports read by hand in Excel or Jira | Days or weeks; a pattern spread over several services is missed | Similar incidents are grouped automatically, by meaning and by time |
+| Spotting the recurrence | Weekly reports read by hand in Excel or Jira | Days or weeks; a pattern spread over several services is missed | Alike incidents are proposed as problems automatically; the Problem Manager decides |
 | Collecting the context | Five or six tools opened one by one: tickets, old RCAs, CMDB, change calendar, logs | Time lost switching between systems, each with its own search | All sources are queried in one run |
-| Finding the cause | Brainstorming from what the team remembers, then trial and error | Depends on who is available; the first plausible cause wins | The evidence is correlated and at least two hypotheses are written, each with its proof |
+| Finding the cause | Brainstorming from what the team remembers, then trial and error | Depends on who is available; the first plausible cause wins | The evidence is correlated and at least two candidate causes are written, each with its proof |
 | Writing it down | The document is written by hand, often incomplete | No common structure, so the task is avoided | A structured draft is ready before the review starts |
 
 The detailed version follows.
@@ -113,19 +113,20 @@ exactly the tasks a machine does well.
 The same four stages, today on the top row and with the application on the row below,
 and what the company gets out of the difference.
 
-![The four stages of an RCA, done by hand today and with the application, what the business gets, and the two KPIs](../diagrams/02-current-process/rca_problem_management.png)
+![The four stages of an RCA, done by hand today and with the application, what the business gets, and the four KPIs](../diagrams/02-current-process/rca_problem_management.png)
 
-*Figure 2.1 — The four stages of an RCA today and with the application, and what the business gets from the difference.*
+*Figure 2.1 — The four stages of an RCA today and with the application, what the business gets from the difference, and the four KPIs that measure it.*
 
 | Today | With the application |
 |---|---|
 | The expert searches five systems by hand | The system queries all sources automatically |
 | Old RCAs are found by keyword, or not at all | Old RCAs are found by meaning, using semantic search |
-| Similar incidents are spotted by memory | Similar incidents are grouped automatically |
-| The timeline is built manually in a spreadsheet | The timeline is built automatically from the collected evidence |
+| Similar incidents are spotted by memory | Alike incidents are proposed as one problem, by meaning |
+| The timeline is built manually in a spreadsheet | The timeline is built automatically from the collected evidence, with the first error marked |
 | Hypotheses come from one long meeting | A draft with hypotheses and evidence is ready before the meeting |
 | Usually one hypothesis is written | At least two are proposed, so alternatives are not lost |
 | "The logs showed errors" | Every statement points to the exact record it came from |
+| Past fixes are forgotten | A past RCA whose fix did not stop the problem is shown as such |
 | Each RCA looks different | Every RCA has the same structure |
 | Nobody records what was not checked | The gaps are written down explicitly |
 
@@ -140,6 +141,8 @@ failure in a real production system.
 
 These parts stay with people:
 
+- **The grouping.** The application proposes which incidents belong together; the Problem
+  Manager decides.
 - **The decision.** Only the Technical Expert confirms that a hypothesis is the real cause.
 - **Technical judgement.** Many things are not written in any system: how the service
   really behaves, what the team changed last month without a ticket, what is normal for

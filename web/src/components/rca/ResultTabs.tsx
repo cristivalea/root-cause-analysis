@@ -1,32 +1,27 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { clsx } from "clsx";
-import { AlertTriangle, CheckCircle2, CircleHelp, FileSearch, PenLine, ShieldCheck, Sparkles, Wrench } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleHelp, PenLine, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import { useDiagram } from "@/api/queries";
 import { revisionId, type Evidence, type EvidenceType, type RCARecord } from "@/api/types";
-import { useI18n } from "@/i18n/I18nProvider";
+import { useI18n, type Translate } from "@/i18n/I18nProvider";
 import type { MessageKey } from "@/i18n/en";
 import { Card, Id } from "@/components/ui/Card";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { PillTabs } from "@/components/ui/PillTabs";
 import { ConfidencePill, Pill } from "@/components/ui/Pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { evidenceSummary } from "@/lib/evidence";
 import { formatDateTime } from "@/lib/format";
-import { uniqueLines } from "@/lib/text";
 import { DiagramFrame } from "./DiagramFrame";
-import { EvidenceMap } from "./EvidenceMap";
+import { EvidenceChip, TYPE_TONE } from "./EvidenceChip";
 import { FishboneDiagram } from "./FishboneDiagram";
 import { FiveWhysDiagram } from "./FiveWhysDiagram";
 
-export type ResultTab = "inputs" | "causes" | "summary" | "evidence" | "not_verified" | "timeline" | "checks" | "cause_diagram" | "evidence_map" | "steps";
+export type ResultTab = "causes" | "summary" | "evidence" | "not_verified" | "timeline" | "checks" | "cause_diagram" | "steps";
 
 const TAB_LABEL: Record<ResultTab, MessageKey> = {
-  inputs: "tabs.inputs", causes: "tabs.causes", summary: "tabs.summary", evidence: "tabs.evidence", not_verified: "tabs.not_verified",
-  timeline: "tabs.timeline", checks: "tabs.checks", cause_diagram: "tabs.cause_diagram", evidence_map: "tabs.evidence_map", steps: "tabs.steps",
-};
-
-const TYPE_TONE: Record<EvidenceType, string> = {
-  INCIDENT: "bg-[#FDE2E1] text-[#7A1F1C]", LOG: "bg-[#E0ECFB] text-[#173E73]", CHANGE: "bg-[#FFE8CC] text-[#7A4300]",
-  CMDB: "bg-[#DDF2EE] text-[#0E4F47]", HISTORICAL_RCA: "bg-[#EEE7FB] text-[#4C2F96]", HISTORICAL_INCIDENT: "bg-[#FCE4F0] text-[#7D1F4C]",
+  causes: "tabs.causes", summary: "tabs.summary", evidence: "tabs.evidence", not_verified: "tabs.not_verified",
+  timeline: "tabs.timeline", checks: "tabs.checks", cause_diagram: "tabs.cause_diagram", steps: "tabs.steps",
 };
 
 function Heading({ children }: { children: ReactNode }) {
@@ -37,51 +32,16 @@ function Bullets({ items }: { items: string[] }) {
   return <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm leading-relaxed text-ink">{items.map((item, index) => <li key={index}>{item}</li>)}</ul>;
 }
 
-function EvidenceChip({ item }: { item: Evidence }) {
-  const { t } = useI18n();
-  return (
-    <span title={item.description} className={clsx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold", TYPE_TONE[item.type])}>
-      <FileSearch className="h-3 w-3" aria-hidden="true" />{item.evidence_id} · {t(`evidence.type.${item.type}`)} · {item.citation}
-    </span>
-  );
-}
-
-function evidenceLabel(record: RCARecord) {
+/** The evidence of a diagram node as people read it ("Change: Deploy auth-service…"), shorter than in the cards. */
+function evidenceLabel(record: RCARecord, t: Translate) {
   const known = new Map(record.evidence.map((item) => [item.evidence_id, item]));
-  return (ids: string[]) => ids.map((id) => ({ id, label: known.get(id) ? `${id} · ${known.get(id)!.citation}` : id }));
+  return (ids: string[]) => ids.map((id) => {
+    const item = known.get(id);
+    return { id, label: item ? `${t(`evidence.type.${item.type}`)}: ${evidenceSummary(item, 40)}` : id };
+  });
 }
 
 // ----------------------------------------------------------------------------------- the tabs
-
-function Inputs({ record }: { record: RCARecord }) {
-  const { t } = useI18n();
-  const context = record.context;
-  const guidance = record.guidance ?? context?.guidance ?? null;
-  const searches = [
-    guidance?.extra_services.length ? t("inputs.extra_services", { services: guidance.extra_services.join(", ") }) : null,
-    guidance?.change_window_days ? t("inputs.change_days", { days: guidance.change_window_days }) : null,
-    guidance?.log_hours_before ? t("inputs.log_hours", { hours: guidance.log_hours_before }) : null,
-  ].filter(Boolean) as string[];
-  const given: [MessageKey, ReactNode][] = [];
-  if (context?.notes) given.push(["inputs.notes", <p className="text-sm text-ink">{context.notes}</p>]);
-  if (context?.instructions) given.push(["inputs.instructions", <p className="text-sm text-ink">{context.instructions}</p>]);
-  if (context?.expert_request) given.push(["inputs.expert_request", <Bullets items={uniqueLines(context.expert_request)} />]);
-  if (searches.length) given.push(["inputs.searches", <Bullets items={searches} />]);
-  if (context?.previous_conclusions.length) given.push(["inputs.previous", <Bullets items={context.previous_conclusions} />]);
-  return (
-    <div className="flex flex-col gap-5">
-      {context && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div><Heading>{t("inputs.services")}</Heading><p className="mt-1 text-sm text-ink">{[...context.services, ...context.related_services].join(", ")}</p></div>
-          <div><Heading>{t("inputs.reference")}</Heading><p className="mt-1"><Id>{context.reference_incident_id}</Id></p></div>
-        </div>
-      )}
-      {given.length === 0 ? <p className="text-sm text-muted">{t("inputs.none")}</p> : given.map(([key, body]) => (
-        <div key={key} className="rounded-card border border-line p-4"><Heading>{t(key)}</Heading><div className="mt-1.5">{body}</div></div>
-      ))}
-    </div>
-  );
-}
 
 function Causes({ record }: { record: RCARecord }) {
   const { t } = useI18n();
@@ -279,7 +239,7 @@ export function CauseDiagram({ record, problem }: { record: RCARecord; problem: 
   const { t } = useI18n();
   const id = revisionId(record);
   const diagram = useDiagram(id, record.run_status === "COMPLETED");
-  const labels = evidenceLabel(record);
+  const labels = evidenceLabel(record, t);
   if (diagram.isPending) return <Skeleton className="h-80 rounded-card" />;
   if (diagram.isError) return <ErrorState error={diagram.error} title={t("diagram.unavailable")} onRetry={() => void diagram.refetch()} />;
   if (!diagram.data) return <EmptyState title={t("diagram.none")} />;
@@ -307,19 +267,6 @@ export function CauseDiagram({ record, problem }: { record: RCARecord; problem: 
   );
 }
 
-function EvidenceMapTab({ record, problem }: { record: RCARecord; problem: string }) {
-  const { t } = useI18n();
-  if (record.hypotheses.length === 0) return <EmptyState title={t("causes.none")} />;
-  return (
-    <div>
-      <p className="mb-3 text-sm text-muted">{t("diagram.evidence_text")}</p>
-      <DiagramFrame label={t("diagram.label_evidence")} maxHeight={560} className="bg-surface">
-        <EvidenceMap problem={problem} hypotheses={record.hypotheses} evidence={record.evidence} />
-      </DiagramFrame>
-    </div>
-  );
-}
-
 /** The parts of an analysis as rounded tabs; which ones, and in which order, is the page's choice. */
 export function ResultTabs({ record, problem, tabs, steps, defaultTab }: {
   record: RCARecord;
@@ -334,10 +281,10 @@ export function ResultTabs({ record, problem, tabs, steps, defaultTab }: {
     causes: record.hypotheses.length, evidence: record.evidence.length, not_verified: record.not_checked.length, timeline: record.timeline.length,
   }), [record]);
   const body: Record<ResultTab, ReactNode> = {
-    inputs: <Inputs record={record} />, causes: <Causes record={record} />, summary: <Summary record={record} />,
+    causes: <Causes record={record} />, summary: <Summary record={record} />,
     evidence: <EvidenceList record={record} />, not_verified: <NotVerified record={record} />, timeline: <Timeline record={record} />,
     checks: <Checks record={record} />, cause_diagram: <CauseDiagram record={record} problem={problem} />,
-    evidence_map: <EvidenceMapTab record={record} problem={problem} />, steps,
+    steps,
   };
   return (
     <PillTabs label={t("tabs.label")} value={tab} onChange={setTab}

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { clsx } from "clsx";
-import { ArrowLeft, CalendarDays, ChevronRight, CircleMinus, FileText, Info, Layers, ListChecks, Lock, Microscope, Plus, RotateCcw, Save, ShieldAlert, XCircle } from "lucide-react";
+import { ArrowLeft, ChevronRight, CircleMinus, FileText, Info, ListChecks, Lock, Microscope, Plus, RotateCcw, Save, ShieldAlert, XCircle } from "lucide-react";
 import { useCloseProblem, useDetachIncident, useIncidentIndex, useProblem, useReopenProblem, useSetGuidance, useStartRca } from "@/api/queries";
 import { ApiError } from "@/api/client";
 import { RCA_STATUSES, type Problem, type ProblemEvent, type RCARecord } from "@/api/types";
@@ -34,44 +34,27 @@ function latestRevisions(rcas: RCARecord[]): RCARecord[] {
   return [...latest.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 rounded-card bg-white/[0.07] px-4 py-3 ring-1 ring-white/10">
-      <span className="flex h-9 w-9 items-center justify-center rounded-control bg-white/10 text-emerald-200">{icon}</span>
-      <span>
-        <span className="block text-xs text-white/60">{label}</span>
-        <span className="tabular block font-semibold text-white">{value}</span>
-      </span>
-    </div>
-  );
-}
-
-function SummaryCard({ problem, rcaCount }: { problem: Problem; rcaCount: number }) {
+function SummaryCard({ problem }: { problem: Problem }) {
   const { t, language } = useI18n();
   return (
     <section className="relative overflow-hidden rounded-[20px] bg-brand-950 p-6 text-white shadow-card sm:p-8">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+      <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-400/10 blur-3xl" />
       <div className="relative flex flex-wrap items-center gap-2">
         <span className="tabular rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold text-white/80">{problem.problem_id}</span>
         <ProblemStatusPill status={problem.status} />
-        <span title={t("problem.priority_rule")}><PriorityPill priority={problem.priority} /></span>
+        <PriorityPill priority={problem.priority} />
         {problem.services.map((service) => (
           <span key={service} className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-medium text-white/80">{service}</span>
         ))}
       </div>
       <h1 className="relative mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">{problem.title}</h1>
-      <p className="relative mt-2 text-sm text-white/60">
+      <p className="relative mt-2 text-sm text-white/75">
         {t("problem.created_by", { name: problem.created_by, date: formatDate(problem.created_at, language) })}
         {problem.rca_id && <> · {t("problem.closed_by_rca", { rca: problem.rca_id })}</>}
         {!problem.rca_id && problem.close_reason && <> · {t("problem.closed_reason", { date: formatDate(problem.closed_at, language), reason: problem.close_reason })}</>}
       </p>
-      <div className="relative mt-6 grid gap-3 sm:grid-cols-3">
-        <Stat icon={<Layers className="h-4 w-4" aria-hidden="true" />} label={t("problem.stat.incidents")} value={problem.incidents.length} />
-        <Stat icon={<Microscope className="h-4 w-4" aria-hidden="true" />} label={t("problem.stat.rcas")} value={rcaCount} />
-        <Stat icon={<CalendarDays className="h-4 w-4" aria-hidden="true" />} label={t("problem.stat.created")} value={formatDate(problem.created_at, language)} />
-      </div>
       {problem.description && problem.description !== problem.title && (
-        <div className="relative mt-5 [&_button]:text-emerald-200 [&_button:hover]:text-white">
+        <div className="relative mt-5 [&_button]:text-sky-200 [&_button:hover]:text-white">
           <Disclosure label={t("problem.description")} icon={<FileText className="h-4 w-4" aria-hidden="true" />}>
             <p className="max-w-3xl text-sm leading-relaxed text-white/80">{problem.description}</p>
           </Disclosure>
@@ -272,10 +255,14 @@ function NextStepCard({ problem, rcas }: { problem: Problem; rcas: RCARecord[] }
         </Button>
       )}
 
+      {/* closing ends the work on the problem: a quiet link at the bottom, away from the main action */}
       {(problem.status === "Open" || problem.status === "Manual") && (
-        <Button variant="danger-ghost" className="mt-2 w-full" icon={<XCircle className="h-4 w-4" aria-hidden="true" />} onClick={() => setClosing(true)}>
-          {t("problem.close")}
-        </Button>
+        <div className="mt-5 border-t border-line pt-3 text-center">
+          <button type="button" onClick={() => setClosing(true)}
+                  className="inline-flex items-center gap-1.5 rounded-control px-2 py-1 text-sm text-muted transition-colors hover:text-danger focus-visible:text-danger">
+            <XCircle className="h-4 w-4" aria-hidden="true" />{t("problem.close_link")}
+          </button>
+        </div>
       )}
 
       <ConfirmDialog
@@ -395,7 +382,6 @@ export function ProblemDetailPage() {
   const detail = useProblem(problemId);
   const index = useIncidentIndex();
   const [details, setDetails] = useState<string | null>(null);
-  const rcaCount = useMemo(() => new Set(detail.data?.rcas.map((record) => record.rca_id)).size, [detail.data]);
 
   const back = (
     <Link to="/problems" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink">
@@ -416,7 +402,7 @@ export function ProblemDetailPage() {
   return (
     <>
       {back}
-      <SummaryCard problem={problem} rcaCount={rcaCount} />
+      <SummaryCard problem={problem} />
       {/* small screens read top-down: incidents, next step, RCAs, history; wide screens keep the next step on the right */}
       <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[auto_auto_1fr]">
         <div className="min-w-0 lg:col-start-1"><IncidentsCard problem={problem} onDetails={setDetails} /></div>

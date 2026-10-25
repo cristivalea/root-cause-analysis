@@ -122,6 +122,12 @@ export interface Candidate {
 
 export type ProposalKind = "group" | "attach" | "single";
 
+/** A reason or fact of a proposal as a code and its values (rca/suggestions.Note); the interface words it. */
+export interface Note {
+  code: string;
+  params: Record<string, unknown>;
+}
+
 export interface Proposal {
   key: string;
   kind: ProposalKind;
@@ -133,6 +139,8 @@ export interface Proposal {
   recurrence_of: string | null;
   score_label: string;
   score_meaning: string;
+  reason_notes?: Note[]; // the reasons as codes, in the same order (absent from an older server)
+  evidence_notes?: Note[]; // the facts as codes, in the same order
 }
 
 export interface Evidence {

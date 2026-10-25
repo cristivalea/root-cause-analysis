@@ -1,12 +1,13 @@
 import { clsx } from "clsx";
-import { Check } from "lucide-react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { useServices } from "@/api/queries";
 import { useI18n } from "@/i18n/I18nProvider";
 import { TextArea, TextInput } from "@/components/ui/Field";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { Skeleton } from "@/components/ui/States";
-import { CHANGE_DAYS, LOG_HOURS, draftErrors, type GuidanceDraft } from "./guidance";
+import { CHANGE_DAYS, DEFAULT_CHANGE_DAYS, DEFAULT_LOG_HOURS, LOG_HOURS, draftErrors, type GuidanceDraft } from "./guidance";
 
-/** The optional guidance of an investigation: notes, questions, more services, wider windows. */
+/** The optional guidance of an investigation: what is suspected, what to find out, and under "advanced" more services and wider windows. */
 export function GuidanceForm({ draft, onChange, disabled, exclude = [], searchesOnly = false }: {
   draft: GuidanceDraft;
   onChange: (draft: GuidanceDraft) => void;
@@ -23,17 +24,10 @@ export function GuidanceForm({ draft, onChange, disabled, exclude = [], searches
   const toggle = (service: string) =>
     set({ services: draft.services.includes(service) ? draft.services.filter((item) => item !== service) : [...draft.services, service] });
 
-  return (
-    <fieldset disabled={disabled} className="flex flex-col gap-4">
-      {!searchesOnly && (
-        <>
-          <p className="text-sm text-muted">{t("guidance.hint")}</p>
-          <TextArea label={t("guidance.notes")} hint={t("guidance.notes_help")} rows={2} value={draft.notes}
-                    onChange={(event) => set({ notes: event.target.value })} maxLength={4000} />
-          <TextArea label={t("guidance.instructions")} hint={t("guidance.instructions_help")} rows={2} value={draft.instructions}
-                    onChange={(event) => set({ instructions: event.target.value })} maxLength={4000} />
-        </>
-      )}
+  const advancedChanged = draft.services.length > 0 || draft.changeDays !== String(DEFAULT_CHANGE_DAYS) ||
+    draft.logHours !== String(DEFAULT_LOG_HOURS) || errors.changeDays || errors.logHours;
+  const searches = (
+    <>
       <div>
         <p className="text-sm font-medium text-ink">{t("guidance.services")}</p>
         <p className="text-xs text-muted">{t("guidance.services_help")}</p>
@@ -62,6 +56,26 @@ export function GuidanceForm({ draft, onChange, disabled, exclude = [], searches
                    onChange={(event) => set({ logHours: event.target.value })}
                    error={errors.logHours ? t("guidance.range", LOG_HOURS) : null} />
       </div>
+    </>
+  );
+
+  return (
+    <fieldset disabled={disabled} className="flex flex-col gap-4">
+      {!searchesOnly && (
+        <>
+          <p className="text-sm text-muted">{t("guidance.hint")}</p>
+          <TextArea label={t("guidance.notes")} hint={t("guidance.notes_help")} rows={2} value={draft.notes}
+                    onChange={(event) => set({ notes: event.target.value })} maxLength={4000} />
+          <TextArea label={t("guidance.instructions")} hint={t("guidance.instructions_help")} rows={2} value={draft.instructions}
+                    onChange={(event) => set({ instructions: event.target.value })} maxLength={4000} />
+        </>
+      )}
+      {searchesOnly ? searches : (
+        // the days, hours and extra services are settings of the search, not questions: folded away unless changed
+        <Disclosure label={t("guidance.advanced")} icon={<SlidersHorizontal className="h-4 w-4" aria-hidden="true" />} defaultOpen={advancedChanged}>
+          <div className="flex flex-col gap-4 pt-2">{searches}</div>
+        </Disclosure>
+      )}
     </fieldset>
   );
 }

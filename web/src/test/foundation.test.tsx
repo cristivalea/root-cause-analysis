@@ -44,6 +44,10 @@ describe("navigation rules", () => {
     expect(allowedFor("technical_expert", "/review/RCA-2026-00001")).toBe(true);
     expect(allowedFor("technical_expert", "/problems")).toBe(false);
     expect(allowedFor("technical_expert", "/")).toBe(true);
+    // not in the menu, but still the Problem Manager's page; the guide belongs to both roles
+    expect(allowedFor("problem_manager", "/investigation/RCA-2026-00001")).toBe(true);
+    expect(allowedFor("technical_expert", "/investigation/RCA-2026-00001")).toBe(false);
+    expect(allowedFor("technical_expert", "/how-it-works")).toBe(true);
   });
 
   it("shows the first, the last and the neighbours of the current page", () => {
@@ -107,7 +111,7 @@ describe("shell and guards", () => {
     renderApp(<App />, { route: "/" });
     const menu = screen.getAllByRole("navigation", { name: en["nav.label"] })[0]!;
     const links = within(menu).getAllByRole("link").map((link) => link.textContent);
-    expect(links).toEqual([en["nav.home"], en["nav.problems"], en["nav.proposals"], en["nav.investigation"], en["nav.history"], en["nav.kpis"]]);
+    expect(links).toEqual([en["nav.home"], en["nav.problems"], en["nav.proposals"], en["nav.history"], en["nav.kpis"]]);
   });
 
   it("takes the expert home from a Problem Manager page", async () => {
@@ -115,6 +119,17 @@ describe("shell and guards", () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse([]));
     renderApp(<App />, { route: "/problems" });
     expect(await screen.findByRole("heading", { level: 1, name: "Hello, tester" })).toBeInTheDocument();
+  });
+
+  it("keeps Home to the actions and opens how the application works from it", async () => {
+    signInAs("problem_manager", "manager");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse([]));
+    renderApp(<App />, { route: "/" });
+    expect(screen.queryByRole("heading", { name: en["home.how_title"] })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("link", { name: en["guide.link"] }));
+    expect(await screen.findByRole("heading", { level: 1, name: en["guide.title"] })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: en["home.how_title"] })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: en["home.claims_title"] })).toBeInTheDocument();
   });
 
   it("logs out from the user menu", async () => {

@@ -9,8 +9,9 @@ import { Card, Id } from "@/components/ui/Card";
 import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
 import { Disclosure } from "@/components/ui/Disclosure";
 import { TextArea, TextInput } from "@/components/ui/Field";
-import { SimilarityBar } from "@/components/ui/Pills";
+import { SimilarityPill } from "@/components/ui/Pills";
 import { useReport } from "@/lib/useReport";
+import { proposalTexts } from "./notes";
 
 /** What an accepted proposal made, for the confirmation the page shows. */
 export interface ProposalDone {
@@ -64,9 +65,10 @@ export function ProposalCard({ proposal, incidents, onDetails, index, onDone }: 
   index: number;
   onDone: (done: ProposalDone) => void;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const report = useReport();
   const accept = useAcceptProposal();
+  const said = proposalTexts(proposal, t, language);
   const reject = useRejectProposal();
   const [creating, setCreating] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -94,10 +96,10 @@ export function ProposalCard({ proposal, incidents, onDetails, index, onDone }: 
             )}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1" title={proposal.score_meaning}>
+        <div className="flex flex-col items-end gap-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t("proposals.similarity")}</span>
           {proposal.score !== null
-            ? <SimilarityBar score={proposal.score} label={`${t("proposals.similarity")} ${Math.round(proposal.score * 100)}%`} />
+            ? <SimilarityPill score={proposal.score} />
             : <span className="text-xs text-muted">{t("proposals.no_score")}</span>}
         </div>
       </div>
@@ -123,10 +125,10 @@ export function ProposalCard({ proposal, incidents, onDetails, index, onDone }: 
             ))}
           </ul>
         </Disclosure>
-        {proposal.evidence.length > 0 && (
+        {said.evidence.length > 0 && (
           <Disclosure label={t("proposals.sources")} icon={<FileSearch className="h-4 w-4" aria-hidden="true" />}>
             <ul className="flex flex-col gap-1.5 pl-1">
-              {proposal.evidence.map((fact) => (
+              {said.evidence.map((fact) => (
                 <li key={fact} className="flex gap-2 rounded-control bg-[#EEE7FB]/60 px-3 py-1.5 text-sm text-ink">
                   <FileSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7C5CCB]" aria-hidden="true" />{fact}
                 </li>
@@ -134,10 +136,10 @@ export function ProposalCard({ proposal, incidents, onDetails, index, onDone }: 
             </ul>
           </Disclosure>
         )}
-        {proposal.reasons.length > 0 && (
+        {said.reasons.length > 0 && (
           <Disclosure label={t("proposals.why")} icon={<Lightbulb className="h-4 w-4" aria-hidden="true" />}>
             <ul className="list-disc space-y-1 pl-6 text-sm text-muted">
-              {proposal.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+              {said.reasons.map((reason) => <li key={reason}>{reason}</li>)}
             </ul>
           </Disclosure>
         )}

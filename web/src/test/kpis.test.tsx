@@ -35,29 +35,40 @@ const report = (change: Partial<KpiReport> = {}): KpiReport => ({
   ...change,
 });
 
+/** The charts and the test on known cases are folded under "See the details" on every card. */
+async function openDetails() {
+  for (const button of screen.getAllByRole("button", { name: en["kpis.details"] })) await userEvent.click(button);
+}
+
 describe("KPI page", () => {
-  it("shows the four KPIs with their basis, the paper values of docs/KPIS.md, and no benchmark number without a valid report", async () => {
+  it("shows the four KPIs with their basis, their targets, and no benchmark number without a valid report", async () => {
     mockApi({ "GET /kpis": report() });
     renderApp(<App />, { route: "/kpis" });
     expect(await screen.findByText("60.2%")).toBeInTheDocument();
+    expect(screen.queryByText(/KPI 1/)).not.toBeInTheDocument();
+    await openDetails();
     expect(screen.getByText("63.64%")).toBeInTheDocument(); // the teammate's calculation, as written
     expect(screen.getByText("90%")).toBeInTheDocument();
     expect(screen.getAllByText("62.5%").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText(en["kpi4.ordered_no"])).toBeInTheDocument();
     expect(screen.getByText(en["kpis.bench.not_measured"])).toBeInTheDocument();
-    expect(screen.getByText(/written before the scripts were fixed/)).toBeInTheDocument();
+    expect(screen.getByText(/is out of date and is not shown/)).toBeInTheDocument();
+    expect(screen.queryByText(/scripts\//)).not.toBeInTheDocument();
     expect(screen.getAllByText(en["kpis.few"]).length).toBeGreaterThan(0); // 8–10 cases: a first signal
     expect(screen.getByText("9 min")).toBeInTheDocument();
   });
 
-  it("shows a measured exam with its date, the cases counted and the model", async () => {
+  it("shows a measured exam with its date and the cases counted, without the model or the excluded IDs", async () => {
     mockApi({ "GET /kpis": report({ benchmark: { ...report().benchmark, accuracy: {
       status: "measured", timestamp: "2026-10-16T09:00:00Z", agent_model: "openai/gpt-oss-120b", judge_model: "llama-3.3-70b-versatile",
       selected: 13, evaluated: 12, values: { top1_percent: 66.67, topk_percent: 91.67 }, excluded: ["INC-2026-00110"] } } }) });
     renderApp(<App />, { route: "/kpis" });
-    expect(await screen.findByText("91.67%")).toBeInTheDocument();
-    expect(screen.getByText(/12 of 13 cases counted · model openai\/gpt-oss-120b/)).toBeInTheDocument();
-    expect(screen.getByText(/INC-2026-00110/)).toBeInTheDocument();
+    await screen.findByText("60.2%");
+    await openDetails();
+    expect(screen.getByText("91.67%")).toBeInTheDocument();
+    expect(screen.getByText(/12 of 13 cases counted/)).toBeInTheDocument();
+    expect(screen.queryByText(/gpt-oss-120b/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/INC-2026-00110/)).not.toBeInTheDocument();
   });
 
   it("asks the server for the period chosen", async () => {
@@ -82,6 +93,7 @@ describe("KPI page", () => {
     mockApi({ "GET /kpis": report() });
     renderApp(<App />, { route: "/kpis" });
     await screen.findByText("60.2%");
+    await openDetails();
     expect(screen.getAllByText("50% (2/4)")).toHaveLength(2); // on the chart, and in the table for screen readers
     const low = screen.getByText(en["confidence.LOW"], { selector: "span" }).parentElement!;
     expect(low.querySelectorAll("[tabindex]")).toHaveLength(0);

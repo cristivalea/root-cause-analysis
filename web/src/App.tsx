@@ -17,6 +17,7 @@ const HistoryPage = lazy(() => import("@/pages/history/HistoryPage").then((m) =>
 const CasePage = lazy(() => import("@/pages/history/CasePage").then((m) => ({ default: m.CasePage })));
 const ReviewQueuePage = lazy(() => import("@/pages/review/ReviewQueuePage").then((m) => ({ default: m.ReviewQueuePage })));
 const ReviewPage = lazy(() => import("@/pages/review/ReviewPage").then((m) => ({ default: m.ReviewPage })));
+const HowItWorksPage = lazy(() => import("@/pages/guide/HowItWorksPage").then((m) => ({ default: m.HowItWorksPage })));
 const KpisPage = lazy(() => import("@/pages/kpis/KpisPage").then((m) => ({ default: m.KpisPage })));
 
 const loading = <div className="pt-2"><SkeletonList rows={4} /></div>;
@@ -29,6 +30,7 @@ export function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<HomePage />} />
+        <Route path="how-it-works" element={<Suspense fallback={loading}><HowItWorksPage /></Suspense>} />
         <Route path="problems" element={pm(<ProblemsPage />)} />
         <Route path="problems/:problemId" element={pm(<ProblemDetailPage />)} />
         <Route path="proposals" element={pm(<ProposalsPage />)} />

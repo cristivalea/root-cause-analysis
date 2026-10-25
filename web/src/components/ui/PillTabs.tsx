@@ -10,13 +10,15 @@ export interface PillTab<T extends string> {
 
 /** Rounded tabs with a pill that slides to the chosen one (the pattern of Aceternity's tabs). Arrow keys move
  * between tabs (Radix). The panel shows only the chosen tab, rendered by the caller as children. */
-export function PillTabs<T extends string>({ tabs, value, onChange, label, children, className }: {
+export function PillTabs<T extends string>({ tabs, value, onChange, label, children, className, aside }: {
   tabs: PillTab<T>[];
   value: T;
   onChange: (value: T) => void;
   label: string;
   children?: ReactNode;
   className?: string;
+  /** Shown at the end of the tab row, e.g. an action that belongs to the tabs. */
+  aside?: ReactNode;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const [pill, setPill] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
@@ -24,7 +26,8 @@ export function PillTabs<T extends string>({ tabs, value, onChange, label, child
   useLayoutEffect(() => {
     const update = () => {
       const active = listRef.current?.querySelector<HTMLElement>('[data-state="active"]');
-      if (active) setPill({ left: active.offsetLeft, top: active.offsetTop, width: active.offsetWidth, height: active.offsetHeight });
+      // no tab is chosen when the value belongs to the aside action: no pill then
+      setPill(active ? { left: active.offsetLeft, top: active.offsetTop, width: active.offsetWidth, height: active.offsetHeight } : null);
     };
     update();
     const observer = new ResizeObserver(update);
@@ -34,7 +37,7 @@ export function PillTabs<T extends string>({ tabs, value, onChange, label, child
 
   return (
     <Tabs.Root value={value} onValueChange={(next) => onChange(next as T)} className={className}>
-      <div className="-mx-1 px-1 pb-1">
+      <div className="-mx-1 flex flex-wrap items-center justify-between gap-3 px-1 pb-1">
         {/* many tabs wrap onto a second row instead of hiding behind a scroll */}
         <Tabs.List
           ref={listRef}
@@ -66,6 +69,7 @@ export function PillTabs<T extends string>({ tabs, value, onChange, label, child
             </Tabs.Trigger>
           ))}
         </Tabs.List>
+        {aside}
       </div>
       {children !== undefined ? (
         <Tabs.Content value={value} className="mt-5 outline-none" tabIndex={-1}>
