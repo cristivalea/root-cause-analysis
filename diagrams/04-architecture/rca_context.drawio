@@ -16,22 +16,22 @@
         <mxCell id="13" parent="1" style="rounded=1;arcSize=18;whiteSpace=wrap;html=1;fillColor=#ede9fe;strokeColor=#6d28d9;strokeWidth=2;fontSize=15;fontColor=#0f172a;verticalAlign=middle;spacingTop=30;" value="&lt;b&gt;RCA Application&lt;/b&gt;" vertex="1">
           <mxGeometry height="160" width="300" x="430" y="350" as="geometry" />
         </mxCell>
-        <mxCell id="16" edge="1" parent="1" source="10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="incidents, past RCAs, CMDB, changes, logs">
+        <mxCell id="16" edge="1" parent="1" source="10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.5;exitY=1.0;exitDx=0;exitDy=0;entryX=0.5;entryY=0.0;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="incidents, problems, past RCAs, CMDB, changes, logs">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="17" edge="1" parent="1" source="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2222;exitDx=0;exitDy=0;entryX=0.0;entryY=0.3438;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="incident to investigate">
+        <mxCell id="17" edge="1" parent="1" source="11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2222;exitDx=0;exitDy=0;entryX=0.0;entryY=0.3438;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="problem, guidance">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="18" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.0;exitY=0.6562;exitDx=0;exitDy=0;entryX=1.0;entryY=0.7778;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="11" value="final RCA">
+        <mxCell id="18" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.0;exitY=0.6562;exitDx=0;exitDy=0;entryX=1.0;entryY=0.7778;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="11" value="draft RCA, decision">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="19" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2812;exitDx=0;exitDy=0;entryX=0.0;entryY=0.1818;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="draft RCA">
+        <mxCell id="19" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.2812;exitDx=0;exitDy=0;entryX=0.0;entryY=0.1818;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="RCA to review">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="20" edge="1" parent="1" source="12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0.0;exitY=0.5;exitDx=0;exitDy=0;entryX=1.0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="13" value="decision">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="21" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.7188;exitDx=0;exitDy=0;entryX=0.0;entryY=0.8182;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="final RCA">
+        <mxCell id="21" edge="1" parent="1" source="13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1.0;exitY=0.7188;exitDx=0;exitDy=0;entryX=0.0;entryY=0.8182;entryDx=0;entryDy=0;strokeColor=#475569;strokeWidth=1.8;fontSize=12;fontColor=#334155;labelBackgroundColor=#ffffff;endArrow=block;endFill=1;endSize=6;" target="12" value="next revision">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="900" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#0f172a;" value="RCA application — context diagram" vertex="1">

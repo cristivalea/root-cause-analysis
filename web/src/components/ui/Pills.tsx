@@ -43,7 +43,8 @@ export function RcaStatusPill({ status }: { status: RCAStatus }) {
 }
 
 export function PriorityPill({ priority }: { priority: Priority }) {
-  return <Pill tone={PRIORITY_TONE[priority] ?? "neutral"} className="tabular">{priority}</Pill>;
+  const { t } = useI18n();
+  return <Pill tone={PRIORITY_TONE[priority] ?? "neutral"}>{t(`priority.${priority}`)}</Pill>;
 }
 
 export function SeverityPill({ severity }: { severity: Severity }) {
@@ -56,16 +57,23 @@ export function ConfidencePill({ confidence }: { confidence: Confidence }) {
   return <Pill tone={CONFIDENCE_TONE[confidence] ?? "neutral"}>{t(`confidence.${confidence}`)}</Pill>;
 }
 
-/** A 0–1 similarity shown as a percentage with a bar. The stored score is not changed: 0.873 → 87%. */
-export function SimilarityBar({ score, label, className }: { score: number; label: string; className?: string }) {
-  const percent = Math.round(Math.max(0, Math.min(1, score)) * 100);
-  return (
-    <div className={clsx("flex items-center gap-2", className)} title={label}>
-      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-neutral-soft" role="meter" aria-label={label}
-           aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}>
-        <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500" style={{ width: `${percent}%` }} />
-      </div>
-      <span className="tabular text-xs font-semibold text-ink">{percent}%</span>
-    </div>
-  );
+// the server proposes incidents together from 0.85 (rca/suggestions.TEXT_ALIKE_SAME_CI); "very" is clearly above
+const VERY_ALIKE = 0.92;
+const ALIKE = 0.85;
+
+export type SimilarityLevel = "very" | "alike" | "slight";
+
+/** A 0–1 text similarity in words, instead of a percentage that reads like a probability. */
+export function similarityLevel(score: number): SimilarityLevel {
+  return score >= VERY_ALIKE ? "very" : score >= ALIKE ? "alike" : "slight";
+}
+
+export const SIMILARITY_MIN: Record<Exclude<SimilarityLevel, "slight">, number> = { very: VERY_ALIKE, alike: ALIKE };
+
+const LEVEL_TONE: Record<SimilarityLevel, Tone> = { very: "brand", alike: "info", slight: "neutral" };
+
+export function SimilarityPill({ score, className }: { score: number; className?: string }) {
+  const { t } = useI18n();
+  const level = similarityLevel(score);
+  return <Pill tone={LEVEL_TONE[level]} className={className}>{t(`similarity.${level}`)}</Pill>;
 }

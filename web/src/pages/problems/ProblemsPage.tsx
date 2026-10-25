@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { clsx } from "clsx";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronRight, Layers } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Layers } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { MessageKey } from "@/i18n/en";
 import { useProblems } from "@/api/queries";
 import { PROBLEM_STATUSES, type Priority, type Problem } from "@/api/types";
 import { Id, PageHeader } from "@/components/ui/Card";
 import { PillTabs } from "@/components/ui/PillTabs";
+import { ROW_HOVER, RowChevron } from "@/components/ui/RowLink";
 import { FilterPopover, SearchInput } from "@/components/ui/Search";
 import { Pagination } from "@/components/ui/Pagination";
 import { PriorityPill, ProblemStatusPill } from "@/components/ui/Pills";
@@ -54,12 +55,10 @@ function ProblemRow({ problem }: { problem: Problem }) {
         to={`/problems/${problem.problem_id}`}
         aria-label={t("problems.row_label", {
           id: problem.problem_id, title: problem.title, status: t(`status.problem.${problem.status}`),
-          priority: problem.priority, count: problem.incidents.length,
+          priority: t(`priority.${problem.priority}`), count: problem.incidents.length,
         })}
         className={clsx(
-          "group block cursor-pointer rounded-card border border-line bg-surface px-4 py-3.5 shadow-card",
-          "transition-[background-color,border-color,box-shadow,transform] duration-150",
-          "hover:-translate-y-px hover:border-brand-600/40 hover:bg-brand-50 hover:shadow-pop",
+          "block cursor-pointer rounded-card border border-line bg-surface px-4 py-3.5 shadow-card", ROW_HOVER,
           GRID,
         )}
       >
@@ -74,7 +73,7 @@ function ProblemRow({ problem }: { problem: Problem }) {
           <Services services={problem.services} />
           <span><ProblemStatusPill status={problem.status} /></span>
           <span className="text-sm text-muted">{formatDate(problem.created_at, language)}</span>
-          <ChevronRight className="hidden h-5 w-5 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-brand-700 md:block" aria-hidden="true" />
+          <RowChevron className="hidden md:block" />
         </span>
       </Link>
     </li>
@@ -125,7 +124,7 @@ export function ProblemsPage() {
           <FilterPopover active={activeFilters} onClear={() => set({ priority: "", service: "", min: "1", from: "", to: "" })}>
             <Select label={t("problems.filter.priority")} value={filters.priority} onChange={(event) => set({ priority: event.target.value })}>
               <option value="">{t("common.all")}</option>
-              {PRIORITIES.map((item) => <option key={item} value={item}>{item}</option>)}
+              {PRIORITIES.map((item) => <option key={item} value={item}>{t(`priority.${item}`)}</option>)}
             </Select>
             <Select label={t("problems.filter.service")} value={filters.service} onChange={(event) => set({ service: event.target.value })}>
               <option value="">{t("common.all")}</option>

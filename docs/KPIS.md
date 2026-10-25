@@ -86,6 +86,10 @@ $$0{,}636363\dots \times 100 \approx \mathbf{63{,}64\%}$$
 
 > **RCA Process Efficiency Rate:** **`63,64%`** (reduction of human effort/interaction).
 
+### Live measurement in the application
+
+The KPIs page (`rca/kpis.py`, `GET /api/v1/kpis`) counts the real human steps of every RCA the expert decided, from its status history: 1 to start the RCA, 1 per sending to the expert, 1 per decision of the expert, 1 per further revision started, and 1 to read the final decision. The ideal path is the 4 steps above. Reduction = (11 − average) ÷ 11. The page also shows how many RCAs stayed on the ideal path and how many needed more steps.
+
 
 # KPI 2: Self-resolution rate
 
@@ -131,6 +135,10 @@ It measures the software architecture's ability to complete an end-to-end techni
 > **Conclusion:** After automating the process, the self-resolution rate increases from **`0%`** to **`62,5%`**.
 >
 > **Limitation:** the 62,5% applies to the normal path. If the guardrail refuses the draft in all 3 attempts, the RCA becomes `ESCALATED_MANUAL`; after a technical error it becomes `FAILED` and the PM must run it again. In both cases a human must intervene.
+
+### Live measurement in the application
+
+Every run of an investigation (every revision) that ended is counted. It finished on its own when it produced an analysis. It needed a person when it stopped on a technical error (`FAILED`), or when the guardrail refused the draft in every attempt (`ESCALATED_MANUAL` without a decision of the expert). Rate = runs finished on their own ÷ all runs. The design value of 62,5% is shown next to it.
 
 
 
@@ -192,6 +200,15 @@ Measurements are collected autonomously using the dedicated evaluation script (`
    - The JSON report (`data/evaluation/kpi_accuracy_report.json`) is rewritten after every incident and holds the aggregated scores, the RCA status and the detailed verdict for every hypothesis, providing a full audit trail.
    - Investigations run on a temporary copy of the database, so the application data is untouched.
 
+## 5. Live measurement in the application
+
+In the application the Technical Expert is the judge. Of the RCAs the expert decided for good (`VALIDATED`, `REJECTED`, or `ESCALATED_MANUAL` after the last request):
+
+- **Top-K** = validated ÷ decided;
+- **Top-1** = validated with the hypothesis that was first in the approved revision ÷ decided.
+
+The KPIs page shows the live values next to the benchmark of this script, when its report was written by the current version of the script.
+
 
 # KPI 4: Confidence Calibration & Correctness
 
@@ -212,3 +229,7 @@ $$\text{Confidence Calibration Rate} = \frac{\text{Scenarios where } \text{confi
 - **Mitigates Automation Bias:** Prevents the human expert from rubber-stamping weakly supported findings.
 - **Drives Observability Remediation:** A `LOW` confidence rating tells engineering teams that diagnostic telemetry is missing rather than offering false closure.
 - **Validates Deterministic Scoring:** Proves that the rule-based scoring engine in `rca/confidence.py` penalizes missing evidence correctly, irrespective of LLM prose generation.
+
+## 4. Live measurement in the application
+
+Every decision of the expert is grouped by the confidence of the first hypothesis of the revision it was taken on (HIGH, MEDIUM, LOW), and the share approved is computed for each level. The confidence is well calibrated when HIGH is approved more often than MEDIUM, and MEDIUM more often than LOW. The KPIs page shows it next to the benchmark of `scripts/eval_kpi_confidence.py`.

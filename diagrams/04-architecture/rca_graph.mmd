@@ -5,29 +5,29 @@ config:
 ---
 graph TD;
 	__start__([<p>__start__</p>]):::first
-	start(start)
-	similar_incidents(similar_incidents)
+	build_context(build_context)
 	investigation_planner(investigation_planner)
-	tools(tools)
-	historical_rca_agent(historical_rca_agent)
+	gather_evidence(gather_evidence)
+	build_timeline(build_timeline)
+	historical_review(historical_review)
 	rca_reasoning_agent(rca_reasoning_agent)
 	guardrail(guardrail)
 	confidence(confidence)
-	save_rca(save_rca)
+	save_revision(save_revision)
 	__end__([<p>__end__</p>]):::last
-	__start__ --> start;
-	confidence --> save_rca;
+	__start__ --> build_context;
+	build_context --> investigation_planner;
+	build_timeline --> historical_review;
+	confidence --> save_revision;
+	gather_evidence --> build_timeline;
 	guardrail -.-> confidence;
 	guardrail -.-> rca_reasoning_agent;
-	guardrail -.-> save_rca;
-	historical_rca_agent --> rca_reasoning_agent;
-	investigation_planner -.-> save_rca;
-	investigation_planner -.-> tools;
+	guardrail -.-> save_revision;
+	historical_review --> rca_reasoning_agent;
+	investigation_planner -.-> gather_evidence;
+	investigation_planner -.-> save_revision;
 	rca_reasoning_agent --> guardrail;
-	similar_incidents --> investigation_planner;
-	start --> similar_incidents;
-	tools --> historical_rca_agent;
-	save_rca --> __end__;
+	save_revision --> __end__;
 	classDef default fill:#f2f0ff,line-height:1.2
 	classDef first fill-opacity:0
 	classDef last fill:#bfb6fc

@@ -1,31 +1,16 @@
 import { Link } from "react-router-dom";
 import { clsx } from "clsx";
-import { ArrowRight, BookCheck, ClipboardCheck, FileSearch, FolderSearch, Lightbulb, ListChecks, Microscope, PlayCircle, Search, Send } from "lucide-react";
+import { useMemo } from "react";
+import { AlertTriangle, ArrowRight, FolderSearch, Lightbulb, MessageSquareText, Send } from "lucide-react";
 import { useUser } from "@/auth/AuthProvider";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useProblems, useRcas, useSummaries } from "@/api/queries";
+import type { RCARecord } from "@/api/types";
 import { Card, Id } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/States";
 import { Pill } from "@/components/ui/Pills";
-import { DiagramFrame } from "@/components/rca/DiagramFrame";
-import { FiveWhysDiagram } from "@/components/rca/FiveWhysDiagram";
 import { formatDateTime } from "@/lib/format";
-import { Claims, Hero, ProcessSteps, type Step } from "./HomeParts";
-
-const PM_STEPS: Step[] = [
-  { title: "home.pm.step1.title", text: "home.pm.step1.text", icon: Lightbulb },
-  { title: "home.pm.step2.title", text: "home.pm.step2.text", icon: PlayCircle },
-  { title: "home.pm.step3.title", text: "home.pm.step3.text", icon: Search },
-  { title: "home.pm.step4.title", text: "home.pm.step4.text", icon: ListChecks },
-  { title: "home.pm.step5.title", text: "home.pm.step5.text", icon: Send },
-];
-
-const TE_STEPS: Step[] = [
-  { title: "home.te.step1.title", text: "home.te.step1.text", icon: ClipboardCheck },
-  { title: "home.te.step2.title", text: "home.te.step2.text", icon: Microscope },
-  { title: "home.te.step3.title", text: "home.te.step3.text", icon: FileSearch },
-  { title: "home.te.step4.title", text: "home.te.step4.text", icon: BookCheck },
-];
+import { Hero } from "./HomeParts";
 
 function EntryCard({ to, title, text, icon: Icon, badge }: {
   to: string; title: string; text: string; icon: typeof FolderSearch; badge?: React.ReactNode;
@@ -33,7 +18,7 @@ function EntryCard({ to, title, text, icon: Icon, badge }: {
   return (
     <Link to={to}
           className="group flex items-start gap-3 rounded-card bg-white/10 p-4 text-white ring-1 ring-white/10 transition-colors hover:bg-white/15">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-emerald-300 text-brand-950">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-sky-300 text-brand-950">
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
@@ -48,29 +33,88 @@ function EntryCard({ to, title, text, icon: Icon, badge }: {
   );
 }
 
-/** "Move from symptoms toward explanations", with a small labelled example of a 5 Whys diagram. */
-function Symptoms() {
-  const { t } = useI18n();
-  const evidence = (id: string, label: string) => [{ id, label }];
+type TodoKind = "ready" | "more" | "failed";
+const TODO_ICON: Record<TodoKind, typeof Send> = { ready: Send, more: MessageSquareText, failed: AlertTriangle };
+const TODO_TONE: Record<TodoKind, string> = {
+  ready: "bg-brand-100 text-brand-700", more: "bg-info-soft text-info", failed: "bg-danger-soft text-danger",
+};
+const SHOWN = 4;
+
+/** One list of "To do now": the analyses waiting for one step of the Problem Manager, newest first, each
+ * opening its investigation, where that step is. */
+function TodoCard({ kind, items, loading, titles }: {
+  kind: TodoKind; items: RCARecord[]; loading: boolean; titles: Map<string, string>;
+}) {
+  const { t, language } = useI18n();
+  const Icon = TODO_ICON[kind];
   return (
-    <section aria-labelledby="symptoms-title" className="grid grid-cols-[minmax(0,1fr)] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div>
-        <h2 id="symptoms-title" className="text-xl font-semibold tracking-tight text-ink">{t("home.symptoms_title")}</h2>
-        <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-muted">{t("home.symptoms_text")}</p>
+    <Card className="flex flex-col p-5">
+      <div className="flex items-start gap-3">
+        <span className={clsx("flex h-9 w-9 shrink-0 items-center justify-center rounded-control", TODO_TONE[kind])}>
+          <Icon className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="flex items-center gap-2 font-semibold text-ink">
+            {t(`home.todo.${kind}`)}
+            {!loading && <span className="tabular rounded-full bg-neutral-soft px-2 text-xs text-muted">{items.length}</span>}
+          </h3>
+          <p className="mt-0.5 text-xs text-muted">{t(`home.todo.${kind}_text`)}</p>
+        </div>
       </div>
-      <div className="relative">
-        <Pill tone="brand" className="absolute left-3 top-3 z-10">{t("home.example")}</Pill>
-        <DiagramFrame label={t("diagram.example_label")} maxHeight={540} className="bg-surface">
-          <FiveWhysDiagram
-            problem={t("home.example_problem")}
-            steps={[
-              { text: t("home.example_why1"), evidence: evidence("1", t("home.example_ev1")) },
-              { text: t("home.example_why3"), evidence: evidence("3", t("home.example_ev3")) },
-            ]}
-            root={t("home.example_root")}
-            rootLabel={t("diagram.root_cause")}
-          />
-        </DiagramFrame>
+      <ul className="mt-4 flex flex-col gap-1.5">
+        {loading && [0, 1].map((key) => <li key={key}><Skeleton className="h-12 rounded-control" /></li>)}
+        {!loading && items.length === 0 && <li className="rounded-control bg-neutral-soft px-3 py-3 text-center text-sm text-muted">{t("home.todo.none")}</li>}
+        {items.slice(0, SHOWN).map((record) => (
+          <li key={record.rca_id}>
+            <Link to={`/investigation/${record.rca_id}`}
+                  className="group flex items-center gap-2 rounded-control border border-line px-3 py-2 transition-colors hover:border-brand-600/40 hover:bg-brand-50">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-ink" title={titles.get(record.rca_id)}>{titles.get(record.rca_id) ?? record.rca_id}</span>
+                <span className="block text-xs text-muted">{formatDateTime(record.created_at, language)}</span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-brand-700 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+            </Link>
+          </li>
+        ))}
+      </ul>
+      {items.length > SHOWN && (
+        <Link to="/history" className="mt-2 text-xs font-semibold text-brand-700 hover:underline">{t("home.todo.more_count", { count: items.length - SHOWN })}</Link>
+      )}
+    </Card>
+  );
+}
+
+/** "To do now": what waits for the Problem Manager (send, redo, try again), and a line on what waits for
+ * others (running, with the expert). Read from the statuses the API reports; nothing is guessed. */
+function Todo() {
+  const { t } = useI18n();
+  const drafts = useRcas("DRAFT");
+  const more = useRcas("REQUEST_MORE_DETAILS");
+  const failed = useRcas("FAILED");
+  const awaiting = useRcas("AWAITING_TECHNICAL_REVIEW");
+  const summaries = useSummaries();
+  const titles = useMemo(() => new Map((summaries.data ?? []).map((item) => [item.rca_id, item.title])), [summaries.data]);
+  const newest = (items: RCARecord[] | undefined) => [...(items ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  const ready = newest(drafts.data?.filter((record) => record.run_status === "COMPLETED"));
+  const running = drafts.data?.filter((record) => record.run_status === "RUNNING").length;
+  const loading = drafts.isPending || more.isPending || failed.isPending;
+  const nothing = !loading && ready.length === 0 && (more.data ?? []).length === 0 && (failed.data ?? []).length === 0;
+  return (
+    <section aria-labelledby="todo-title">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 id="todo-title" className="text-xl font-semibold tracking-tight text-ink">{t("home.todo_title")}</h2>
+          <p className="mt-1 text-sm text-muted">{nothing ? t("home.todo.all_clear") : t("home.todo_sub")}</p>
+        </div>
+        {running !== undefined && awaiting.data && (
+          <p className="text-sm text-muted">{t("home.todo.elsewhere", { running, awaiting: awaiting.data.length })}</p>
+        )}
+      </div>
+      {(drafts.isError || more.isError || failed.isError) && <p className="mt-3 text-sm text-danger">{t("error.load")}</p>}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <TodoCard kind="ready" items={ready} loading={loading} titles={titles} />
+        <TodoCard kind="more" items={newest(more.data)} loading={loading} titles={titles} />
+        <TodoCard kind="failed" items={newest(failed.data)} loading={loading} titles={titles} />
       </div>
     </section>
   );
@@ -81,15 +125,13 @@ function ManagerHome({ name }: { name: string }) {
   const problems = useProblems();
   const open = problems.data?.filter((item) => item.status === "Open").length;
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-8">
       <Hero name={name} intro="home.pm.intro">
         <EntryCard to="/problems" title={t("home.go_problems")} text={t("home.problems_text")} icon={FolderSearch}
                    badge={open !== undefined && <Pill tone="brand" className="bg-white/90">{t("home.open_count", { count: open })}</Pill>} />
         <EntryCard to="/proposals" title={t("home.go_proposals")} text={t("home.proposals_text")} icon={Lightbulb} />
       </Hero>
-      <ProcessSteps title="home.how_title" subtitle="home.how_sub" steps={PM_STEPS} />
-      <Symptoms />
-      <Claims />
+      <Todo />
     </div>
   );
 }
@@ -140,11 +182,9 @@ function Waiting() {
 
 function ExpertHome({ name }: { name: string }) {
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-8">
       <Hero name={name} intro="home.te.intro" />
       <Waiting />
-      <ProcessSteps title="home.te.how_title" steps={TE_STEPS} />
-      <Claims />
     </div>
   );
 }

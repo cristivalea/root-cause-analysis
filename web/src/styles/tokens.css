@@ -1,23 +1,23 @@
 /* The palette of docs/ui-ux-rebuild/design-system.md, as R G B triplets for Tailwind's alpha syntax. */
 :root {
-  --brand-950: 11 46 42;    /* #0B2E2A sidebar */
-  --brand-800: 14 79 71;    /* #0E4F47 */
-  --brand-700: 11 107 94;   /* #0B6B5E */
-  --brand-600: 15 127 111;  /* #0F7F6F primary */
-  --brand-100: 221 242 238; /* #DDF2EE */
-  --brand-50: 240 249 247;  /* #F0F9F7 */
-  --bg: 245 247 246;
+  --brand-950: 0 74 150;    /* #004A96 menu, login panel and page headers: the logo blue, deep enough for white text (8.7:1) and white/70 (5.1:1) */
+  --brand-800: 0 74 150;    /* #004A96 */
+  --brand-700: 0 94 189;    /* #005EBD links and hover: 6.3:1 on white */
+  --brand-600: 0 115 230;   /* #0073E6 primary, the blue of the Atos logo: 4.57:1 for white text on it */
+  --brand-100: 220 235 252; /* #DCEBFC */
+  --brand-50: 240 246 254;  /* #F0F6FE */
+  --bg: 245 247 250;
   --surface: 255 255 255;
-  --line: 226 232 230;
-  --ink: 24 33 31;
-  --muted: 90 103 99;
+  --line: 225 231 237;
+  --ink: 22 31 42;
+  --muted: 88 100 115;
   --success: 52 110 26;   /* 5.5:1 on success-soft (63 125 32 was 4.48, under WCAG AA) */
   --success-soft: 234 245 225;
   --warning: 154 91 0;
   --warning-soft: 253 241 220;
   --danger: 180 35 24;
   --danger-soft: 253 236 234;
-  --info: 37 99 168;
-  --info-soft: 231 240 250;
-  --neutral-soft: 238 241 240;
+  --info: 79 70 180;     /* indigo, so an information pill is not mistaken for the brand blue */
+  --info-soft: 237 236 251;
+  --neutral-soft: 238 241 245;
 }

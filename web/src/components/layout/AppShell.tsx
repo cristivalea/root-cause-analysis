@@ -24,7 +24,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           className={({ isActive }) =>
             clsx(
               "group flex h-10 items-center gap-3 rounded-control px-3 text-sm font-medium transition-colors duration-150",
-              isActive ? "bg-white/10 text-white shadow-[inset_3px_0_0_0_rgb(110_231_200)]" : "text-white/70 hover:bg-white/5 hover:text-white",
+              isActive ? "bg-white/10 text-white shadow-[inset_3px_0_0_0_rgb(125_211_252)]" : "text-white/70 hover:bg-white/5 hover:text-white",
             )
           }
         >
@@ -51,12 +51,12 @@ function UserMenu() {
         aria-label={t("user.menu")}
         className="flex w-full items-center gap-3 rounded-card bg-white/5 p-2.5 text-left text-white transition-colors hover:bg-white/10"
       >
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 to-teal-500 text-sm font-bold text-brand-950">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-brand-950">
           {initials(user.username)}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold">{user.username}</span>
-          <span className="block truncate text-xs text-white/60">{t(`role.${user.role}`)}</span>
+          <span className="block truncate text-xs text-white/75">{t(`role.${user.role}`)}</span>
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-white/50" aria-hidden="true" />
       </Menu.Trigger>
@@ -86,7 +86,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col gap-8 px-4 py-6">
       <NavLink to="/" onClick={onNavigate} className="rounded-control px-2 text-white">
-        <Logo name={t("app.name")} className="text-[17px]" markClassName="h-9 w-9 text-emerald-300" />
+        <Logo name={t("app.name")} className="text-[17px]" markClassName="h-9 w-9 text-sky-300" />
       </NavLink>
       <div className="flex-1">
         <NavLinks onNavigate={onNavigate} />

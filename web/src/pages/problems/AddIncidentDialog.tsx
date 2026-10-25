@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Id } from "@/components/ui/Card";
 import { TextInput } from "@/components/ui/Field";
 import { SearchInput } from "@/components/ui/Search";
-import { SeverityPill, SimilarityBar } from "@/components/ui/Pills";
+import { SeverityPill, SimilarityPill } from "@/components/ui/Pills";
 import { EmptyState, ErrorState, SkeletonList } from "@/components/ui/States";
 import { useReport } from "@/lib/useReport";
 
@@ -106,7 +106,7 @@ export function AddIncidentDialog({ problemId, open, onOpenChange, onDetails }: 
                   <Id>{item.incident_id}</Id>
                   <span className="order-last col-span-2 flex items-center gap-2 sm:order-none sm:col-span-1">
                     {item.similarity !== null
-                      ? <SimilarityBar score={item.similarity} label={t("problem.similarity_of", { percent: Math.round(item.similarity * 100) })} />
+                      ? <SimilarityPill score={item.similarity} />
                       : <span className="text-xs text-muted">—</span>}
                     {item.alike && (
                       <span title={t("problem.alike_help")} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-700">

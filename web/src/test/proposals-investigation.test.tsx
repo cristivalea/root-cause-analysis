@@ -3,8 +3,12 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { App } from "@/App";
 import { en } from "@/i18n/en";
-import type { InvestigationStep, Proposal } from "@/api/types";
+import type { Evidence, InvestigationStep, Proposal } from "@/api/types";
 import { filterProposals } from "@/pages/proposals/proposalFilters";
+import { noteText, proposalTexts } from "@/pages/proposals/notes";
+import { evidenceSummary } from "@/lib/evidence";
+import { format, type Translate } from "@/i18n/I18nProvider";
+import { ro } from "@/i18n/ro";
 import { stepModels, stepViews } from "@/components/rca/steps";
 import { incident, mockApi, problem, rca } from "./fixtures";
 import { renderApp, signInAs } from "./render";
@@ -46,14 +50,15 @@ describe("proposal filters", () => {
 });
 
 describe("Proposed problems page", () => {
-  it("shows the similarity as a percentage and rejects only with a reason", async () => {
+  it("shows the similarity in words and rejects only with a reason", async () => {
     const calls = mockApi({
       "GET /proposals": [proposal("PP-1", {})], "GET /incidents": incidents,
       "POST /proposals/reject": { key: "PP-1", rejected: true },
     });
     renderApp(<App />, { route: "/proposals" });
     expect(await screen.findByText("New problem with 2 incidents")).toBeInTheDocument();
-    expect(screen.getByText("93%")).toBeInTheDocument();
+    expect(screen.getByText(en["similarity.very"])).toBeInTheDocument();
+    expect(screen.queryByText("93%")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: en["proposals.reject"] }));
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(within(dialog).getByRole("button", { name: en["proposals.reject"] }));
@@ -130,6 +135,46 @@ describe("investigation steps", () => {
   });
 });
 
+describe("proposal notes", () => {
+  const t: Translate = (key, values) => format(en[key], values);
+  const tRo: Translate = (key, values) => format(ro[key], values);
+
+  it("words the reasons and facts plainly, in the language of the interface", () => {
+    expect(noteText({ code: "text_alike", params: { incident: "INC-1", title: "Pool exhausted", similarity: 0.95 } }, t, "en"))
+      .toBe("The description is very much like that of INC-1: “Pool exhausted”.");
+    expect(noteText({ code: "alone", params: { severity: "SEV-3" } }, tRo, "ro")).toContain("gravitate medie");
+    expect(noteText({ code: "days_apart", params: { incident: "INC-1", days: 0 } }, tRo, "ro")).toBe("A apărut în aceeași zi cu INC-1.");
+    expect(noteText({ code: "severities", params: { counts: { "SEV-1": 2, "SEV-3": 1 } } }, t, "en")).toBe("Severity: critical: 2, medium: 1.");
+  });
+
+  it("keeps the English sentence for a code it does not know, and for a server without notes", () => {
+    expect(noteText({ code: "something_new", params: {} }, t, "en")).toBeNull();
+    const base: Omit<Proposal, "reasons" | "evidence"> = { key: "PP-1", kind: "group", incident_ids: [], problem_id: null, score: null, recurrence_of: null, score_label: "", score_meaning: "" };
+    expect(proposalTexts({ ...base, reasons: ["Same service: payments."], evidence: [],
+      reason_notes: [{ code: "something_new", params: {} }], evidence_notes: [] }, t, "en").reasons).toEqual(["Same service: payments."]);
+    expect(proposalTexts({ ...base, reasons: ["Old text."], evidence: ["Old fact."] }, t, "en")).toEqual({ reasons: ["Old text."], evidence: ["Old fact."] });
+  });
+});
+
+describe("evidence in plain words", () => {
+  const evidence = (type: Evidence["type"], description: string): Evidence =>
+    ({ evidence_id: "EV-001", type, source: "x", description, citation: "X-1", timestamp: null, related_ids: [], service: null });
+
+  it("takes the short part of each pattern the code writes, and the start of anything else", () => {
+    expect(evidenceSummary(evidence("LOG", '18 ERROR log line(s) of type OOMKilled between 2026-04-04 11:58 and 12:47 UTC, the first 12 minutes before detection.')))
+      .toBe("OOMKilled (18×)");
+    expect(evidenceSummary(evidence("LOG", "On Auth DB, a dependency: 3 WARN log line(s) of type SlowQuery between …"))).toBe("SlowQuery (3×) · Auth DB");
+    expect(evidenceSummary(evidence("CHANGE", "Deploy auth-service Helm chart 5.2.0 on CI-AUTH-APP: Chart upgrade."))).toBe("Deploy auth-service Helm chart 5.2.0");
+    expect(evidenceSummary(evidence("CMDB", "auth-service (CI-AUTH-APP) depends_on auth-postgresql (CI-AUTH-DB, database)."))).toBe("auth-service → auth-postgresql");
+    expect(evidenceSummary(evidence("INCIDENT", "The incident under investigation, INC-1 on Auth (SEV-1), detected 2026-04-04 12:10 UTC: Auth restarts. More.")))
+      .toBe("Auth restarts");
+    expect(evidenceSummary(evidence("HISTORICAL_RCA", "Past RCA RCA-2025-00305 for Auth, completed 2025-10-24. Summary: Pods killed for memory. Fixed.")))
+      .toBe("Pods killed for memory");
+    expect(evidenceSummary(evidence("CHANGE", "Release 4.2"))).toBe("Release 4.2");
+    expect(evidenceSummary(evidence("CHANGE", "a".repeat(100)), 20)).toHaveLength(20);
+  });
+});
+
 describe("Investigation page", () => {
   const record = rca({
     rca_id: "RCA-2026-00005", problem_id: "PRB-2026-00001", status: "DRAFT",
@@ -146,11 +191,20 @@ describe("Investigation page", () => {
     "GET /problems/PRB-2026-00001": { problem: problem(1), events: [], rcas: [record] }, "GET /incidents": [],
   };
 
-  it("shows the steps with their model, the candidate causes, and sends the draft to the expert after a confirmation", async () => {
+  it("folds the finished steps away (the model only in a step's details), shows the causes, and sends the draft after a confirmation", async () => {
     const calls = mockApi({ ...routes, "POST /rcas/RCA-2026-00005/submit-review": { ...record, status: "AWAITING_TECHNICAL_REVIEW" } });
     renderApp(<App />, { route: "/investigation/RCA-2026-00005" });
     expect(await screen.findByText("A release left sessions open")).toBeInTheDocument();
-    expect(screen.getByText("gpt-oss-120b")).toBeInTheDocument();
+    expect(screen.queryByText(/gpt-oss-120b/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: /Inputs/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: en["inv.steps_toggle"] }));
+    await userEvent.click(screen.getByRole("button", { name: /^Plan the investigation/ }));
+    expect(screen.getByText(/gpt-oss-120b/)).toBeInTheDocument();
+    // the evidence reads "Change: Release 4.2"; its codes are in the details behind the info button
+    expect(screen.queryByText(/CHG-2026-00001/)).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: en["evidence.details"].replace("{label}", "Change: Release 4.2") }));
+    expect(await screen.findByText("CHG-2026-00001")).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: en["next.send"] }));
     const dialog = await screen.findByRole("dialog");
     expect(calls.some((call) => call.method === "POST")).toBe(false);

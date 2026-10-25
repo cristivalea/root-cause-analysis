@@ -113,7 +113,7 @@ describe("Problem page", () => {
       "POST /problems/PRB-2026-00001/close": () => jsonResponse({ detail: "The problem has an RCA in progress." }, 409),
     });
     renderApp(<App />, { route: "/problems/PRB-2026-00001" });
-    await userEvent.click(await screen.findByRole("button", { name: en["problem.close"] }));
+    await userEvent.click(await screen.findByRole("button", { name: en["problem.close_link"] }));
     const dialog = await screen.findByRole("dialog");
     await userEvent.type(within(dialog).getByLabelText(/Reason/), "Duplicate");
     await userEvent.click(within(dialog).getByRole("button", { name: en["problem.close"] }));
@@ -150,7 +150,7 @@ describe("Problem page", () => {
 
     mockApi({ ...common, "GET /problems/PRB-2026-00001": detail({ ...open, status: "Manual" }) });
     const manual = renderApp(<App />, { route: "/problems/PRB-2026-00001" });
-    expect(await screen.findByRole("button", { name: en["problem.close"] })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: en["problem.close_link"] })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: en["problem.start"] })).not.toBeInTheDocument();
     manual.unmount();
     vi.restoreAllMocks();
@@ -158,7 +158,7 @@ describe("Problem page", () => {
     mockApi({ ...common, "GET /problems/PRB-2026-00001": detail({ ...open, status: "Closed" }) });
     renderApp(<App />, { route: "/problems/PRB-2026-00001" });
     expect(await screen.findByRole("button", { name: en["problem.reopen"] })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: en["problem.close"] })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: en["problem.close_link"] })).not.toBeInTheDocument();
   });
 
   it("does not let the last incident be removed", async () => {

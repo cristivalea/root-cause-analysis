@@ -34,7 +34,7 @@ export function EmptyState({ title, text, action, icon }: { title: string; text?
 }
 
 /** A failed load: what happened in plain words, a retry, and the server's own message folded away. */
-export function ErrorState({ error, onRetry, title }: { error: unknown; onRetry?: () => void; title?: string }) {
+export function ErrorState({ error, onRetry, title, retryLabel }: { error: unknown; onRetry?: () => void; title?: string; retryLabel?: string }) {
   const { t } = useI18n();
   const detail = error instanceof ApiError ? `${error.status || "—"} · ${error.detail}` : String(error);
   return (
@@ -47,7 +47,7 @@ export function ErrorState({ error, onRetry, title }: { error: unknown; onRetry?
             <p className="break-words text-xs text-muted">{detail}</p>
           </Disclosure>
         </div>
-        {onRetry && <Button size="sm" onClick={onRetry}>{t("common.retry")}</Button>}
+        {onRetry && <Button size="sm" onClick={onRetry}>{retryLabel ?? t("common.retry")}</Button>}
       </div>
     </div>
   );

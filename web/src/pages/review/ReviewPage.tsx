@@ -95,8 +95,10 @@ export function ReviewPage() {
   const [decided, setDecided] = useState<Decided | null>(null);
   const navigate = useNavigate();
 
+  // an RCA that waits for nothing came from the "Checked" tab: go back there
+  const checked = record.data !== undefined && record.data.status !== "AWAITING_TECHNICAL_REVIEW";
   const back = (
-    <Link to="/review" className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink">
+    <Link to={checked ? "/review?tab=checked" : "/review"} className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink">
       <ArrowLeft className="h-4 w-4" aria-hidden="true" />{t("review.back")}
     </Link>
   );
@@ -134,9 +136,9 @@ export function ReviewPage() {
       )}
 
       <ResultTabs record={rca} problem={title}
-                  tabs={["steps", "causes", "timeline", "summary", "evidence", "not_verified", "evidence_map"]}
+                  tabs={["steps", "causes", "timeline", "summary", "evidence", "not_verified"]}
                   defaultTab="causes"
-                  steps={<Card className="p-5"><Stepper trace={rca.trace} plan={rca.plan} running={rca.run_status === "RUNNING"} failed={rca.run_status === "FAILED"} current={rca.current_step} /></Card>} />
+                  steps={<Card className="p-5"><Stepper trace={rca.trace} plan={rca.plan} running={rca.run_status === "RUNNING"} failed={rca.run_status === "FAILED"} current={rca.current_step} record={rca} /></Card>} />
 
       {waiting ? <ReviewDecisions record={rca} onDecided={setDecided} /> : <Outcome record={rca} />}
       <SuccessDialog open={decided !== null} onOpenChange={(open) => !open && setDecided(null)}

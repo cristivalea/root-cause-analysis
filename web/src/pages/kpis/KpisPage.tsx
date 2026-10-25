@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { clsx } from "clsx";
-import { AlertTriangle, CheckCircle2, FlaskConical, HelpCircle, Info, Scale } from "lucide-react";
+import { AlertTriangle, BarChart3, CheckCircle2, FlaskConical, HelpCircle, Info, Scale } from "lucide-react";
 import { useKpis } from "@/api/queries";
 import type { KpiBenchmark, KpiReport } from "@/api/types";
 import { useI18n, type Translate } from "@/i18n/I18nProvider";
@@ -25,7 +25,7 @@ function startOf(period: Period): string | null {
   return `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
 }
 
-// as computed, at most two decimals (the 63.64 % of docs/KPIS.md stays 63.64 %)
+// as computed, at most two decimals (63.64 % stays 63.64 %)
 const pct = (value: number | null) => (value === null ? "—" : `${Math.round(value * 100) / 100}%`);
 
 function duration(hours: number | null, t: Translate) {
@@ -62,9 +62,10 @@ function Hero({ value, unit }: { value: string; unit?: string }) {
   );
 }
 
-/** One KPI: the question it answers, its number, its chart, and how it is calculated and read. */
-function KpiCard({ tag, title, question, how, read, children, icon }: {
-  tag: MessageKey; title: MessageKey; question: MessageKey; how: MessageKey; read: MessageKey; children: ReactNode; icon: ReactNode;
+/** One indicator: the question it answers and its one number on top; the chart, the test on known cases and
+ * how it is calculated are folded away below. */
+function KpiCard({ title, question, how, details, children, icon }: {
+  title: MessageKey; question: MessageKey; how: MessageKey; details?: ReactNode; children: ReactNode; icon: ReactNode;
 }) {
   const { t } = useI18n();
   return (
@@ -72,37 +73,43 @@ function KpiCard({ tag, title, question, how, read, children, icon }: {
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-brand-100 text-brand-700">{icon}</span>
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wide text-brand-700">{t(tag)}</p>
           <h2 className="text-lg font-semibold text-ink">{t(title)}</h2>
           <p className="mt-0.5 text-sm text-muted">{t(question)}</p>
         </div>
       </div>
       <div className="mt-5 flex-1">{children}</div>
       <div className="mt-5 flex flex-col gap-1 border-t border-line pt-3">
+        {details && (
+          <Disclosure label={t("kpis.details")} icon={<BarChart3 className="h-4 w-4" aria-hidden="true" />}>
+            {details}
+          </Disclosure>
+        )}
         <Disclosure label={t("kpis.how")} icon={<HelpCircle className="h-4 w-4" aria-hidden="true" />}>
           <p className="text-sm leading-relaxed text-ink">{t(how)}</p>
-        </Disclosure>
-        <Disclosure label={t("kpis.read")} icon={<Info className="h-4 w-4" aria-hidden="true" />}>
-          <p className="text-sm leading-relaxed text-ink">{t(read)}</p>
         </Disclosure>
       </div>
     </Card>
   );
 }
 
+/** The target the team designed for, next to the measured number. */
+function Target({ value, note }: { value: string; note?: string }) {
+  const { t } = useI18n();
+  return <p className="mt-1 text-sm text-muted">{t("kpis.design")}: <span className="font-semibold text-ink">{value}</span>{note && <> — {note}</>}</p>;
+}
+
 /** The exam on the 13 prepared cases: its result, or why there is none. Never a made-up number. */
 function BenchmarkPanel({ bench, children }: { bench: KpiBenchmark; children?: ReactNode }) {
   const { t, language } = useI18n();
   return (
-    <div className="mt-5 rounded-card border border-dashed border-line bg-bg/60 p-4">
+    <div className="mt-4 rounded-card border border-dashed border-line bg-bg/60 p-4">
       <p className="flex items-center gap-2 text-sm font-semibold text-ink"><FlaskConical className="h-4 w-4 text-brand-600" aria-hidden="true" />{t("kpis.benchmark")}</p>
       {bench.status === "measured" ? (
         <>
           <div className="mt-2">{children}</div>
           <p className="mt-2 text-xs text-muted">{t("kpis.bench.measured", {
-            date: formatDate(bench.timestamp, language), evaluated: bench.evaluated ?? "—", selected: bench.selected ?? "—", model: bench.agent_model ?? "—",
+            date: formatDate(bench.timestamp, language), evaluated: bench.evaluated ?? "—", selected: bench.selected ?? "—",
           })}</p>
-          {bench.excluded.length > 0 && <p className="mt-0.5 text-xs text-muted">{t("kpis.bench.excluded", { ids: bench.excluded.join(", ") })}</p>}
         </>
       ) : (
         <p className="mt-1.5 break-words text-sm text-muted">
@@ -115,22 +122,27 @@ function BenchmarkPanel({ bench, children }: { bench: KpiBenchmark; children?: R
 
 function Kpi1({ data }: { data: KpiReport["kpi1_interactions"] }) {
   const { t } = useI18n();
-  const average = data.average_interactions;
   return (
     <>
       <Hero value={pct(data.reduction_percent)} unit={t("kpi1.unit")} />
+      <Target value={pct(data.design_reduction_percent)} />
       <Basis text={data.finished ? t("kpis.cases", { count: data.finished }) : t("kpis.none")} count={data.finished} />
-      <p className="mt-1 text-xs text-muted">{t("kpis.design")}: <span className="font-semibold text-ink">{pct(data.design_reduction_percent)}</span></p>
-      {average !== null && (
-        <div className="mt-5">
-          <BarList caption={t("kpi1.title")} max={data.manual_interactions} bars={[
-            { label: t("kpi1.bar.manual"), value: data.manual_interactions, display: String(data.manual_interactions), colour: SERIES.rest },
-            { label: t("kpi1.bar.app"), value: average, display: average.toFixed(1) },
-            { label: t("kpi1.bar.design"), value: data.design_interactions, display: String(data.design_interactions), colour: SERIES.rest },
-          ]} />
-          <p className="mt-3 text-xs text-muted">{t("kpi1.split", { happy: data.happy_path, more: data.with_more_steps })}</p>
-        </div>
-      )}
+    </>
+  );
+}
+
+function Kpi1Details({ data }: { data: KpiReport["kpi1_interactions"] }) {
+  const { t } = useI18n();
+  const average = data.average_interactions;
+  if (average === null) return <p className="text-sm text-muted">{t("kpis.none")}</p>;
+  return (
+    <>
+      <BarList caption={t("kpi1.title")} max={data.manual_interactions} bars={[
+        { label: t("kpi1.bar.manual"), value: data.manual_interactions, display: String(data.manual_interactions), colour: SERIES.rest },
+        { label: t("kpi1.bar.app"), value: average, display: average.toFixed(1) },
+        { label: t("kpi1.bar.design"), value: data.design_interactions, display: String(data.design_interactions), colour: SERIES.rest },
+      ]} />
+      <p className="mt-3 text-xs text-muted">{t("kpi1.split", { happy: data.happy_path, more: data.with_more_steps })}</p>
     </>
   );
 }
@@ -140,58 +152,65 @@ function Kpi2({ data }: { data: KpiReport["kpi2_autonomy"] }) {
   return (
     <>
       <Hero value={pct(data.rate_percent)} unit={t("kpi2.unit")} />
+      <Target value={pct(data.design_percent)} note={t("kpi2.design_text", { automated: data.design_automated, stages: data.design_stages })} />
       <Basis text={data.runs ? t("kpis.runs", { count: data.runs }) : t("kpis.none")} count={data.runs} />
-      <p className="mt-1 text-xs text-muted">{t("kpis.design")}: <span className="font-semibold text-ink">{pct(data.design_percent)}</span> — {t("kpi2.design_text", { automated: data.design_automated, stages: data.design_stages })}</p>
-      {data.runs > 0 && (
-        <div className="mt-5">
-          <StackedBar caption={t("kpi2.title")} segments={[
-            { label: t("kpi2.seg.auto"), value: data.autonomous, colour: SERIES.blue },
-            { label: t("kpi2.seg.refused"), value: data.refused_by_checks, colour: SERIES.orange },
-            { label: t("kpi2.seg.failed"), value: data.failed, colour: SERIES.aqua },
-          ]} />
-        </div>
-      )}
     </>
   );
 }
 
-function Pair({ items }: { items: { label: string; value: string }[] }) {
+function Kpi2Details({ data }: { data: KpiReport["kpi2_autonomy"] }) {
+  const { t } = useI18n();
+  if (data.runs === 0) return <p className="text-sm text-muted">{t("kpis.none")}</p>;
   return (
-    <div className="grid grid-cols-2 gap-4">
-      {items.map((item) => (
-        <div key={item.label}>
-          <p className="text-4xl font-semibold tracking-tight text-ink">{item.value}</p>
-          <p className="mt-0.5 text-xs text-muted">{item.label}</p>
-        </div>
-      ))}
-    </div>
+    <StackedBar caption={t("kpi2.title")} segments={[
+      { label: t("kpi2.seg.auto"), value: data.autonomous, colour: SERIES.blue },
+      { label: t("kpi2.seg.refused"), value: data.refused_by_checks, colour: SERIES.orange },
+      { label: t("kpi2.seg.failed"), value: data.failed, colour: SERIES.aqua },
+    ]} />
   );
 }
 
-function Kpi3({ data, bench }: { data: KpiReport["kpi3_accuracy"]; bench: KpiBenchmark }) {
+function Kpi3({ data }: { data: KpiReport["kpi3_accuracy"] }) {
   const { t } = useI18n();
   return (
     <>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t("kpis.live")}</p>
-      <Pair items={[{ label: t("kpi3.top1"), value: pct(data.top1_percent) }, { label: t("kpi3.topk"), value: pct(data.topk_percent) }]} />
+      <Hero value={pct(data.top1_percent)} unit={t("kpi3.top1")} />
+      <p className="mt-1 text-sm text-muted">{t("kpi3.topk")}: <span className="font-semibold text-ink">{pct(data.topk_percent)}</span></p>
       <Basis text={data.decided ? t("kpis.cases", { count: data.decided }) : t("kpis.none")} count={data.decided} />
-      <BenchmarkPanel bench={bench}>
-        <Pair items={[{ label: t("kpi3.top1"), value: pct(bench.values.top1_percent ?? null) }, { label: t("kpi3.topk"), value: pct(bench.values.topk_percent ?? null) }]} />
-      </BenchmarkPanel>
     </>
   );
 }
 
-function Kpi4({ data, bench }: { data: KpiReport["kpi4_calibration"]; bench: KpiBenchmark }) {
+function Kpi3Details({ bench }: { bench: KpiBenchmark }) {
+  const { t } = useI18n();
+  return (
+    <BenchmarkPanel bench={bench}>
+      <p className="text-sm text-ink">{t("kpi3.top1")}: <span className="font-semibold">{pct(bench.values.top1_percent ?? null)}</span></p>
+      <p className="text-sm text-ink">{t("kpi3.topk")}: <span className="font-semibold">{pct(bench.values.topk_percent ?? null)}</span></p>
+    </BenchmarkPanel>
+  );
+}
+
+function Kpi4({ data }: { data: KpiReport["kpi4_calibration"] }) {
   const { t } = useI18n();
   const verdict = data.ordered === true
-    ? { icon: <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />, text: t("kpi4.ordered_yes") }
+    ? { icon: <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />, text: t("kpi4.ordered_yes") }
     : data.ordered === false
-      ? { icon: <AlertTriangle className="h-4 w-4 text-warning" aria-hidden="true" />, text: t("kpi4.ordered_no") }
-      : { icon: <Info className="h-4 w-4 text-muted" aria-hidden="true" />, text: t("kpi4.ordered_none") };
+      ? { icon: <AlertTriangle className="h-5 w-5 shrink-0 text-warning" aria-hidden="true" />, text: t("kpi4.ordered_no") }
+      : { icon: <Info className="h-5 w-5 shrink-0 text-muted" aria-hidden="true" />, text: t("kpi4.ordered_none") };
   return (
     <>
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t("kpis.live")} · {t("kpi4.axis")}</p>
+      <p className="flex items-start gap-2 text-[15px] font-medium text-ink">{verdict.icon}{verdict.text}</p>
+      <Basis text={t("kpis.decisions", { count: data.decisions })} count={data.decisions} />
+    </>
+  );
+}
+
+function Kpi4Details({ data, bench }: { data: KpiReport["kpi4_calibration"]; bench: KpiBenchmark }) {
+  const { t } = useI18n();
+  return (
+    <>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{t("kpi4.axis")}</p>
       {data.decisions > 0 ? (
         <BarList caption={t("kpi4.title")} max={100} bars={data.levels.map((level) => ({
           label: t(`confidence.${level.level}`),
@@ -200,10 +219,8 @@ function Kpi4({ data, bench }: { data: KpiReport["kpi4_calibration"]; bench: Kpi
           tip: t("kpi4.bar", { level: t(`confidence.${level.level}`), approved: level.approved, decisions: level.decisions }),
         }))} />
       ) : <p className="text-sm text-muted">{t("kpis.none")}</p>}
-      <Basis text={t("kpis.decisions", { count: data.decisions })} count={data.decisions} />
-      <p className="mt-3 flex items-start gap-2 text-sm text-ink">{verdict.icon}{verdict.text}</p>
       <BenchmarkPanel bench={bench}>
-        <p className="text-4xl font-semibold tracking-tight text-ink">{pct(bench.values.calibration_percent ?? null)}</p>
+        <p className="text-sm font-semibold text-ink">{pct(bench.values.calibration_percent ?? null)}</p>
       </BenchmarkPanel>
     </>
   );
@@ -268,17 +285,21 @@ export function KpisPage() {
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <KpiCard tag="kpi1.tag" title="kpi1.title" question="kpi1.question" how="kpi1.how" read="kpi1.read" icon={<Scale className="h-5 w-5" aria-hidden="true" />}>
+            <KpiCard title="kpi1.title" question="kpi1.question" how="kpi1.how" icon={<Scale className="h-5 w-5" aria-hidden="true" />}
+                     details={<Kpi1Details data={data.kpi1_interactions} />}>
               <Kpi1 data={data.kpi1_interactions} />
             </KpiCard>
-            <KpiCard tag="kpi2.tag" title="kpi2.title" question="kpi2.question" how="kpi2.how" read="kpi2.read" icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}>
+            <KpiCard title="kpi2.title" question="kpi2.question" how="kpi2.how" icon={<CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
+                     details={<Kpi2Details data={data.kpi2_autonomy} />}>
               <Kpi2 data={data.kpi2_autonomy} />
             </KpiCard>
-            <KpiCard tag="kpi3.tag" title="kpi3.title" question="kpi3.question" how="kpi3.how" read="kpi3.read" icon={<FlaskConical className="h-5 w-5" aria-hidden="true" />}>
-              <Kpi3 data={data.kpi3_accuracy} bench={data.benchmark.accuracy} />
+            <KpiCard title="kpi3.title" question="kpi3.question" how="kpi3.how" icon={<FlaskConical className="h-5 w-5" aria-hidden="true" />}
+                     details={<Kpi3Details bench={data.benchmark.accuracy} />}>
+              <Kpi3 data={data.kpi3_accuracy} />
             </KpiCard>
-            <KpiCard tag="kpi4.tag" title="kpi4.title" question="kpi4.question" how="kpi4.how" read="kpi4.read" icon={<HelpCircle className="h-5 w-5" aria-hidden="true" />}>
-              <Kpi4 data={data.kpi4_calibration} bench={data.benchmark.calibration} />
+            <KpiCard title="kpi4.title" question="kpi4.question" how="kpi4.how" icon={<HelpCircle className="h-5 w-5" aria-hidden="true" />}
+                     details={<Kpi4Details data={data.kpi4_calibration} bench={data.benchmark.calibration} />}>
+              <Kpi4 data={data.kpi4_calibration} />
             </KpiCard>
           </div>
 

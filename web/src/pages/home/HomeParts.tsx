@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { clsx } from "clsx";
 import type { LucideIcon } from "lucide-react";
-import { Eye, GitBranch, Scale, UserCheck } from "lucide-react";
+import { ArrowRight, BookOpen, Eye, GitBranch, Scale, UserCheck } from "lucide-react";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { MessageKey } from "@/i18n/en";
 import { LogoMark } from "@/components/layout/Logo";
@@ -12,19 +13,23 @@ export interface Step {
   icon: LucideIcon;
 }
 
-/** The greeting at the top of a home page, with room for the main ways in. */
+/** The greeting at the top of a home page, the link to how the application works, and room for the main ways in. */
 export function Hero({ name, intro, children }: { name: string; intro: MessageKey; children?: ReactNode }) {
   const { t } = useI18n();
   return (
     <section className="relative overflow-hidden rounded-[20px] bg-brand-950 px-6 py-8 text-white sm:px-10 sm:py-10">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-400/15 blur-3xl" />
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky-400/15 blur-3xl" />
         <LogoMark className="absolute -bottom-10 right-6 h-56 w-56 text-white/[0.05]" />
       </div>
       <div className="relative flex flex-col gap-8">
         <div className="max-w-xl animate-fade-up">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-[34px]">{t("home.greeting", { name })}</h1>
           <p className="mt-3 text-[15px] leading-relaxed text-white/75">{t(intro)}</p>
+          <Link to="/how-it-works" className="group mt-4 inline-flex items-center gap-2 text-sm font-semibold text-sky-200 hover:text-white">
+            <BookOpen className="h-4 w-4" aria-hidden="true" />{t("guide.link")}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </Link>
         </div>
         {children && <div className="relative grid gap-3 md:grid-cols-2 xl:max-w-4xl">{children}</div>}
       </div>

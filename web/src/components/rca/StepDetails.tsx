@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 import { clsx } from "clsx";
 import { Bot, Clock3, Cpu } from "lucide-react";
-import type { InvestigationPlan } from "@/api/types";
+import type { InvestigationPlan, RCARecord } from "@/api/types";
 import { useI18n } from "@/i18n/I18nProvider";
 import type { MessageKey } from "@/i18n/en";
 import { Id } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pills";
 import { formatDateTime, formatSeconds } from "@/lib/format";
 import { readable, uniqueLines } from "@/lib/text";
+import { Inputs } from "./Inputs";
 import { stepModels, stepSeconds, stepText, type StepView } from "./steps";
 
 type Row = Record<string, unknown>;
@@ -141,7 +142,7 @@ const FOUND_LABEL: Record<string, MessageKey> = {
 };
 
 /** What one step did, in words; only what the saved step holds (nothing is inferred, nothing shown as raw data). */
-export function StepDetails({ view, plan }: { view: StepView; plan: InvestigationPlan | null }) {
+export function StepDetails({ view, plan, record }: { view: StepView; plan: InvestigationPlan | null; record?: RCARecord }) {
   const { t, language } = useI18n();
   const step = view.step;
   if (!step) {
@@ -190,6 +191,13 @@ export function StepDetails({ view, plan }: { view: StepView; plan: Investigatio
       </div>
 
       <GivenTexts texts={details.given_text as Row | undefined} />
+
+      {view.name === "build_context" && record && (
+        <div className="rounded-card border border-line bg-surface p-4">
+          <p className="mb-3 font-semibold text-ink">{t("inputs.title")}</p>
+          <Inputs record={record} />
+        </div>
+      )}
 
       {calls.length > 0 && (
         <p className="text-xs text-muted">{t("step.llm_line", {

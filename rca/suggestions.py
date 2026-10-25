@@ -7,8 +7,8 @@ For an incident in no problem the code finds the alike incidents and the closest
 The Proposed Problem Records page lists them as proposals (proposals, below).
 
 Nothing is decided by a model and nothing is applied by itself: the Problem Manager accepts a
-suggestion (rca/problems.py), rejects it (it is not proposed again) or marks the incident as needing
-no problem. Every suggestion says why, with the signals below.
+suggestion (rca/problems.py) or rejects it (it is not proposed again while its incidents stay the same).
+Every suggestion says why, with the signals below.
 
 When two incidents count as alike, all computed by code:
 - the same service, always (past records of other services are never evidence in this project);
@@ -18,6 +18,10 @@ The thresholds were measured on the mock data (data/evaluation/grouping_truth.js
 the first suggestion was right for 443 of the 445 incidents in no problem; see
 tests/test_suggestions.py. The error types in the logs and the distance in time are shown as reasons,
 not used to decide.
+
+Every reason and fact is given twice: as an English sentence (reasons, evidence) and as a Note, a code
+with its values (reason_notes, evidence_notes), which the interface says in its own language and in plain
+words (web/src/pages/proposals/notes.ts).
 """
 
 from __future__ import annotations
@@ -29,7 +33,7 @@ from contextlib import closing
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from rca import rag, storage
 from rca.config import DB_PATH
@@ -42,6 +46,26 @@ LOG_LEVELS = ["ERROR", "WARN"]
 
 
 @dataclass
+class Note:
+    """One reason or fact as a code and its values, e.g. Note("same_service", {"service": "payments"})."""
+
+    code: str
+    params: dict[str, Any] = field(default_factory=dict)
+
+
+class _Said:
+    """The English sentences and their notes, built together so they always say the same."""
+
+    def __init__(self) -> None:
+        self.texts: list[str] = []
+        self.notes: list[Note] = []
+
+    def add(self, text: str, code: str, **params: Any) -> None:
+        self.texts.append(text)
+        self.notes.append(Note(code, params))
+
+
+@dataclass
 class Suggestion:
     incident_id: str
     kind: Literal["open_problem", "closed_problem", "busy_problem", "new_problem"]
@@ -51,6 +75,7 @@ class Suggestion:
     incident_ids: list[str]  # the alike incidents behind the suggestion, the closest first
     similarity: float  # of the closest one
     reasons: list[str] = field(default_factory=list)
+    reason_notes: list[Note] = field(default_factory=list)
 
 
 def load_embeddings() -> dict[str, list[float]]:
@@ -176,24 +201,30 @@ class _World:
         incident = self.incidents[incident_id]
         closest_id, similarity = members[0]
         closest = self.incidents[closest_id]
-        reasons = [f"Same service: {incident.service}."]
+        said = _Said()
+        said.add(f"Same service: {incident.service}.", "same_service", service=incident.service)
         if incident.ci_id and incident.ci_id == closest.ci_id:
-            reasons.append(f"Same CMDB item as {closest_id}: {incident.ci_id}.")
-        reasons.append(f"Text similar to {closest_id} ({similarity:.2f}): \"{closest.title}\".")
+            said.add(f"Same CMDB item as {closest_id}: {incident.ci_id}.", "same_ci", incident=closest_id, ci=incident.ci_id)
+        said.add(f"Text similar to {closest_id} ({similarity:.2f}): \"{closest.title}\".", "text_alike",
+                 incident=closest_id, title=closest.title, similarity=round(similarity, 3))
         shared = self._error_types(incident) & self._error_types(closest)
         if shared:
-            reasons.append(f"Same error types in the logs around both incidents: {', '.join(sorted(shared))}.")
+            said.add(f"Same error types in the logs around both incidents: {', '.join(sorted(shared))}.", "same_errors",
+                     types=sorted(shared))
         days = abs((incident.detected_at - closest.detected_at).days)
-        reasons.append(f"{days} days from {closest_id}.")
+        said.add(f"{days} days from {closest_id}.", "days_apart", incident=closest_id, days=days)
         if len(members) > 1:
-            reasons.append(f"{len(members) - 1} more alike incident(s): {', '.join(item for item, _ in members[1:4])}"
-                           + ("..." if len(members) > 4 else "") + ".")
+            more = [item for item, _ in members[1:]]
+            said.add(f"{len(more)} more alike incident(s): {', '.join(more[:3])}" + ("..." if len(more) > 3 else "") + ".",
+                     "more_alike", count=len(more), incidents=more[:3])
         if kind == "closed_problem":
             rca = self.rca_of.get(problem_id)
-            reasons.append(f"{problem_id} is closed{f' by {rca}' if rca else ''}: the problem may have come back after the fix.")
+            said.add(f"{problem_id} is closed{f' by {rca}' if rca else ''}: the problem may have come back after the fix.",
+                     "closed_problem", problem=problem_id)
         if kind == "busy_problem":
-            reasons.append(f"{problem_id} is {self.status.get(problem_id, '').lower()}: it takes no incident now.")
-        return Suggestion(incident_id, kind, problem_id, [item for item, _ in members], round(similarity, 3), reasons)
+            status = self.status.get(problem_id, "")
+            said.add(f"{problem_id} is {status.lower()}: it takes no incident now.", "busy_problem", problem=problem_id, status=status)
+        return Suggestion(incident_id, kind, problem_id, [item for item, _ in members], round(similarity, 3), said.texts, said.notes)
 
     def _error_types(self, incident: Incident) -> set[str]:
         """The error types logged on the service of the incident, from 2 hours before its detection to 1 hour
@@ -223,22 +254,27 @@ class _World:
         return self._log_index
 
     def evidence(self, incident_ids: list[str]) -> list[str]:
+        return self.facts(incident_ids).texts
+
+    def facts(self, incident_ids: list[str]) -> _Said:
         """The facts behind a proposal, from the sources: the CMDB items, the error types logged around the
         detections, the severities and the dates. Shown with the reasons, never used to decide."""
         items = [self.incidents[item] for item in incident_ids if item in self.incidents]
-        facts = []
+        said = _Said()
         for ci_id, count in Counter(item.ci_id for item in items if item.ci_id).most_common(2):
-            facts.append(f"CMDB item {ci_id}: {count} of {len(items)} incident(s).")
+            said.add(f"CMDB item {ci_id}: {count} of {len(items)} incident(s).", "ci_count", ci=ci_id, count=count, total=len(items))
         types = Counter(kind for item in items for kind in self._error_types(item))
         if types:
-            facts.append("Error types logged around the detections: "
-                         + ", ".join(f"{kind} ({count})" for kind, count in  # ties in name order: the same text every time
-                                     sorted(types.items(), key=lambda pair: (-pair[1], pair[0]))[:4]) + ".")
+            top = sorted(types.items(), key=lambda pair: (-pair[1], pair[0]))[:4]  # ties in name order: the same text every time
+            said.add("Error types logged around the detections: " + ", ".join(f"{kind} ({count})" for kind, count in top) + ".",
+                     "error_types", types=[{"type": kind, "count": count} for kind, count in top])
         severities = Counter(item.severity for item in items)
-        facts.append("Severity: " + ", ".join(f"{count} {severity}" for severity, count in sorted(severities.items())) + ".")
+        said.add("Severity: " + ", ".join(f"{count} {severity}" for severity, count in sorted(severities.items())) + ".",
+                 "severities", counts=dict(sorted(severities.items())))
         first, last = min(item.detected_at for item in items), max(item.detected_at for item in items)
-        facts.append(f"Detected {first:%Y-%m-%d}" + (f" to {last:%Y-%m-%d}." if last.date() != first.date() else "."))
-        return facts
+        said.add(f"Detected {first:%Y-%m-%d}" + (f" to {last:%Y-%m-%d}." if last.date() != first.date() else "."),
+                 "detected", first=first.isoformat(), last=last.isoformat())
+        return said
 
 
 # --------------------------------------------------------------------------------------
@@ -268,6 +304,8 @@ class Proposal:
     recurrence_of: str | None = None  # a closed problem the incidents look like: the problem may have come back
     score_label: str = SCORE_LABEL
     score_meaning: str = SCORE_MEANING
+    reason_notes: list[Note] = field(default_factory=list)  # the reasons as codes and values, for the interface
+    evidence_notes: list[Note] = field(default_factory=list)  # the facts as codes and values, for the interface
 
 
 def proposal_key(kind: str, incident_ids: list[str], problem_id: str | None = None) -> str:
@@ -304,9 +342,10 @@ def proposals(db_path: Path = DB_PATH, embeddings: dict[str, list[float]] | None
         if suggestion is None or suggestion.kind != "open_problem":
             continue
         attached.add(incident_id)
+        facts = world.facts([incident_id, *suggestion.incident_ids[:1]])
         found.append(Proposal(proposal_key("attach", [incident_id], suggestion.problem_id), "attach", [incident_id],
-                              suggestion.problem_id, suggestion.similarity, suggestion.reasons,
-                              world.evidence([incident_id, *suggestion.incident_ids[:1]])))
+                              suggestion.problem_id, suggestion.similarity, suggestion.reasons, facts.texts,
+                              reason_notes=suggestion.reason_notes, evidence_notes=facts.notes))
 
     remaining = [item for item in world.unassigned if item not in attached]
     parent = {item: item for item in remaining}
@@ -332,13 +371,16 @@ def proposals(db_path: Path = DB_PATH, embeddings: dict[str, list[float]] | None
         closed = _closed_problem(members, suggested)
         if len(members) >= MIN_GROUP:
             score = round(min(links[item] for item in members), 3)  # the weakest link of the chain
-            first, last = world.incidents[members[0]], world.incidents[members[-1]]
-            reasons = [f"{len(members)} incidents in no problem, all on {first.service}, each one's text alike another's "
-                       f"(weakest link {score:.2f})."]
+            first = world.incidents[members[0]]
+            said = _Said()
+            said.add(f"{len(members)} incidents in no problem, all on {first.service}, each one's text alike another's "
+                     f"(weakest link {score:.2f}).", "group", count=len(members), service=first.service)
             if closed:
-                reasons.append(f"They look like the closed problem {closed}: the problem may have come back after its fix.")
-            found.append(Proposal(proposal_key("group", members), "group", members, None, score, reasons,
-                                  world.evidence(members), closed))
+                said.add(f"They look like the closed problem {closed}: the problem may have come back after its fix.",
+                         "looks_like_closed", problem=closed)
+            facts = world.facts(members)
+            found.append(Proposal(proposal_key("group", members), "group", members, None, score, said.texts,
+                                  facts.texts, closed, reason_notes=said.notes, evidence_notes=facts.notes))
             continue
         found.append(_single(world, members[0], suggested))
 
@@ -363,26 +405,33 @@ def _single(world: _World, incident_id: str, suggested: dict[str, Suggestion | N
     proposal the Problem Manager rejected (rejected)."""
     incident, suggestion = world.incidents[incident_id], suggested.get(incident_id)
     closed = _closed_problem([incident_id], suggested)
+    said = _Said()
     if rejected is not None and rejected.kind == "group":
         others = [item for item in rejected.incident_ids if item != incident_id]
-        reasons = [f"Its group with {', '.join(others[:4])}{'...' if len(others) > 4 else ''} was rejected. The "
-                   "group is proposed again, with them, when another alike incident arrives."]
+        said.add(f"Its group with {', '.join(others[:4])}{'...' if len(others) > 4 else ''} was rejected. The "
+                 "group is proposed again, with them, when another alike incident arrives.", "group_rejected",
+                 incidents=others[:4], more=max(0, len(others) - 4))
     elif rejected is not None:
-        reasons = [f"Adding it to {rejected.problem_id} was rejected: that problem is not proposed for it again."]
+        said.add(f"Adding it to {rejected.problem_id} was rejected: that problem is not proposed for it again.",
+                 "attach_rejected", problem=rejected.problem_id)
     elif incident.rca_required or incident.severity == "SEV-1":
-        reasons = [f"{incident.severity} incident that needs an analysis on its own"
-                   + (f": {incident.rca_reason}" if incident.rca_reason else ".")]
+        said.add(f"{incident.severity} incident that needs an analysis on its own"
+                 + (f": {incident.rca_reason}" if incident.rca_reason else "."), "major",
+                 severity=incident.severity, reason=incident.rca_reason)
     else:
-        reasons = [f"{incident.severity} incident that is alike no other incident in no problem: a problem with this "
-                   "incident only."]
+        said.add(f"{incident.severity} incident that is alike no other incident in no problem: a problem with this "
+                 "incident only.", "alone", severity=incident.severity)
     if closed:
-        reasons.append(f"It looks like the closed problem {closed}: the problem may have come back after its fix.")
+        said.add(f"It looks like the closed problem {closed}: the problem may have come back after its fix.",
+                 "looks_like_closed", problem=closed)
     elif suggestion is not None and suggestion.kind == "busy_problem":
-        reasons.append(f"It looks like {suggestion.problem_id}, which takes no incident now "
-                       f"({world.status.get(suggestion.problem_id, '').lower()}).")
+        status = world.status.get(suggestion.problem_id, "")
+        said.add(f"It looks like {suggestion.problem_id}, which takes no incident now ({status.lower()}).",
+                 "looks_like_busy", problem=suggestion.problem_id, status=status)
+    facts = world.facts([incident_id])
     return Proposal(proposal_key("single", [incident_id]), "single", [incident_id], None,
-                    suggestion.similarity if closed and suggestion else None, reasons,
-                    world.evidence([incident_id]), closed)
+                    suggestion.similarity if closed and suggestion else None, said.texts,
+                    facts.texts, closed, reason_notes=said.notes, evidence_notes=facts.notes)
 
 
 def _closed_problem(members: list[str], suggested: dict[str, Suggestion | None]) -> str | None:

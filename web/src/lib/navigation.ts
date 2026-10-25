@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardCheck, FolderSearch, History, Home, Lightbulb, Microscope, type LucideIcon } from "lucide-react";
+import { BarChart3, ClipboardCheck, FolderSearch, History, Home, Lightbulb, type LucideIcon } from "lucide-react";
 import type { Role } from "@/api/types";
 import type { MessageKey } from "@/i18n/en";
 
@@ -15,7 +15,6 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
     { to: "/", label: "nav.home", icon: Home },
     { to: "/problems", label: "nav.problems", icon: FolderSearch },
     { to: "/proposals", label: "nav.proposals", icon: Lightbulb },
-    { to: "/investigation", label: "nav.investigation", icon: Microscope },
     { to: "/history", label: "nav.history", icon: History },
     { to: "/kpis", label: "nav.kpis", icon: BarChart3 },
   ],
@@ -25,10 +24,15 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
   ],
 };
 
+/** The pages of a role that are not in its menu: an investigation is opened from its problem or the history. */
+const UNLISTED: Record<Role, string[]> = { problem_manager: ["/investigation"], technical_expert: [] };
+
+const pathsOf = (role: Role) => [...NAVIGATION[role].map((item) => item.to).filter((to) => to !== "/"), ...UNLISTED[role]];
+
 /** Whether a path belongs to the pages of a role (home and unknown pages belong to both). */
 export function allowedFor(role: Role, pathname: string): boolean {
   const other: Role = role === "problem_manager" ? "technical_expert" : "problem_manager";
-  const own = NAVIGATION[role].some((item) => item.to !== "/" && pathname.startsWith(item.to));
-  const foreign = NAVIGATION[other].some((item) => item.to !== "/" && pathname.startsWith(item.to));
+  const own = pathsOf(role).some((to) => pathname.startsWith(to));
+  const foreign = pathsOf(other).some((to) => pathname.startsWith(to));
   return own || !foreign;
 }

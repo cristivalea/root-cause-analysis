@@ -37,6 +37,21 @@ def drawn_chain(steps: list[WhyStep]) -> list[WhyStep]:
     return list(steps)
 
 
+def distinct_factors(factors: list[tuple[str, CauseFactor]]) -> list[tuple[str, CauseFactor]]:
+    """Each factor once per category: two causes that name the same factor (the same words, whatever the case
+    and spacing) share one box, with the evidence of both and the first cause that named it."""
+    found: dict[tuple[str, str], tuple[str, CauseFactor]] = {}
+    for hypothesis_id, factor in factors:
+        key = (factor.category, " ".join(factor.factor.lower().split()))
+        if key in found:
+            first_id, first = found[key]
+            evidence = first.evidence + [item for item in factor.evidence if item not in first.evidence]
+            found[key] = (first_id, first.model_copy(update={"evidence": evidence}))
+        else:
+            found[key] = (hypothesis_id, factor)
+    return list(found.values())
+
+
 def choose_diagram(hypotheses: list[AssessedHypothesis]) -> Diagram | None:
     """The diagram for these hypotheses (the strongest first, as rca/confidence.py orders them), or None
     when the agent gave no structure to draw."""
@@ -48,7 +63,7 @@ def choose_diagram(hypotheses: list[AssessedHypothesis]) -> Diagram | None:
         return Diagram("five_whys", hypothesis_id=main.hypothesis_id, steps=drawn_chain(main.why_chain))
     level = LEVELS[main.confidence]
     tied = [item for item in hypotheses if LEVELS[item.confidence] == level] if not clearly_best else [main]
-    factors = [(item.hypothesis_id, factor) for item in tied for factor in item.factors]
+    factors = distinct_factors([(item.hypothesis_id, factor) for item in tied for factor in item.factors])
     if factors:
         return Diagram("fishbone", factors=factors)
     if main.why_chain:  # no factors given: the chain of the strongest cause is still worth drawing

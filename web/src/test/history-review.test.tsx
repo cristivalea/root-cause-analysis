@@ -54,13 +54,32 @@ describe("RCA history pages", () => {
       "GET /rcas/RCA-2026-00001/revisions": [first, second],
     });
     renderApp(<App />, { route: "/history" });
-    await userEvent.click(await screen.findByRole("link", { name: en["history.open_case"] }));
-    expect(await screen.findByText("Revision 2")).toBeInTheDocument();
-    expect(screen.getByText("Revision 1")).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("link", { name: "Payments fail" })); // the title opens the case, and covers the whole card
+    expect(await screen.findByText("Version 2")).toBeInTheDocument();
+    expect(screen.getByText("Version 1")).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: en["case.open_investigation"] }).map((link) => link.getAttribute("href")))
       .toEqual(["/investigation/RCA-2026-00001-R2", "/investigation/RCA-2026-00001-R1"]);
     expect(screen.queryByText(/Show analysis/)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Problem PRB-2026-00001/ })).toHaveAttribute("href", "/problems/PRB-2026-00001");
+  });
+});
+
+describe("Home of the Problem Manager", () => {
+  it("lists what waits for a step from the Problem Manager, each opening its investigation", async () => {
+    signInAs("problem_manager");
+    mockApi({
+      "GET /problems": [problem(1)], "GET /rcas/summaries": [summary("RCA-2026-00004", { status: "DRAFT", title: "Ready one" }),
+        summary("RCA-2026-00005", { status: "FAILED", title: "Stopped one" })],
+      "GET /rcas?status=DRAFT": [rca({ rca_id: "RCA-2026-00004" }), rca({ rca_id: "RCA-2026-00006", run_status: "RUNNING" })],
+      "GET /rcas?status=REQUEST_MORE_DETAILS": [], "GET /rcas?status=FAILED": [rca({ rca_id: "RCA-2026-00005", status: "FAILED", run_status: "FAILED" })],
+      "GET /rcas?status=AWAITING_TECHNICAL_REVIEW": [rca({ rca_id: "RCA-2026-00007", status: "AWAITING_TECHNICAL_REVIEW" })],
+    });
+    renderApp(<App />, { route: "/" });
+    expect(await screen.findByRole("link", { name: /Ready one/ })).toHaveAttribute("href", "/investigation/RCA-2026-00004");
+    expect(screen.getByRole("link", { name: /Stopped one/ })).toHaveAttribute("href", "/investigation/RCA-2026-00005");
+    expect(screen.queryByRole("link", { name: /RCA-2026-00006/ })).not.toBeInTheDocument(); // running: nothing to do yet
+    expect(screen.getByText("Running now: 1 · With the expert: 1")).toBeInTheDocument();
+    expect(screen.getByText(en["home.todo.none"])).toBeInTheDocument(); // no request from the expert
   });
 });
 
@@ -81,7 +100,7 @@ describe("Technical review", () => {
     signInAs("technical_expert");
     mockApi(routes);
     renderApp(<App />, { route: "/review" });
-    await userEvent.click(await screen.findByRole("link", { name: en["queue.review"] }));
+    await userEvent.click(await screen.findByRole("link", { name: "Payments fail" }));
     expect(await screen.findByRole("heading", { name: en["review.decide_title"] })).toBeInTheDocument();
   });
 
@@ -128,5 +147,22 @@ describe("Technical review", () => {
     renderApp(<App />, { route: "/review/RCA-2026-00003" });
     expect(await screen.findByText(en["review.outcome.REJECTED"])).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: en["review.approve"] })).not.toBeInTheDocument();
+    expect(within(screen.getByRole("main")).getByRole("link", { name: en["review.back"] })).toHaveAttribute("href", "/review?tab=checked");
+  });
+
+  it("lists the analyses already checked in their own tab, to open read-only", async () => {
+    signInAs("technical_expert");
+    mockApi({ ...routes, "GET /rcas/summaries": [
+      summary("RCA-2026-00003", { status: "AWAITING_TECHNICAL_REVIEW", title: "Still waiting" }),
+      summary("RCA-2026-00004", { status: "VALIDATED", title: "Login slow", review_rounds: 2 }),
+      summary("RCA-2026-00005", { status: "DRAFT", title: "Never checked", review_rounds: 0 }),
+    ] });
+    renderApp(<App />, { route: "/review" });
+    await userEvent.click(await screen.findByRole("tab", { name: new RegExp(en["queue.tab.checked"]) }));
+    expect(await screen.findByText("Login slow")).toBeInTheDocument();
+    expect(screen.queryByText("Never checked")).not.toBeInTheDocument();
+    expect(screen.queryByText("Still waiting")).not.toBeInTheDocument();
+    expect(screen.getByText("2 of 3 expert decisions")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Login slow" })).toHaveAttribute("href", "/review/RCA-2026-00004");
   });
 });

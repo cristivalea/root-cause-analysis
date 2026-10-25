@@ -52,3 +52,13 @@ def test_an_evidence_id_invented_in_the_chain_is_refused():
                      change_likely_required=False)
 
     assert any("EV-099" in problem for problem in check_draft(draft, {"EV-002"}))
+
+
+def test_a_factor_named_by_two_causes_is_drawn_once_with_the_evidence_of_both():
+    same = CauseFactor(category="Capacity", factor="Traffic surge from Easter campaign", evidence=["EV-005"])
+    again = CauseFactor(category="Capacity", factor="traffic surge  from Easter campaign", evidence=["EV-005", "EV-007"])
+    other_category = CauseFactor(category="Monitoring", factor="Traffic surge from Easter campaign", evidence=[])
+    diagram = choose_diagram([hypothesis("HYP-001", "MEDIUM", factors=[same]),
+                              hypothesis("HYP-002", "MEDIUM", factors=[again, other_category])])
+    assert [(hypothesis_id, factor.category, factor.evidence) for hypothesis_id, factor in diagram.factors] == [
+        ("HYP-001", "Capacity", ["EV-005", "EV-007"]), ("HYP-002", "Monitoring", [])]

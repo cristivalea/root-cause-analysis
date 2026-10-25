@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { FolderOpen, GitBranch, Loader2 } from "lucide-react";
+import { clsx } from "clsx";
+import { GitBranch, Loader2 } from "lucide-react";
 import { useCases, useProblems, useSummaries } from "@/api/queries";
 import { RCA_STATUSES, type RCARecord, type RCASummary } from "@/api/types";
 import { useI18n } from "@/i18n/I18nProvider";
@@ -8,6 +9,7 @@ import { Card, Id, PageHeader } from "@/components/ui/Card";
 import { FilterPopover, SearchInput } from "@/components/ui/Search";
 import { Pagination } from "@/components/ui/Pagination";
 import { RcaStatusPill } from "@/components/ui/Pills";
+import { ROW_HOVER, RowChevron, STRETCHED_LINK } from "@/components/ui/RowLink";
 import { Select, TextInput } from "@/components/ui/Field";
 import { EmptyState, ErrorState, SkeletonList } from "@/components/ui/States";
 import { formatDate, formatDateTime } from "@/lib/format";
@@ -30,15 +32,18 @@ function Outcome({ rca, latest }: { rca: RCASummary; latest: RCARecord | undefin
 function RcaCard({ rca, latest, index }: { rca: RCASummary; latest: RCARecord | undefined; index: number }) {
   const { t, language } = useI18n();
   return (
-    <Card className="flex flex-col gap-4 p-4 transition-shadow hover:shadow-pop animate-fade-up sm:flex-row sm:items-center sm:p-5" style={{ animationDelay: `${index * 50}ms` }}>
+    // the whole card opens the analysis (the title link covers it); the problem link stays clickable above it
+    <Card className={clsx("relative flex items-center gap-4 p-4 animate-fade-up sm:p-5", ROW_HOVER)} style={{ animationDelay: `${index * 50}ms` }}>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <Id>{rca.rca_id}</Id>
           <span className="text-muted" aria-hidden="true">·</span>
-          <Link to={`/problems/${rca.problem_id}`} className="tabular text-[13px] font-semibold text-brand-700 hover:underline">{rca.problem_id}</Link>
+          <Link to={`/problems/${rca.problem_id}`} className="relative z-10 tabular text-[13px] font-semibold text-brand-700 hover:underline">{rca.problem_id}</Link>
           <RcaStatusPill status={rca.status} />
         </div>
-        <h3 className="mt-1.5 font-semibold leading-snug text-ink">{rca.title}</h3>
+        <h3 className="mt-1.5 font-semibold leading-snug text-ink">
+          <Link to={`/history/${rca.rca_id}`} className={STRETCHED_LINK}>{rca.title}</Link>
+        </h3>
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
           <span className="inline-flex items-center gap-1"><GitBranch className="h-3.5 w-3.5" aria-hidden="true" />{rca.revisions === 1 ? t("history.revisions_one") : t("history.revisions", { count: rca.revisions })}</span>
           <span>{t("history.started", { date: formatDate(rca.created_at, language) })}</span>
@@ -46,10 +51,7 @@ function RcaCard({ rca, latest, index }: { rca: RCASummary; latest: RCARecord | 
         </p>
         <p className="mt-1 text-sm text-ink"><Outcome rca={rca} latest={latest} /></p>
       </div>
-      <Link to={`/history/${rca.rca_id}`}
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-control bg-brand-600 px-4 text-sm font-medium text-white shadow-card hover:bg-brand-700">
-        <FolderOpen className="h-4 w-4" aria-hidden="true" />{t("history.open_case")}
-      </Link>
+      <RowChevron />
     </Card>
   );
 }

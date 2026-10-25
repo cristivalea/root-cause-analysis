@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { clsx } from "clsx";
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, FileSearch, Hourglass, Loader2, MessageSquareText, RotateCcw, Send, ShieldAlert, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, FileSearch, Hourglass, ListChecks, Loader2, MessageSquareText, RotateCcw, Send, ShieldAlert, XCircle } from "lucide-react";
 import { ApiError } from "@/api/client";
 import { useIncidentIndex, useProblem, useRca, useRevisions, useStartNextRevision, useSubmitReview, useSummaries } from "@/api/queries";
 import { revisionId, type RCARecord } from "@/api/types";
@@ -9,6 +9,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { Button } from "@/components/ui/Button";
 import { Card, Id, PageHeader } from "@/components/ui/Card";
 import { ConfirmDialog, SuccessDialog } from "@/components/ui/Dialog";
+import { Disclosure } from "@/components/ui/Disclosure";
 import { Pill, RcaStatusPill } from "@/components/ui/Pills";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { IncidentDetailsDialog } from "@/components/domain/IncidentDetailsDialog";
@@ -174,8 +175,7 @@ function Investigation({ rcaId }: { rcaId: string }) {
         badges={<><RcaStatusPill status={rca.status} /><Pill tone="neutral">{t("inv.revision_of", { revision: rca.revision, rca: rca.rca_id })}</Pill></>}
       >
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pb-1 pt-1 text-xs text-muted">
-          <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{t("inv.duration")}: {formatSeconds(rca.duration_seconds, t)}</span>
-          <span>{t("inv.evidence_count", { count: rca.evidence.length })}</span>
+          <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{t("inv.took", { duration: formatSeconds(rca.duration_seconds, t), count: rca.evidence.length })}</span>
           {all.length > 1 && (
             <span className="flex flex-wrap items-center gap-1.5">{t("inv.other_revisions")}:
               {all.map((item) => (
@@ -211,16 +211,27 @@ function Investigation({ rcaId }: { rcaId: string }) {
         </div>
       )}
 
-      <Card className="p-5 sm:p-6">
-        <h2 className="mb-5 text-lg font-semibold text-ink">{t("inv.steps")}</h2>
-        <Stepper trace={rca.trace} plan={rca.plan} running={running} failed={failed} current={rca.current_step} />
-      </Card>
+      {/* the steps matter while the analysis runs or after it stopped; once it is done they fold into one line */}
+      {rca.run_status === "COMPLETED" ? (
+        <Card className="px-5 py-3 sm:px-6">
+          <Disclosure label={t("inv.steps_toggle")} icon={<ListChecks className="h-4 w-4" aria-hidden="true" />}>
+            <div className="pt-3">
+              <Stepper trace={rca.trace} plan={rca.plan} running={running} failed={failed} current={rca.current_step} record={rca} />
+            </div>
+          </Disclosure>
+        </Card>
+      ) : (
+        <Card className="p-5 sm:p-6">
+          <h2 className="mb-5 text-lg font-semibold text-ink">{t("inv.steps")}</h2>
+          <Stepper trace={rca.trace} plan={rca.plan} running={running} failed={failed} current={rca.current_step} record={rca} />
+        </Card>
+      )}
 
       {rca.run_status === "COMPLETED" && (
         <>
           <section aria-label={t("inv.results")}>
             <ResultTabs record={rca} problem={title}
-                        tabs={["inputs", "causes", "summary", "evidence", "not_verified", "timeline", "checks", "cause_diagram", "evidence_map"]}
+                        tabs={["causes", "summary", "evidence", "not_verified", "timeline", "checks", "cause_diagram"]}
                         defaultTab="causes" />
           </section>
           <NextAction record={rca} latest={latest} />
