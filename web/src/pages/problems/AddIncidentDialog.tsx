@@ -104,12 +104,12 @@ export function AddIncidentDialog({ problemId, open, onOpenChange, onDetails }: 
                       selected ? "border-brand-600 bg-brand-50 ring-1 ring-brand-600" : "border-line hover:border-brand-600/40 hover:bg-brand-50/60",
                     )}>
                   <Id>{item.incident_id}</Id>
-                  <span className="order-last col-span-2 flex items-center gap-2 sm:order-none sm:col-span-1">
+                  <span className="order-last col-span-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 sm:order-none sm:col-span-1">
                     {item.similarity !== null
-                      ? <SimilarityPill score={item.similarity} />
+                      ? <SimilarityPill score={item.similarity} className="whitespace-nowrap" />
                       : <span className="text-xs text-muted">—</span>}
                     {item.alike && (
-                      <span title={t("problem.alike_help")} className="inline-flex items-center gap-0.5 text-xs font-semibold text-brand-700">
+                      <span title={t("problem.alike_help")} className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs font-semibold text-brand-700">
                         <Sparkles className="h-3 w-3" aria-hidden="true" />{t("problem.alike")}
                       </span>
                     )}

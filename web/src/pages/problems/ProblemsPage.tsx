@@ -22,7 +22,7 @@ const PAGE_SIZE = 10;
 const DEFAULTS = { tab: "Open", q: "", priority: "", service: "", min: "1", from: "", to: "", sort: "created", dir: "desc", page: "1" };
 const TABS: StatusTab[] = [...PROBLEM_STATUSES, "all"];
 const PRIORITIES: Priority[] = ["P1", "P2", "P3", "P4"];
-const GRID = "md:grid md:grid-cols-[124px_minmax(0,1fr)_64px_72px_minmax(0,150px)_124px_96px_16px] md:items-center md:gap-4";
+const GRID = "md:grid md:grid-cols-[124px_minmax(0,1fr)_64px_72px_minmax(0,150px)_168px_96px_16px] md:items-center md:gap-4";
 
 const COLUMNS: { key: SortKey | null; label: MessageKey }[] = [
   { key: "problem", label: "problems.col.problem" },

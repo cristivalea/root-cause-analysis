@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +15,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
-OLLAMA_BASE = "http://localhost:11434"
+OLLAMA_BASE = os.getenv("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 DEFAULT_MODEL = "nomic-embed-text"
 BATCH_SIZE = 32
 DEFAULT_MAX_DISTANCE = 0.45
