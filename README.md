@@ -178,7 +178,29 @@ docker compose up phoenix
 ```
 
 Set `PHOENIX_COLLECTOR_ENDPOINT=http://localhost:6006` in `.env` and restart the backend.
-The traces are at http://localhost:6006.
+The traces are at http://localhost:6006. Phoenix remains the fallback when the SDK
+platform settings below are not configured and the Phoenix endpoint is set.
+
+### Tracing with the observability platform
+
+Install the SDK with the other Python dependencies, then set these values in `.env` and
+restart the backend:
+
+```dotenv
+AI_OBSERVABILITY_API_KEY=your-ingest-key
+AI_OBSERVABILITY_ENDPOINT=https://your-platform-endpoint
+```
+
+In Docker Compose, `AI_OBSERVABILITY_ENDPOINT` must be reachable from the backend
+container. The SDK appends `/v1/traces` to the base URL. Each RCA revision appears as one
+`rca-investigation` workflow, keyed by its revision ID. Prompt and response payload capture
+is explicitly enabled for those workflows (`capture_prompts=True`); this sends model
+payloads to the configured platform, so use an endpoint and key approved for that data.
+When both settings are present, this integration is used instead of Phoenix auto-instrumentation.
+If `PHOENIX_COLLECTOR_ENDPOINT` is also set, the same SDK trace provider exports spans to
+both the platform and Phoenix. Docker Compose sets the OpenTelemetry resource attribute
+`openinference.project.name=rca` so these traces appear in the `rca` Phoenix project, not
+the default project.
 
 ### Evaluation
 

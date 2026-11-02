@@ -10,6 +10,9 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - OLLAMA_HOST=http://host.docker.internal:11434
       - JWT_SECRET=${JWT_SECRET}
+      - AI_OBSERVABILITY_API_KEY=${AI_OBSERVABILITY_API_KEY:-}
+      - AI_OBSERVABILITY_ENDPOINT=${AI_OBSERVABILITY_ENDPOINT:-}
+      - OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=rca
       - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:6006
       - PHOENIX_PROJECT_NAME=rca
     depends_on:

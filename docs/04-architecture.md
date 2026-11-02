@@ -137,7 +137,7 @@ None of these calls a model. Each one can be tested with normal unit tests.
 | Groq | The reasoning model, `openai/gpt-oss-120b`, open-weight, free tier | Cloud |
 | Gemini, OpenRouter | Optional fallback models, for manual tests only, off by default | Cloud |
 | Ollama | The embedding model `nomic-embed-text` for the vector search | Local machine |
-| Arize Phoenix | Traces of every run, every tool and every model call | Local container |
+| Arize Phoenix / observability platform | Optional traces of the investigation, tool and model calls | Local container / configured endpoint |
 
 ---
 
@@ -274,13 +274,19 @@ Two handoffs deserve attention:
 
 ## 4.7 Observability and audit
 
-Arize Phoenix, connected through OpenTelemetry, records the whole investigation when
-`PHOENIX_COLLECTOR_ENDPOINT` is set. For every run we can open one trace and see:
+OpenTelemetry tracing records the whole investigation. When
+`AI_OBSERVABILITY_API_KEY` and `AI_OBSERVABILITY_ENDPOINT` are set, the observability SDK
+exports each RCA revision as one workflow. If `PHOENIX_COLLECTOR_ENDPOINT` is also set,
+the same spans are exported to Phoenix; otherwise, only the configured destination is used.
+For every run we can open one trace and see:
 
 - which steps ran, in which order, and how long each one took,
-- what was sent to the model and what came back (the Groq calls are traced automatically),
+- what was sent to the model and what came back (payload capture is enabled on SDK workflows),
 - which tools were called, with which arguments and how many results,
 - the guardrail result, the hypotheses and the calculated confidence.
+
+With the SDK integration, prompt and response payloads are exported to the configured
+endpoint. Configure it only where sending those payloads is approved.
 
 The application keeps the same information in a permanent form, in SQLite:
 
