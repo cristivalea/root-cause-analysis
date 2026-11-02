@@ -25,8 +25,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from rca import auth
 from rca import observability
 
-observability.setup()
-
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -35,7 +33,10 @@ async def lifespan(_: FastAPI):
     if DB_PATH.exists():
         for revision in store.recover_interrupted(DB_PATH):
             print(f"{revision}: interrupted by the restart, saved as FAILED")
-    yield
+    try:
+        yield
+    finally:
+        observability.shutdown()
 
 
 app = FastAPI(

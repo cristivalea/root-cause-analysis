@@ -41,7 +41,7 @@ import chromadb
 from langgraph.graph import END, START, StateGraph
 from opentelemetry import trace
 
-from rca import rag, storage, store
+from rca import observability, rag, storage, store
 from rca.agents import historical, planner, reasoning
 from rca.confidence import assess_draft, first_error_time, is_weakly_supported
 from rca.config import DB_PATH
@@ -65,8 +65,10 @@ from rca.models import (
 )
 from rca.timeline import as_lines, build_timeline as timeline_of
 from rca.tools import find_changes, find_dependencies, find_logs
-from rca.observability import tracer
+from rca.observability import tracer, workflow_context
 from rca.redaction import redact
+
+observability.setup()
 
 DEFAULT_OWNER = "Problem Manager"
 MAX_SIMILAR_INCIDENTS = 5
@@ -1092,7 +1094,8 @@ def run_investigation(
     if revision_id:
         inputs["revision_id"] = revision_id
     state: dict = {}
-    with tracer().start_as_current_span("rca.investigation") as span:
+    with workflow_context("rca-investigation", workflow_id=revision_id), \
+            tracer().start_as_current_span("rca.investigation") as span:
         span.set_attribute("rca.problem_id", problem_id or "")
         span.set_attribute("rca.incident_id", incident_id or "")
         span.set_attribute("rca.owner", owner)

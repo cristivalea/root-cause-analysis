@@ -33,4 +33,7 @@ PyJWT
 #Ariza Phoenix
 arize-phoenix-otel
 openinference-instrumentation-groq
-openinference-instrumentation-langchain   
+openinference-instrumentation-langchain
+
+# Optional external observability platform integration
+ai-observability-sdk==0.3.2
